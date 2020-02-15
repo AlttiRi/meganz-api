@@ -1,0 +1,102 @@
+<!DOCTYPE html><html><head></head><body>
+<script>
+
+    // https://jsbin.com/joweju/20/edit?html,console
+
+    const iv = new Uint8Array(16);
+    let text = "HELL HERE";
+        text = "ABC-123-DEF-WWW-XYZ";
+        text = "1234567890ABCDEFXXX";
+
+    function exportCryptoKey(key) {
+        return crypto.subtle.exportKey(
+            "raw",
+            key
+        );
+    }
+
+    function importSecretKey(rawKey) {
+        return crypto.subtle.importKey(
+            "raw",
+            rawKey,
+            "AES-CBC",
+            true,
+            ["encrypt", "decrypt"]
+        );
+    }
+
+    async function encryptMessage(key, encoded) {
+        let ciphertext = await window.crypto.subtle.encrypt(
+            {
+                name: "AES-CBC",
+                iv
+            },
+            key,
+            encoded
+        );
+        return ciphertext;
+    }
+
+    async function decryptMessage(key, ciphertext) {
+        let decrypted = await window.crypto.subtle.decrypt(
+            {
+                name: "AES-CBC",
+                iv,
+                padding: "none"
+            },
+            key,
+            ciphertext
+        );
+        return decrypted;
+    }
+
+
+    window.crypto.subtle.generateKey(
+        {
+            name: "AES-CBC",
+            length: 128
+        },
+        true,
+        ["encrypt", "decrypt"]
+    ).then(async (key) => {
+
+        let keyExported = await exportCryptoKey(key);
+        console.log("KeyExported:");
+        console.log("Uint8Array: " + new Uint8Array(keyExported));
+
+        // --- Or use my own key ---
+        keyExported = new Uint8Array([42, 40, 254, 9, 99, 201, 174, 52, 226, 21, 90, 155, 81, 50, 2, 9]);
+        console.log("Changed keyExported:");
+        console.log("Uint8Array: " + new Uint8Array(keyExported));
+
+        key = await importSecretKey(keyExported);
+        console.log("Key:");
+        console.log(key);
+
+
+        // OK, I have the key
+        console.log("------------------------------------------");
+
+
+
+        let encodedText = new TextEncoder().encode(text);
+        console.log("EncodedText:");
+        console.log("Uint8Array: " + new Uint8Array(encodedText));
+
+
+        console.log("------------------------------------------");
+
+
+        let ciphertext = await encryptMessage(key, encodedText);
+        console.log("Ciphertext:");
+        console.log("Uint8Array: " + new Uint8Array(ciphertext));
+
+        let decrypted = await decryptMessage(key, ciphertext);
+        console.log("Decrypted result:");
+        console.log(new TextDecoder().decode(decrypted));
+
+    });
+
+</script>
+</body>
+</html>
