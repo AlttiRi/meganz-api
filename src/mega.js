@@ -2,6 +2,9 @@ const { btoa, atob, fetch } = require("./browser-context");
 const { util } = require("./util");
 const logger = util.logger;
 
+
+// node for share with single file
+// todo rework
 class Node {
 
     id;
@@ -28,6 +31,7 @@ class Node {
     getThumbnail() {
         return mega.requestFileAttributeData(this, 0);
     };
+    //todo add video attributes (8 and 9)
 }
 
 
@@ -35,13 +39,14 @@ class Node {
 const mega = {
 
     ssl: 2, // Is there a difference between "1" and "2" [???]
+    apiGateway: "https://g.api.mega.co.nz/cs",
 
     /**
      * @param {string} url - URL
      * @returns {{id: string, decryptionKey: string, isFolder: boolean, selectedFolder: string , selectedFile: string}}
      */
     parseUrl(url) {
-        const regExp = /(?<=#)(?<isF>F)?!(?<id>.+)!(?<key>.+)(?:!?(?<folder>.+))?(?:\??(?<file>.+))?/;
+        const regExp = /(?<=#)(?<isF>F)?!(?<id>[\w-_]+)!(?<key>[\w-_]+)(?:!(?<folder>[\w-_]+))?(?:\?(?<file>[\w-_]+))?/;
         const groups = url.match(regExp).groups;
 
         const isFolder = Boolean(groups.isF);
@@ -56,18 +61,20 @@ const mega = {
     },
 
     /**
+     * @link https://github.com/gpailler/MegaApiClient/blob/93552a027cf7502292088f0ab25f45eb29ebdc64/MegaApiClient/Cryptography/Crypto.cs#L63
      * @param {Uint8Array} decryptedKey
      * @returns {{iv: Uint8Array, metaMac: Uint8Array, nodeKey: Uint8Array}}
      */
     decryptionKeyToParts(decryptedKey) {
 
-        const iv      = new Uint8Array(decryptedKey.buffer, 16, 8);
+        const iv      = new Uint8Array(decryptedKey.buffer, 16, 8); // todo use `subarray`?
         const metaMac = new Uint8Array(decryptedKey.buffer, 24, 8);
 
         const nodeKey = new Uint8Array(16);
 
-        for (let idx = 0; idx < 16; idx++) {
-            nodeKey[idx] = decryptedKey[idx] ^ decryptedKey[idx + 16];
+        // 256 bits -> 128 bits
+        for (let i = 0; i < 16; i++) {
+            nodeKey[i] = decryptedKey[i] ^ decryptedKey[i + 16];
         }
 
         return {iv, metaMac, nodeKey};
@@ -168,6 +175,7 @@ const mega = {
             serializedFingerprint
         } = this.parseEncodedNodeAttributes(nodeAttributesEncoded, node.nodeKey);
         Object.assign(node, {name});
+        console.log("[nodeAttributesEncoded]", nodeAttributesEncoded);
 
 
         logger.info("Decoding and parsing node fingerprint...");
@@ -187,10 +195,17 @@ const mega = {
 
     /**
      * @param {*} payload
+     * @param {*} [searchParams]
      * @returns {Promise<*>} responseData
      */
-    async requestAPI(payload) {
-        const response = await fetch("https://g.api.mega.co.nz/cs", {
+    //todo handle bad urls (revoked, banned)
+    async requestAPI(payload, searchParams = {}) {
+        const url = new URL(this.apiGateway);
+        Object.entries(searchParams).forEach(([key, value]) => {
+            url.searchParams.append(key, value.toString());
+        });
+
+        const response = await fetch(url, {
             method: "post",
             body: JSON.stringify([payload])
         });
@@ -292,16 +307,22 @@ const mega = {
             "p": id,         // Content ID
             "g": 1,          // The download link
             //"v": 2,        // Multiple links for big files
-            "ssl": this.ssl  // HTTPS for the download link.
+            "ssl": this.ssl  // HTTPS for the download link
         });
+
+        logger.debug(responseData);
 
         return {
             size:                  responseData["s"],
             nodeAttributesEncoded: responseData["at"],  // Node attr (name, hash (file fingerprint) -> mtime)
-            fileAttributesString:  responseData["fa"],  // File attr (thumbnail, preview)
+            fileAttributesString:  responseData["fa"],  // File attr (thumbnail, preview) // only for video or image – undefine in the other case
             downloadUrl:           responseData["g"],
+            timeLeft:              responseData["tl"],  // time left to wait. 0 seconds if quota is not exceeded
             EFQ:                   responseData["efq"], // Something about the Quota – Quota enforcement [???]
             MSD:                   responseData["msd"]  // "MegaSync download"
+            //todo
+            // add `TL` (It looks it is the new parameter added at the beginning of March 2020)
+            // time to wait of the reset of bandwidth quota
         };
     },
 
@@ -361,6 +382,24 @@ const mega = {
         const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return (bytes / Math.pow(k, i)).toFixed(precision) + " " + sizes[i];
+    },
+
+    /**
+     * {@link https://github.com/gpailler/MegaApiClient/blob/93552a027cf7502292088f0ab25f45eb29ebdc64/MegaApiClient/Cryptography/Crypto.cs#L33}
+     * @param {Uint8Array} encryptedKey a key that need to decrypt
+     * @param {Uint8Array} key a key to decrypt with it
+     * @returns {Uint8Array} decryptionKey
+     */
+    decryptKey(encryptedKey, key) {
+        const result = new Uint8Array(encryptedKey.length);
+
+        for (let i = 0; i < encryptedKey.length; i += 16) {
+            const block = encryptedKey.subarray(i, i + 16);
+            const decryptedBlock = util.decryptAES(block, key, {padding: "NoPadding"}); // "NoPadding" – for the case when the last byte is zero (do not trim it)
+            result.set(decryptedBlock, i);
+        }
+
+        return result;
     },
 };
 

@@ -1,7 +1,7 @@
 const { util } = require("./util");
 const { mega } = require("./mega");
 
-
+// todo if file have no file attributes
 !async function app() {
     let link = "https://mega.nz/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"; // a cat jpg
 

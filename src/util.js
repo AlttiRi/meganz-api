@@ -51,9 +51,20 @@ const util = {
             .join("");
     },
 
-    /** To binary string (Latin1)
+    /**
+     * To binary string (Latin1).
+     *
+     * NB: A binary string is a string is encoded with "Latin1" ("ISO-8859-1", not "Windows−1252"!).
+     * `TextDecoder` does not support decoding "Latin1", "ISO-8859-1".
+     * ```
+     * const str = new TextDecoder("ISO-8859-1").decode(new Uint8Array([148, 125, 1, 218, 233, 169, 248, 111]));
+     * console.log(str[0], str[0].charCodeAt(0)); // "”" 8221 (!)
+     * const result = Uint8Array.from(str.split(""), ch => ch.charCodeAt(0));
+     * console.log(result);
+     * // [29, 125, 1, 218, 233, 169, 248, 111] // 29 (!) (trims `8221` to one byte)
+     * ```
      * @param {Uint8Array} arrayBuffer
-     * @returns {string}
+     * @returns {string} binaryString
      * */
     arrayBufferToBinaryString(arrayBuffer) {
         return String.fromCharCode(...arrayBuffer);
