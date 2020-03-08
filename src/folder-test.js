@@ -6,7 +6,7 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
 
 !async function test() {
     let url = "https://mega.nz/#F!e1ogxQ7T!ee4Q_ocD1bSLmNeg9B6kBw"; // a cat folder
-
+    //url = "https://mega.nz/#F!e1ogxQ7T"; // a cat folder - no key
 
     console.log(await getFolderNodes(url));
 
@@ -46,13 +46,12 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
         }
         const share = new Share(url);
 
-        const masterKey = mega.megaBase64ToArrayBuffer(share.decryptionKey);
+        const masterKey = share.decryptionKey ? mega.megaBase64ToArrayBuffer(share.decryptionKey) : null;
         //logger.debug("[masterKey]", masterKey);
-
 
         const {
             nodes,
-            rootId // [unused]
+            rootId // [unused] //todo use it
         } = await requestFolderInfo(share.id);
         logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
 
@@ -60,65 +59,26 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
         const files = [];
 
 
-        //todo
-        // from public info
-        // files and folder from decrypting
         for (let i = 0; i < nodes.length; i++) {
 
-            let node = nodes[i];
+            const node = nodes[i];
             let resultNode;
-
 
             if (node.type === "file") {
                 if (node.fileAttributes) {
-                    resultNode = new MediaFileNode(node);
+                    resultNode = new MediaFileNode(node, masterKey);
                 } else {
-                    resultNode = new FileNode(node);
+                    resultNode = new FileNode(node, masterKey);
                 }
                 files.push(resultNode);
 
             } else if (node.type === "folder") {
-                resultNode = new FolderNode(node);
+                resultNode = new FolderNode(node, masterKey);
                 folders.set(node.id, resultNode);
-            }
-
-
-            //todo if no key is
-            const decryptionKeyEncrypted = mega.megaBase64ToArrayBuffer(node.decryptionKeyStr);
-            const decryptionKey = mega.decryptKey(decryptionKeyEncrypted, masterKey);
-
-            if (node.type === "file") {
-                const {
-                    nodeKey,
-                    iv,     // [unused][???]
-                    metaMac // [unused][???]
-                } = mega.decryptionKeyToParts(decryptionKey);
-                Object.assign(resultNode, {
-                    nodeKey
-                });
-            } else if (node.type === "folder") {
-                Object.assign(resultNode, {
-                    nodeKey: decryptionKey
-                });
-            }
-
-            const {
-                name,
-                serializedFingerprint
-            } = mega.parseEncodedNodeAttributes(node.attributes, resultNode.nodeKey);
-            Object.assign(resultNode, {name});
-
-            if (node.type === "file") {
-                const {
-                    modificationDate,
-                    fileChecksum      // [unused][???]
-                } = mega.parseFingerprint(serializedFingerprint);
-                Object.assign(resultNode, {modificationDate});
             }
 
             nodes[i] = null;
         }
-        console.log(nodes);
 
         return [...folders.values(), ...files];
     }
@@ -166,10 +126,10 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
                     creationDate: node.ts,
                 };
                 if (prettyNode.type === "file") {
-                    Object.assign(prettyNode,{
-                        fileAttributes: node.fa,
-                        size: node.s,
-                    })
+                    prettyNode.size = node.s;
+                    if (node.fa) { // only for images and videos
+                        prettyNode.fileAttributes = node.fa;
+                    }
                 }
                 return prettyNode;
             });

@@ -46,14 +46,14 @@ const mega = {
      * @returns {{id: string, decryptionKey: string, isFolder: boolean, selectedFolder: string , selectedFile: string}}
      */
     parseUrl(url) {
-        const regExp = /(?<=#)(?<isF>F)?!(?<id>[\w-_]+)!(?<key>[\w-_]+)(?:!(?<folder>[\w-_]+))?(?:\?(?<file>[\w-_]+))?/;
+        const regExp = /(?<=#)(?<isF>F)?!(?<id>[\w-_]+)(!(?<key>[\w-_]+))?(?:!(?<folder>[\w-_]+))?(?:\?(?<file>[\w-_]+))?/;
         const groups = url.match(regExp).groups;
 
         const isFolder = Boolean(groups.isF);
         /** Content ID */
         const id = groups.id;
         /** Decryption key encoded with Mega's base64 */
-        const decryptionKey = groups.key;
+        const decryptionKey = groups.key ? groups.key : "";
         const selectedFolder = groups.folder ? groups.folder : "";
         const selectedFile = groups.selectedFile ? groups.selectedFile : "";
 
@@ -289,7 +289,7 @@ const mega = {
         const trimmedAttributesPlaneString = attributesPlane.substring("MEGA".length);
         const {
             n: name,
-            c: serializedFingerprint
+            c: serializedFingerprint // only for files (not folders)
         } = JSON.parse(trimmedAttributesPlaneString);
 
         return {name, serializedFingerprint};

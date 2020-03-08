@@ -2,45 +2,93 @@ const { mega } = require("./mega");
 
 
 class BasicFolderShareNode {
-    constructor(node) {
+    constructor(node, masterKey) {
         this.id           = node.id;
         this.parent       = node.parent;
         this.owner        = node.owner;
         this.creationDate = node.creationDate;
+
+        if (masterKey) {
+            const decryptionKeyEncrypted = mega.megaBase64ToArrayBuffer(node.decryptionKeyStr);
+            this.#decryptionKey = mega.decryptKey(decryptionKeyEncrypted, masterKey);
+        } else {
+            this.#decryptionKey = null;
+        }
     }
     type;
     id;
     parent;
     owner;
     creationDate;
+    #decryptionKey;
 
-    nodeKey;
+    get nodeKey() {
+        return this.#decryptionKey;
+    };
     name; // [requires nodeKey]
 }
 
 class FileNode extends BasicFolderShareNode {
-    constructor(node) {
-        super(node);
+    constructor(node, masterKey) {
+        super(node, masterKey);
         this.type = "file";
         this.size = node.size;
+
+        if (masterKey) {
+            const {
+                name,
+                serializedFingerprint
+            } = mega.parseEncodedNodeAttributes(node.attributes, this.nodeKey);
+            this.name = name;
+
+            const {
+                modificationDate,
+                fileChecksum      // [unused][???]
+            } = mega.parseFingerprint(serializedFingerprint);
+            this.modificationDate = modificationDate;
+        } else {
+            this.name = this.modificationDate = null;
+        }
     }
     size;
+
+    #keyParts;
+    get nodeKey() {
+        if (!this.#keyParts) {
+            if (super.nodeKey) {
+                this.#keyParts = mega.decryptionKeyToParts(super.nodeKey);
+            } else {
+                this.#keyParts = {iv: null, metaMac: null, nodeKey: null};
+            }
+        }
+        return this.#keyParts.nodeKey;
+    };
     modificationDate; // [requires nodeKey]
 }
 
-class MediaFileNode extends BasicFolderShareNode {
-    constructor(node) {
-        super(node);
+class MediaFileNode extends FileNode {
+    constructor(node, masterKey) {
+        super(node, masterKey);
         this.type = "mediaFile";
         this.fileAttributes = node.fileAttributes;
     }
     fileAttributes; // [requires nodeKey to work later]
+    //todo fileAttributes getters
 }
 
 class FolderNode extends BasicFolderShareNode {
-    constructor(node) {
-        super(node);
+    constructor(node, masterKey) {
+        super(node, masterKey);
         this.type = "folder";
+
+        if (masterKey) {
+            const {
+                name
+            } = mega.parseEncodedNodeAttributes(node.attributes, this.nodeKey);
+            this.name = name;
+        } else {
+            this.name = null;
+        }
     }
     folders = [];
     files = [];
