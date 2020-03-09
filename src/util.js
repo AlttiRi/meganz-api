@@ -172,7 +172,7 @@ const util = {
     },
 
     /**
-     * Array of bytes (Big-endian) to Long (64-bits) value
+     * Array of bytes (Little-endian) to Long (64-bits) value
      * @param {Uint8Array} arrayBuffer
      * @returns {number}
      */
@@ -183,7 +183,7 @@ const util = {
             throw "Length is over size of Long";
         }
 
-        const result = arrayBuffer.reduceRight((previousValue, currentValue, index) => {
+        const result = arrayBuffer.reduce((previousValue, currentValue, index) => {
             return previousValue + currentValue * (256 ** index);
         }, 0);
 

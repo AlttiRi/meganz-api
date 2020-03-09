@@ -1,7 +1,7 @@
-const { util } = require("./util");
+const {util} = require("./util");
 const logger = util.logger;
-const { mega } = require("./mega");
-const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
+const {mega} = require("./mega");
+const {FolderNode, RootFolderNode, FileNode, MediaFileNode} = require("./nodes");
 
 
 !async function test() {
@@ -13,9 +13,6 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
 
 
 
-    // Mega returns nodes sorted by creationDate
-    // so, the root node is the first node
-    // and a folder node is always located before the nodes that are inside it
     async function getFolderNodes(url) {
 
         class Share {
@@ -51,11 +48,11 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
 
         const {
             nodes,
-            rootId // [unused] //todo use it
+            rootId
         } = await requestFolderInfo(share.id);
-        logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
+        //logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
 
-        const folders = new Map(); // JS's HashMap holds the insert order
+        const folders = new Map(); // [note] JS's HashMap holds the insert order
         const files = [];
 
 
@@ -72,8 +69,16 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
                 }
                 files.push(resultNode);
 
+                // the parent node is always located before the child node, no need to check its existence [1][note]
+                folders.get(resultNode.parent).files.push(resultNode);
+
             } else if (node.type === "folder") {
-                resultNode = new FolderNode(node, masterKey);
+                if (node.id === rootId) { // or `if (i === 0)`
+                    resultNode = new RootFolderNode(node, masterKey);
+                } else {
+                    resultNode = new FolderNode(node, masterKey);
+                    folders.get(resultNode.parent).folders.push(resultNode); // see [1] note
+                }
                 folders.set(node.id, resultNode);
             }
 
@@ -83,6 +88,16 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
         return [...folders.values(), ...files];
     }
 
+
+    // The logic of nodes order that Mega returns looks like it is:
+    // The first node is root node,
+    // the next: root node children sorted by creationDate (folders have the same priority as files),
+    // the next: nodes (also sorted by creationDate) of each folder,
+    //              these folder iterates from last one to the first (like a stack works). And etc.
+    //
+    // So, a folder node is always located before the nodes that are inside it,       <-- [important]
+    // all nodes with the same parent are listed one by one in creationDate order,
+    // one level folders iterates in reverse order to `print` their children.
     async function requestFolderInfo(shareId) {
         const responseData = await mega.requestAPI({
             "a": "f",
@@ -137,10 +152,5 @@ const {FolderNode, FileNode, MediaFileNode} = require("./Nodes");
 
         return {nodes: prettifyNodes(rawNodes), rootId: shareRootNodeId};
     }
-
-
-
-
-
 
 }();

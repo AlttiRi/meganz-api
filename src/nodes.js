@@ -1,4 +1,5 @@
 const { mega } = require("./mega");
+const { util } = require("./util");
 
 
 class BasicFolderShareNode {
@@ -64,6 +65,12 @@ class FileNode extends BasicFolderShareNode {
         return this.#keyParts.nodeKey;
     };
     modificationDate; // [requires nodeKey]
+    get modificationDateFormatted() {
+        return util.secondsToFormattedString(this.modificationDate);
+    }
+    get mtime() {     // An alias
+        return this.modificationDate;
+    }
 }
 
 class MediaFileNode extends FileNode {
@@ -73,7 +80,16 @@ class MediaFileNode extends FileNode {
         this.fileAttributes = node.fileAttributes;
     }
     fileAttributes; // [requires nodeKey to work later]
-    //todo fileAttributes getters
+    //todo fileAttributes getters for 8, 9 (9 may not exists)
+
+    // /** @returns {Promise<Uint8Array>} */
+    // getPreview() {
+    //     return mega.requestFileAttributeData(this, 1);
+    // };
+    // /** @returns {Promise<Uint8Array>} */
+    // getThumbnail() {
+    //     return mega.requestFileAttributeData(this, 0);
+    // };
 }
 
 class FolderNode extends BasicFolderShareNode {
@@ -99,6 +115,12 @@ class FolderNode extends BasicFolderShareNode {
     };
 }
 
+class RootFolderNode extends FolderNode {
+    constructor(node, masterKey) {
+        super(node, masterKey);
+        this.type = "rootFolder";
+    }
+}
 
 // todo
 class SharedFileNode {
@@ -113,4 +135,4 @@ class SharedFileNode {
     fileAttributes;
 }
 
-module.exports = {FolderNode, FileNode, MediaFileNode, SharedFileNode};
+module.exports = {FolderNode, RootFolderNode, FileNode, MediaFileNode, SharedFileNode};

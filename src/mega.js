@@ -350,9 +350,11 @@ const mega = {
         logger.info("Downloading content...");
         const responseBytes = await this.requestFile(downloadLink, faHashBinary);
 
-        const hashBytes = responseBytes.subarray(0, 8);  // [unused]
-        const wtfBytes  = responseBytes.subarray(8, 12); // [unused][???]
-        const atBytes   = responseBytes.subarray(12);
+        const hashBytes   = responseBytes.subarray(0, 8);  // [unused]
+        const lengthBytes = responseBytes.subarray(8, 12); // [unused] bytes count – little endian 32 bit integer (enough for up to 4 GB)
+        const atBytes     = responseBytes.subarray(12);
+
+        logger.debug("Attribute (enc) size is " + util.arrayBufferToLong(lengthBytes) + " bytes"); // with zero padding
 
         logger.info("Decryption of downloaded content...");
         return util.decryptAES(atBytes, node.nodeKey);

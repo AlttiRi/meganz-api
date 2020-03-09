@@ -1,5 +1,5 @@
 const { btoa, atob, fetch } = require("../browser-context");
-const { util: u } = require("../util");
+const { util } = require("../util");
 const { mega } = require("../mega");
 
 // The test of downloading a thumbnail and a preview (file attributes)
@@ -17,7 +17,7 @@ const { mega } = require("../mega");
     let thumbnailId = fa.match(/(?<=:0\*).+?(?=\/|$)/)[0];
     let previewId   = fa.match(/(?<=:1\*).+?(?=\/|$)/)[0];
 
-    u.log(thumbnailId, previewId);
+    console.log(thumbnailId, previewId);
 // lH0B2ump-G8
 // sqbpWSbonCU
 
@@ -33,7 +33,7 @@ const { mega } = require("../mega");
         }])
     });
 
-    u.log(headers(resp));
+    console.log(headers(resp));
 // [
 //         'access-control-allow-headers': 'Content-Type, MEGA-Chrome-Antileak',
 //         'access-control-allow-origin': '*',
@@ -47,14 +47,14 @@ const { mega } = require("../mega");
 
 
     let downloadLink = (await resp.json())[0]["p"];
-    u.log(downloadLink);
+    console.log(downloadLink);
 // https://gfs270n891.userstorage.mega.co.nz/.v9M_inQRPGeF3AIES08HwnBPOPhC-3rq0TTVk77EyXmJQae9smv9j3BM_THxKzmmyDsx8Q
 
     thumbnailId = mega.megaBase64ToBase64(thumbnailId);
     console.log(thumbnailId);
     thumbnailId = atob(thumbnailId);
     console.log(thumbnailId);
-    thumbnailId = u.binaryStringToArrayBuffer(thumbnailId);
+    thumbnailId = util.binaryStringToArrayBuffer(thumbnailId);
     console.log(thumbnailId);
 // lH0B2ump+G8=
 // }Úé©øo
@@ -69,7 +69,7 @@ const { mega } = require("../mega");
             "connection": "keep-alive" // It's important for `node-fetch`
         }
     });
-    u.log("", headers(resp2));
+    console.log("", headers(resp2));
 // [
 //         'access-control-allow-headers': 'MEGA-Chrome-Antileak',
 //         'access-control-allow-origin': '*',
@@ -81,36 +81,39 @@ const { mega } = require("../mega");
 
 
     const responseBytes = new Uint8Array(await resp2.arrayBuffer());
-    u.log("responseBytes", responseBytes);
+    console.log("responseBytes", responseBytes);
 // Uint8Array(2572) [
 //     148, 125,   1, 218,  233, 169, 248, 111,    0,  10,   0,   0,  124, 113, 177, 188,
 //      40,  73,  11, 185,  249, 199,  74,  35,   92, 172, 234, 197,  231, 152, 251, 239,
 
 
     let hashBytes = responseBytes.subarray(0, 8);
-    u.log("hashBytes", hashBytes);
+    console.log("hashBytes", hashBytes);
 // Uint8Array(8) [148, 125,  1, 218, 233, 169, 248, 111]
 
-    let wtfBytes = responseBytes.subarray(8, 12); // ???
-    u.log("wtfBytes", wtfBytes);
+    let lengthBytes = responseBytes.subarray(8, 12); // ???
+    console.log("lengthBytes", lengthBytes);
 // Uint8Array(4) [0, 10, 0, 0]
 
+    console.log("thumbnail bytes count", util.arrayBufferToLong(lengthBytes));
+// 2560
+
     let thumbnailBytes = responseBytes.subarray(12);
-    u.log("thumbnailBytes", thumbnailBytes);
+    console.log("thumbnailBytes", thumbnailBytes);
 // Uint8Array(2560) [
 //     124, 113, 177, 188,  40,  73,  11, 185, 249, 199,  74,  35, 92, 172, 234, 197,
 //     231, 152, 251, 239,  56, 107,  91, 130, 128, 115,  87,  69, 124,  53, 198,
 
 
 
-    let decrypted = u.decryptAES(thumbnailBytes, nodeKey);
-    u.log(decrypted);
+    let decrypted = util.decryptAES(thumbnailBytes, nodeKey);
+    console.log(decrypted);
 // Uint8Array(2546) [
 //   255, 216, 255, 224,     0,  16,  74,  70,   73,  70,  0,   1,    1,   0,   0,   1,
 //     0,   1,   0,   0,   255, 219,  0,   67,    0,  10,  7,   7,    8,   7,   6,  10,
 //     8,   8,   8,  11,    10,  10,  11,  14,   24,  16,  14, 13,   13,  14,  29,  21,
 
-    u.saveFile(decrypted, "123.jpg"); // -> temp/123.jpg
+    util.saveFile(decrypted, "123.jpg"); // -> temp/123.jpg
 
 
     // in case uncommenting – download necessary asmcrypto.js file
@@ -131,12 +134,12 @@ const { mega } = require("../mega");
         const asmCrypto = require("./asmcrypto");
 
         let decryptedByASM = asmCrypto.AES_CBC.decrypt(data, key, false);
-        u.log("asmCrypto:", decryptedByASM);
+        console.log("asmCrypto:", decryptedByASM);
         // Uint8Array(2560) [...]
 
         // It works OK, but it does not remove the tailing zero padding (the size of the image is multiple 16)
 
-        u.saveFile(decryptedByASM,"123_asm.jpg");
+        util.saveFile(decryptedByASM,"123_asm.jpg");
     }
 
 
