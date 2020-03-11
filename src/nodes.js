@@ -64,12 +64,16 @@ class FileNode extends BasicFolderShareNode {
         }
         return this.#keyParts.nodeKey;
     };
-    modificationDate; // [requires nodeKey]
+    modificationDate;   // [requires nodeKey]
+    get mtime() {       // An alias
+        return this.modificationDate;
+    }
     get modificationDateFormatted() {
         return util.secondsToFormattedString(this.modificationDate);
     }
-    get mtime() {     // An alias
-        return this.modificationDate;
+
+    get downloadUrl() { // not implemented
+        return null;
     }
 }
 
@@ -122,17 +126,90 @@ class RootFolderNode extends FolderNode {
     }
 }
 
-// todo
-class SharedFileNode {
-    type = "sharedFile";
+//todo static factory methods
+// SharedNode.of()
+// FolderShareNode.of()
 
+class SharedFileNode {
+    constructor(share, nodeInfo) {
+        this.type = "sharedFile";
+        this.id = share.id; // in fact it is not real file node id (for every new generated share url you get new id)
+
+        if (share.decryptionKey) {
+            const decryptionKey = mega.megaBase64ToArrayBuffer(share.decryptionKey);
+            const {
+                iv,      // [unused][???] // probably it is needed for decryption (not implemented)
+                metaMac, // [unused][???]
+                nodeKey
+            } = mega.decryptionKeyToParts(decryptionKey);
+            this.nodeKey = nodeKey;
+        } else {
+            this.nodeKey = null;
+        }
+
+        const {
+            size,
+            nodeAttributesEncoded,
+            fileAttributes, // [uses in sub class]
+            downloadUrl,
+            timeLeft,
+            EFQ,            // [unused]
+            MSD             // [unused]
+        } = nodeInfo;
+
+        this.size = size;
+        this.#meta = {downloadUrl, timeLeft};
+
+        if (share.decryptionKey) {
+            const {
+                name,
+                serializedFingerprint
+            } = mega.parseEncodedNodeAttributes(nodeAttributesEncoded, this.nodeKey);
+
+            const {
+                modificationDate,
+                fileChecksum   // [unused][???]
+            } = mega.parseFingerprint(serializedFingerprint);
+
+            this.name = name;
+            this.modificationDate = modificationDate;
+        } else {
+            this.name = this.modificationDate = null;
+        }
+
+    }
+
+
+    type;
     id;
+    size;
+
     nodeKey;
     name;
-
-    size;
     modificationDate;
+    get mtime() { // An alias
+        return this.modificationDate;
+    }
+    get modificationDateFormatted() {
+        return util.secondsToFormattedString(this.modificationDate);
+    }
+
+    #meta;
+    get timeLeft() {
+        return this.#meta.timeLeft;
+    }
+    get downloadUrl() {
+        return this.#meta.downloadUrl;
+    }
+}
+
+class SharedMediaFileNode extends SharedFileNode {
+    constructor(share, nodeInfo) {
+        super(share, nodeInfo);
+        this.type = "sharedMediaFile";
+        this.fileAttributes = nodeInfo.fileAttributes;
+    }
     fileAttributes;
 }
 
-module.exports = {FolderNode, RootFolderNode, FileNode, MediaFileNode, SharedFileNode};
+module.exports = {FolderNode, RootFolderNode, FileNode, MediaFileNode, SharedFileNode, SharedMediaFileNode};

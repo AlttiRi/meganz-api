@@ -161,7 +161,7 @@ const mega = {
         const {
             size,
             nodeAttributesEncoded,
-            fileAttributesString,
+            fileAttributes: fileAttributesString,
             downloadUrl, // [unused]
             EFQ,         // [unused]
             MSD          // [unused]
@@ -243,12 +243,13 @@ const mega = {
 
         const chunks = fileAttributesString.split("\/");
         chunks.forEach(chunk => {
-            const groups = chunk.match(/(?<plain>\d+):(?<type>\d+)\*(?<hash>.+)/).groups;
-            const {hash, type, plain} = groups;
+            const groups = chunk.match(/(?<bunch>\d+):(?<type>\d+)\*(?<hash>.+)/).groups;
+            const {hash, type, bunch} = groups;
             fileAttributes.push({
-                hash,                // [???] Well, name it "hash"
+                hash,                // todo rename to `id`
                 type:  Number(type),
-                plain: Number(plain) // [???] WTF? I have no idea that it is.
+                //todo rename to `bunch`
+                plain: Number(bunch) // Attributes with the same bunch number can be requested within one API request
             });
         });
 
@@ -297,8 +298,8 @@ const mega = {
 
     /**
      * @param {string} id
-     * @returns {Promise<{size: number, nodeAttributesEncoded: string, fileAttributesString: string,
-     *           downloadUrl: string, EFQ: number, MSD: number}>}
+     * @returns {Promise<{size: number, nodeAttributesEncoded: string, fileAttributes: string,
+     *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number}>} nodeInfo
      */
     async requestNodeInfo(id) {
 
@@ -310,19 +311,20 @@ const mega = {
             "ssl": this.ssl  // HTTPS for the download link
         });
 
-        logger.debug(responseData);
+        //logger.debug(responseData);
 
         return {
             size:                  responseData["s"],
-            nodeAttributesEncoded: responseData["at"],  // Node attr (name, hash (file fingerprint) -> mtime)
-            fileAttributesString:  responseData["fa"],  // File attr (thumbnail, preview) // only for video or image – undefine in the other case
+            nodeAttributesEncoded: responseData["at"],  // Node attributes (name, hash (file fingerprint) -> mtime)
+            fileAttributes:        responseData["fa"],  // File attributes (thumbnail, preview, [video meta info])
+                                                        // Only for image or video – `undefine` in the other case
             downloadUrl:           responseData["g"],
-            timeLeft:              responseData["tl"],  // time left to wait. 0 seconds if quota is not exceeded
-            EFQ:                   responseData["efq"], // Something about the Quota – Quota enforcement [???]
-            MSD:                   responseData["msd"]  // "MegaSync download"
-            //todo
-            // add `TL` (It looks it is the new parameter added at the beginning of March 2020)
-            // time to wait of the reset of bandwidth quota
+            timeLeft:              responseData["tl"],  // Time to wait of the reset of bandwidth quota.
+                                                        // `0` seconds if quota is not exceeded
+                                                        // (It looks it is the new parameter added
+                                                        //                             at the beginning of March 2020)
+            EFQ:                   responseData["efq"], // `1` – Something about the Quota – Quota enforcement?  [???]
+            MSD:                   responseData["msd"]  // `1` – "MegaSync download"                             [???]
         };
     },
 

@@ -1,46 +1,60 @@
 const {util} = require("./util");
 const logger = util.logger;
 const {mega} = require("./mega");
-const {FolderNode, RootFolderNode, FileNode, MediaFileNode} = require("./nodes");
+const {FolderNode, RootFolderNode, FileNode, MediaFileNode, SharedFileNode, SharedMediaFileNode} = require("./nodes");
 
+
+
+
+class Share {
+    id;
+    decryptionKey;  // todo rename to decryptionKeyStr
+    isFolder;
+    selectedFolder; // todo rename +`Id` to name
+    selectedFile;
+
+    constructor(url) {
+        //logger.info("Parsing URL...");
+        Object.assign(this, mega.parseUrl(url));
+        //logger.debug(this.toString());
+    }
+
+    toString() {
+        return  "" +
+            "[id]             " + this.id             + "\n" +
+            "[decryptionKey]  " + this.decryptionKey  + "\n" +
+            "[isFolder]       " + this.isFolder       + "\n" +
+            "[selectedFolder] " + this.selectedFolder + "\n" +
+            "[selectedFile]   " + this.selectedFile;
+    }
+
+    get selected() {
+        return this.selectedFile ? this.selectedFile : this.selectedFolder ? this.selectedFolder : null;
+    }
+}
 
 !async function test() {
     let url = "https://mega.nz/#F!e1ogxQ7T!ee4Q_ocD1bSLmNeg9B6kBw"; // a cat folder
     //url = "https://mega.nz/#F!e1ogxQ7T"; // a cat folder - no key
 
+    
     console.log(await getFolderNodes(url));
+    console.log(await getSharedNode("https://mega.nz/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"));
 
 
 
+    async function getSharedNode(url) {
+        const share = new Share(url);
+        const nodeInfo = await mega.requestNodeInfo(share.id);
+        if (nodeInfo.fileAttributes) {
+            return new SharedMediaFileNode(share, nodeInfo);
+        } else {
+            return new SharedFileNode(share, nodeInfo);
+        }
+    }
 
     async function getFolderNodes(url) {
 
-        class Share {
-            id;
-            decryptionKey;  // todo rename to decryptionKeyStr
-            isFolder;
-            selectedFolder;
-            selectedFile;
-
-            constructor(url) {
-                //logger.info("Parsing URL...");
-                Object.assign(this, mega.parseUrl(url));
-                //logger.debug(this.toString());
-            }
-
-            toString() {
-                return  "" +
-                    "[id]             " + this.id             + "\n" +
-                    "[decryptionKey]  " + this.decryptionKey  + "\n" +
-                    "[isFolder]       " + this.isFolder       + "\n" +
-                    "[selectedFolder] " + this.selectedFolder + "\n" +
-                    "[selectedFile]   " + this.selectedFile;
-            }
-
-            get selected() {
-                // todo
-            }
-        }
         const share = new Share(url);
 
         const masterKey = share.decryptionKey ? mega.megaBase64ToArrayBuffer(share.decryptionKey) : null;
