@@ -3,10 +3,10 @@ const { util } = require("./util");
 
 class Share {
     id;
-    decryptionKey;  // todo rename to decryptionKeyStr
+    decryptionKeyStr;
     isFolder;
-    selectedFolder; // todo rename +`Id` to name
-    selectedFile;
+    selectedFolderId;
+    selectedFileId;
 
     constructor(url) {
         //logger.info("Parsing URL...");
@@ -16,11 +16,11 @@ class Share {
 
     toString() {
         return  "" +
-            "[id]             " + this.id             + "\n" +
-            "[decryptionKey]  " + this.decryptionKey  + "\n" +
-            "[isFolder]       " + this.isFolder       + "\n" +
-            "[selectedFolder] " + this.selectedFolder + "\n" +
-            "[selectedFile]   " + this.selectedFile;
+            "[id]             " + this.id               + "\n" +
+            "[decryptionKey]  " + this.decryptionKeyStr + "\n" +
+            "[isFolder]       " + this.isFolder         + "\n" +
+            "[selectedFolder] " + this.selectedFolderId + "\n" +
+            "[selectedFile]   " + this.selectedFileId;
     }
 
     static isFolder(url) {
@@ -28,7 +28,7 @@ class Share {
     }
 
     get selected() {
-        return this.selectedFile ? this.selectedFile : this.selectedFolder ? this.selectedFolder : null;
+        return this.selectedFileId ? this.selectedFileId : this.selectedFolderId ? this.selectedFolderId : null;
     }
 }
 
@@ -162,8 +162,8 @@ class SharedFileNode {
         this.type = "sharedFile";
         this.id = share.id; // in fact it is not real file node id (for every new generated share url you get new id)
 
-        if (share.decryptionKey) {
-            const decryptionKey = mega.megaBase64ToArrayBuffer(share.decryptionKey);
+        if (share.decryptionKeyStr) {
+            const decryptionKey = mega.megaBase64ToArrayBuffer(share.decryptionKeyStr);
             const {
                 iv,      // [unused][???] // probably it is needed for decryption (not implemented)
                 metaMac, // [unused][???]
@@ -187,7 +187,7 @@ class SharedFileNode {
         this.size = size;
         this.#meta = {downloadUrl, timeLeft};
 
-        if (share.decryptionKey) {
+        if (share.decryptionKeyStr) {
             const {
                 name,
                 serializedFingerprint
@@ -261,7 +261,7 @@ async function getFolderNodes(url) {
 
     const share = new Share(url);
 
-    const masterKey = share.decryptionKey ? mega.megaBase64ToArrayBuffer(share.decryptionKey) : null;
+    const masterKey = share.decryptionKeyStr ? mega.megaBase64ToArrayBuffer(share.decryptionKeyStr) : null;
     //logger.debug("[masterKey]", masterKey);
 
     const {

@@ -1,5 +1,6 @@
 const { btoa, atob, fetch } = require("../browser-context");
 const { util } = require("../util");
+const logger = util.logger;
 const { mega } = require("../mega");
 
 
@@ -14,13 +15,13 @@ const { mega } = require("../mega");
 
         const {
             id,
-            decryptionKey: decryptionKeyEncoded,
+            decryptionKeyStr,
             isFolder,
-            selectedFolder,
-            selectedFile
+            selectedFolderId,
+            selectedFileId
         } = mega.parseUrl(link);
 
-        util.log(isFolder, id, decryptionKeyEncoded, selectedFolder, selectedFile);
+        logger.debug(isFolder, id, decryptionKeyStr, selectedFolderId, selectedFileId);
 
     // false
     // bkwkHC7D
@@ -31,10 +32,10 @@ const { mega } = require("../mega");
 // ---------------------------------------------------------------------------------------------------------------------
 
         console.log("Decode decryption key...");
-        const decryptionKey = mega.megaBase64ToArrayBuffer(decryptionKeyEncoded);
+        const decryptionKey = mega.megaBase64ToArrayBuffer(decryptionKeyStr);
 
 
-        util.log("decryptionKey:", decryptionKey);
+        logger.debug("decryptionKey:", decryptionKey);
     // Uint8Array(32) [  1,  98, 110, 182, 143,  63, 126,  25,  94,   0, 141, 150,  27,  68, 111,   0,
     //                  43,  74, 144, 191, 236, 246, 208,  45, 188,  21, 215,  13,  74, 118, 109,   9]
 
@@ -43,7 +44,7 @@ const { mega } = require("../mega");
         console.log("Parse decryption key...");
         const { iv, metaMac, nodeKey } = mega.decryptionKeyToParts(decryptionKey);
 
-        util.log("iv:", iv, "metaMac:", metaMac, "nodeKey:", nodeKey);
+        logger.debug("iv:", iv, "metaMac:", metaMac, "nodeKey:", nodeKey);
 
     // Uint8Array(8)  [ 43,  74, 144, 191, 236, 246, 208,  45]
     // Uint8Array(8)  [188,  21, 215,  13,  74, 118, 109,   9]
@@ -74,8 +75,8 @@ const { mega } = require("../mega");
             msd: MSD  // "MegaSync download"
         } = json[0];
 
-        util.log("s   " + size, "at  " + serializedAttributes, "fa  " + fileAttributesEncoded,
-                 "g   " + downloadUrl, "efq " + EFQ, "msd " + MSD);
+        logger.debug("s   " + size, "at  " + serializedAttributes, "fa  " + fileAttributesEncoded,
+                     "g   " + downloadUrl, "efq " + EFQ, "msd " + MSD);
 
     // s   523265
     // at  ZlDcSbnpVQfDxIlrQZaioVBSGhJu972wI8WMBIpLn8VLWIMX631gUSmq3C1ANx5EJwZwwvPRsa02RxWsPpNwTA
@@ -87,7 +88,7 @@ const { mega } = require("../mega");
 // ---------------------------------------------------------------------------------------------------------------------
 
         const attributesEncrypted = util.base64BinaryStringToArrayBuffer(serializedAttributes);
-        util.log("attributesEncrypted:", attributesEncrypted);
+        logger.debug("attributesEncrypted:", attributesEncrypted);
 
     // Uint8Array(64)
     // [102,  80, 220,  73, 185, 233,  85,   7, 195, 196, 137, 107,  65, 150, 162, 161,
@@ -104,7 +105,7 @@ const { mega } = require("../mega");
 
         const attributesPlane = util.arrayBufferToUtf8String(attributesArrayBuffer);
 
-        util.log("Attributes:", attributesArrayBuffer, attributesPlane);
+        logger.debug("Attributes:", attributesArrayBuffer, attributesPlane);
 
     // Uint8Array(61) [
     //  77,  69,  71,  65, 123,  34, 110,  34,  58,  34,  83,  104,  97, 114, 101, 100,
@@ -118,14 +119,14 @@ const { mega } = require("../mega");
         console.log("Parsing of Attributes...");
         const { n: name, c: serializedFingerprint } = JSON.parse(attributesPlane.substring("MEGA".length));
 
-        util.log(name, serializedFingerprint);
+        logger.debug(name, serializedFingerprint);
 
     // SharedFile.jpg
     // GRSM8+c1HUmlmyDuTJVrDwSDpqRV  // node hash + mtime
 
 
         const fingerprintBytes = util.base64BinaryStringToArrayBuffer(serializedFingerprint);
-        util.log(fingerprintBytes);
+        logger.debug(fingerprintBytes);
 
     // Uint8Array(21) [
     //      25,  20, 140, 243,
@@ -150,14 +151,14 @@ const { mega } = require("../mega");
 
 
         const modificationDateSeconds = util.arrayBufferToLong(timeBytes);
-        util.log(modificationDateSeconds);
+        logger.debug(modificationDateSeconds);
     // 1436853891
 
-        util.log(new Date(modificationDateSeconds * 1000).toLocaleString());
+        logger.debug(new Date(modificationDateSeconds * 1000).toLocaleString());
     // 14.07.2015, 09:04:51
 
         // I prefer this format
-        util.log(util.secondsToFormattedString(modificationDateSeconds));
+        logger.debug(util.secondsToFormattedString(modificationDateSeconds));
     // 2015.06.14 09:04:51
 
 

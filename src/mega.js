@@ -8,7 +8,7 @@ const logger = util.logger;
 class Node {
 
     id;
-    decryptionKey;
+    decryptionKeyStr;
     isFolder;
     nodeKey;
 
@@ -43,7 +43,7 @@ const mega = {
 
     /**
      * @param {string} url - URL
-     * @returns {{id: string, decryptionKey: string, isFolder: boolean, selectedFolder: string , selectedFile: string}}
+     * @returns {{id: string, decryptionKeyStr: string, isFolder: boolean, selectedFolderId: string , selectedFileId: string}}
      */
     parseUrl(url) {
         const regExp = /(?<=#)(?<isF>F)?!(?<id>[\w-_]+)(!(?<key>[\w-_]+))?(?:!(?<folder>[\w-_]+))?(?:\?(?<file>[\w-_]+))?/;
@@ -53,11 +53,11 @@ const mega = {
         /** Content ID */
         const id = groups.id;
         /** Decryption key encoded with Mega's base64 */
-        const decryptionKey  = groups.key ? groups.key : "";
-        const selectedFolder = groups.folder ? groups.folder : "";
-        const selectedFile   = groups.file ? groups.file : "";
+        const decryptionKeyStr = groups.key ? groups.key : "";
+        const selectedFolderId = groups.folder ? groups.folder : "";
+        const selectedFileId   = groups.file ? groups.file : "";
 
-        return {id, decryptionKey, isFolder, selectedFolder, selectedFile};
+        return {id, decryptionKeyStr, isFolder, selectedFolderId, selectedFileId};
     },
 
     /**
@@ -140,16 +140,16 @@ const mega = {
         logger.info("Parsing URL...");
         const {
             id,
-            decryptionKey,
+            decryptionKeyStr,
             isFolder,
-            selectedFolder, // [unused]
-            selectedFile    // [unused]
+            selectedFolderId, // [unused]
+            selectedFileId    // [unused]
         } = this.parseUrl(url);
-        Object.assign(node, {isFolder, id, decryptionKey});
+        Object.assign(node, {isFolder, id, decryptionKeyStr});
 
 
         logger.info("Decode and parse decryption key...");
-        const decryptionKeyDecoded = this.megaBase64ToArrayBuffer(node.decryptionKey);
+        const decryptionKeyDecoded = this.megaBase64ToArrayBuffer(node.decryptionKeyStr);
         const {
             iv,      // [unused][???]
             metaMac, // [unused][???]
