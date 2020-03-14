@@ -331,7 +331,7 @@ class Nodes {
 
     /**
      * @param {string} url
-     * @returns {Promise<SharedFileNode >}
+     * @returns {Promise<SharedFileNode|SharedMediaFileNode|RootFolderNode|FolderNode|FileNode|MediaFileNode>}
      */
     static async node(url) {
         if (!Share.isFolder(url)) {
