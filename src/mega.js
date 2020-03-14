@@ -4,7 +4,7 @@ const logger = util.logger;
 
 
 // node for share with single file
-// todo rework
+// todo delete (replace with the new class)
 class Node {
 
     id;
@@ -53,9 +53,9 @@ const mega = {
         /** Content ID */
         const id = groups.id;
         /** Decryption key encoded with Mega's base64 */
-        const decryptionKey = groups.key ? groups.key : "";
+        const decryptionKey  = groups.key ? groups.key : "";
         const selectedFolder = groups.folder ? groups.folder : "";
-        const selectedFile = groups.selectedFile ? groups.selectedFile : "";
+        const selectedFile   = groups.file ? groups.file : "";
 
         return {id, decryptionKey, isFolder, selectedFolder, selectedFile};
     },
@@ -91,7 +91,8 @@ const mega = {
 
     /**
      * Transform Mega Base64 format to normal Base64
-     *   "AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk" ->
+     *   "AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
+     *   ->
      *   "AWJuto8/fhleAI2WG0RvACtKkL/s9tAtvBXXDUp2bQk="
      * @param {string} megaBase64EncodedStr
      * @returns {string}
@@ -326,6 +327,70 @@ const mega = {
             EFQ:                   responseData["efq"], // `1` – Something about the Quota – Quota enforcement?  [???]
             MSD:                   responseData["msd"]  // `1` – "MegaSync download"                             [???]
         };
+    },
+
+    // The logic of nodes order that Mega returns looks like it is:
+    // The first node is root node,
+    // the next: root node children sorted by creationDate (folders have the same priority as files),
+    // the next: nodes (also sorted by creationDate) of each folder,
+    //              these folder iterates from last one to the first (like a stack works). And etc.
+    //
+    // So, a folder node is always located before the nodes that are inside it,       <-- [important]
+    // all nodes with the same parent are listed one by one in creationDate order,
+    // one level folders iterates in reverse order to `print` their children.
+    async requestFolderInfo(shareId) {
+        const responseData = await mega.requestAPI({
+            "a": "f",
+            "r":  1, // Recursive (include sub folders/files) // if not set only root node and 1th lvl file/folder nodes
+            "c":  1, // [???][useless]
+            "ca": 1, // [???][useless]
+        }, {
+            "n": shareId
+        });
+        //logger.debug("[responseData]", responseData);
+
+        const {
+            f: rawNodes, // array of file and folder nodes
+            sn, // [???][unused] // "1"
+            noc // [???][unused] // "McPlUF51ioE" [random]
+        } = responseData;
+
+
+        // Every node has a prefix in its `k` value – `shareRootNodeId:decryptionKey`
+        const shareRootNodeId = rawNodes[0].k.match(/^[^:]+/)[0];
+        //logger.debug("[sharedRootId]", shareRootNodeId);
+
+
+        function prettifyType(type) {
+            switch (type) {
+                case  0: return "file";
+                case  1: return "folder";
+                default: return type;
+            }
+        }
+
+        function prettifyNodes(rawNodes) {
+            return rawNodes.map(node => {
+                const prettyNode = {
+                    id: node.h,
+                    parent: node.p,
+                    owner: node.u,
+                    type: prettifyType(node.t),
+                    attributes: node.a,
+                    decryptionKeyStr: node.k.match(/(?<=:)[\w-_]+/)[0],
+                    creationDate: node.ts, // (timestamp)
+                };
+                if (prettyNode.type === "file") {
+                    prettyNode.size = node.s;
+                    if (node.fa) { // only for images and videos
+                        prettyNode.fileAttributes = node.fa;
+                    }
+                }
+                return prettyNode;
+            });
+        }
+
+        return {nodes: prettifyNodes(rawNodes), rootId: shareRootNodeId};
     },
 
     /**
