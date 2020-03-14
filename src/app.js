@@ -1,11 +1,11 @@
+const URLS = require("./test-urls");
 const { util } = require("./util");
 const { mega } = require("./mega");
 
 // todo if file have no file attributes
 !async function app() {
-    let link = "https://mega.nz/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"; // a cat jpg
 
-    const node = await mega.getNode(link);
+    const node = await mega.getNode(URLS.CAT_IMAGE_FILE);
     console.log(node);
     console.log(node.modificationDateFormatted);
     console.log(util.bytesToSize(node.size));
