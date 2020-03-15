@@ -16,18 +16,18 @@ class Share {
 
     toString() {
         return  "" +
-            "[id]             " + this.id               + "\n" +
-            "[decryptionKey]  " + this.decryptionKeyStr + "\n" +
-            "[isFolder]       " + this.isFolder         + "\n" +
-            "[selectedFolder] " + this.selectedFolderId + "\n" +
-            "[selectedFile]   " + this.selectedFileId;
+            "[id]               " + this.id               + "\n" +
+            "[decryptionKeyStr] " + this.decryptionKeyStr + "\n" +
+            "[isFolder]         " + this.isFolder         + "\n" +
+            "[selectedFolderId] " + this.selectedFolderId + "\n" +
+            "[selectedFileId]   " + this.selectedFileId;
     }
 
     static isFolder(url) {
         return mega.parseUrl(url).isFolder;
     }
 
-    get selected() {
+    get selectedId() {
         return this.selectedFileId ? this.selectedFileId : this.selectedFolderId ? this.selectedFolderId : null;
     }
 }
@@ -177,7 +177,7 @@ class SharedFileNode {
         const {
             size,
             nodeAttributesEncoded,
-            fileAttributes, // [uses in sub class]
+            fileAttributes, // [unused][uses in sub classes]
             downloadUrl,
             timeLeft,
             EFQ,            // [unused]
@@ -307,7 +307,7 @@ async function getFolderNodes(url) {
 
     //todo rework – make an iterable class with these getters
     const root = folders.get(rootId);
-    const selected = resultArray.find(node => node.id === share.selected);
+    const selected = resultArray.find(node => node.id === share.selectedId);
     Object.defineProperty(resultArray, "root",     { get: () => root });
     Object.defineProperty(resultArray, "selected", { get: () => selected });
     Object.defineProperty(resultArray, "folders",  { get: () => [...folders.values()] });
@@ -338,8 +338,8 @@ class Nodes {
             return getSharedNode(url);
         } else {
             const nodes = await getFolderNodes(url);
-            if (nodes.selected) {
-                return nodes.selected;
+            if (nodes.selectedId) {
+                return nodes.selectedId;
             } else {
                 return nodes.root;
             }

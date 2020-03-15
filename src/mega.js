@@ -298,15 +298,15 @@ const mega = {
     },
 
     /**
-     * @param {string} id
+     * @param {string} shareId
      * @returns {Promise<{size: number, nodeAttributesEncoded: string, fileAttributes: string,
      *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number}>} nodeInfo
      */
-    async requestNodeInfo(id) {
+    async requestNodeInfo(shareId) {
 
         const responseData = await this.requestAPI({
             "a": "g",        // Command type
-            "p": id,         // Content ID
+            "p": shareId,    // Content ID
             "g": 1,          // The download link
             //"v": 2,        // Multiple links for big files
             "ssl": this.ssl  // HTTPS for the download link
