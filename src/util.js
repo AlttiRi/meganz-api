@@ -137,15 +137,17 @@ const util = {
         );
 
         /**
-         * From CryptoJS.enc.Latin1.stringify code
+         * The convert code [*] is from CryptoJS.enc.Latin1.stringify
+         * @see CryptoJS.enc.Latin1 stringify()
+         *
          * @param {CryptoJS.lib.WordArray} wordArray
          * @returns {Uint8Array}
          * @private
          */
         const _wordArrayToArrayBuffer = function (wordArray) {
-            let bites = [];
+            const bites = [];
             for (let i = 0; i < wordArray.sigBytes; i++) {
-                const bite = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                const bite = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff; // [*]
                 bites.push(bite);
             }
             return new Uint8Array(bites);
