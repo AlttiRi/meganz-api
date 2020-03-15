@@ -239,85 +239,13 @@ class SharedMediaFileNode extends SharedFileNode {
     fileAttributes;
 }
 
-/**
- * @param {string} url
- * @returns {Promise<SharedFileNode|SharedMediaFileNode>}
- */
-async function getSharedNode(url) {
-    const share = new Share(url);
-    const nodeInfo = await mega.requestNodeInfo(share.id);
-    if (nodeInfo.fileAttributes) {
-        return new SharedMediaFileNode(share, nodeInfo);
-    } else {
-        return new SharedFileNode(share, nodeInfo);
-    }
-}
+
 
 /**
- * @param {string} url
- * @returns {Promise<(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>} [note] The array have mixed type content
+ * Static factory methods for node creating
+ *
+ * Well, not the best JSDoc signatures, may be rework it later
  */
-async function getFolderNodes(url) {
-
-    const share = new Share(url);
-
-    const masterKey = share.decryptionKeyStr ? mega.megaBase64ToArrayBuffer(share.decryptionKeyStr) : null;
-    //logger.debug("[masterKey]", masterKey);
-
-    const {
-        nodes,
-        rootId
-    } = await mega.requestFolderInfo(share.id);
-    //logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
-
-    const folders = new Map(); // [note] JS's HashMap holds the insert order
-    const files = [];
-
-
-    for (let i = 0; i < nodes.length; i++) {
-
-        const node = nodes[i];
-        let resultNode;
-
-        if (node.type === "file") {
-            if (node.fileAttributes) {
-                resultNode = new MediaFileNode(node, masterKey);
-            } else {
-                resultNode = new FileNode(node, masterKey);
-            }
-            files.push(resultNode);
-
-            // the parent node is always located before the child node, no need to check its existence [1][note]
-            folders.get(resultNode.parent).files.push(resultNode);
-
-        } else if (node.type === "folder") {
-            if (node.id === rootId) { // or `if (i === 0)`
-                resultNode = new RootFolderNode(node, masterKey);
-            } else {
-                resultNode = new FolderNode(node, masterKey);
-                folders.get(resultNode.parent).folders.push(resultNode); // see [1] note
-            }
-            folders.set(node.id, resultNode);
-        }
-
-        nodes[i] = null;
-    }
-
-    const resultArray = [...folders.values(), ...files];
-
-    //todo rework – make an iterable class with these getters
-    const root = folders.get(rootId);
-    const selected = resultArray.find(node => node.id === share.selectedId);
-    Object.defineProperty(resultArray, "root",     { get: () => root });
-    Object.defineProperty(resultArray, "selected", { get: () => selected });
-    Object.defineProperty(resultArray, "folders",  { get: () => [...folders.values()] });
-    Object.defineProperty(resultArray, "files",    { get: () => files });
-
-    return resultArray;
-}
-
-// Static factory methods
-// Well, not the best JSDoc signatures, may be rework it later
 class Nodes {
 
     /**
@@ -326,7 +254,7 @@ class Nodes {
      *     |Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>}
      */
     static async of(url) {
-        return Share.isFolder(url) ? getFolderNodes(url) : getSharedNode(url);
+        return Share.isFolder(url) ? Nodes.getFolderNodes(url) : Nodes.getSharedNode(url);
     }
 
     /**
@@ -335,9 +263,9 @@ class Nodes {
      */
     static async node(url) {
         if (!Share.isFolder(url)) {
-            return getSharedNode(url);
+            return Nodes.getSharedNode(url);
         } else {
-            const nodes = await getFolderNodes(url);
+            const nodes = await Nodes.getFolderNodes(url);
             if (nodes.selectedId) {
                 return nodes.selectedId;
             } else {
@@ -352,13 +280,95 @@ class Nodes {
      */
     static async nodes(url) {
         if (!Share.isFolder(url)) {
-            return [await getSharedNode(url)];
+            return [await Nodes.getSharedNode(url)];
         } else {
-            return getFolderNodes(url);
+            return Nodes.getFolderNodes(url);
         }
+    }
+
+    /**
+     * @param {string} url
+     * @returns {Promise<SharedFileNode|SharedMediaFileNode>}
+     */
+    static async getSharedNode(url) {
+        const share = new Share(url);
+        const nodeInfo = await mega.requestNodeInfo(share.id);
+        if (nodeInfo.fileAttributes) {
+            return new SharedMediaFileNode(share, nodeInfo);
+        } else {
+            return new SharedFileNode(share, nodeInfo);
+        }
+    }
+
+    /**
+     * @param {string} url
+     * @returns {Promise<(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>} [note] The array have mixed type content
+     */
+    static async getFolderNodes(url) {
+
+        const share = new Share(url);
+
+        const masterKey = share.decryptionKeyStr ? mega.megaBase64ToArrayBuffer(share.decryptionKeyStr) : null;
+        //logger.debug("[masterKey]", masterKey);
+
+        const {
+            nodes,
+            rootId
+        } = await mega.requestFolderInfo(share.id);
+        //logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
+
+        const folders = new Map(); // [note] JS's HashMap holds the insert order
+        const files = [];
+
+
+        for (let i = 0; i < nodes.length; i++) {
+
+            const node = nodes[i];
+            let resultNode;
+
+            if (node.type === "file") {
+                if (node.fileAttributes) {
+                    resultNode = new MediaFileNode(node, masterKey);
+                } else {
+                    resultNode = new FileNode(node, masterKey);
+                }
+                files.push(resultNode);
+
+                // the parent node is always located before the child node, no need to check its existence [1][note]
+                folders.get(resultNode.parent).files.push(resultNode);
+
+            } else if (node.type === "folder") {
+                if (node.id === rootId) { // or `if (i === 0)`
+                    resultNode = new RootFolderNode(node, masterKey);
+                } else {
+                    resultNode = new FolderNode(node, masterKey);
+                    folders.get(resultNode.parent).folders.push(resultNode); // see [1] note
+                }
+                folders.set(node.id, resultNode);
+            }
+
+            nodes[i] = null;
+        }
+
+        const resultArray = [...folders.values(), ...files];
+
+        //todo rework – make an iterable class with these getters
+        const root = folders.get(rootId);
+        const selected = resultArray.find(node => node.id === share.selectedId);
+        Object.defineProperty(resultArray, "root",     { get: () => root });
+        Object.defineProperty(resultArray, "selected", { get: () => selected });
+        Object.defineProperty(resultArray, "folders",  { get: () => [...folders.values()] });
+        Object.defineProperty(resultArray, "files",    { get: () => files });
+
+        return resultArray;
     }
 }
 
 
-module.exports = {FolderNode, RootFolderNode, FileNode, MediaFileNode, SharedFileNode, SharedMediaFileNode, Share,
-    getSharedNode, getFolderNodes, Nodes};
+module.exports = {
+    FolderNode, RootFolderNode,
+    FileNode, MediaFileNode,
+    SharedFileNode, SharedMediaFileNode,
+    Share,
+    Nodes
+};
