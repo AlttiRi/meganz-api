@@ -114,7 +114,7 @@ class MediaFileNode extends FileNode {
         this.fileAttributes = node.fileAttributes;
     }
     fileAttributes; // [requires nodeKey to work later]
-    //todo fileAttributes getters for 8, 9 (9 may not exists)
+    // todo: add fileAttributes getters for 8, 9 (9 may not exists)
 
     // /** @returns {Promise<Uint8Array>} */
     // getPreview() {
@@ -145,7 +145,7 @@ class FolderNode extends BasicFolderShareNode {
 
     #size = 0;
     get size() {
-        return this.#size; // todo
+        return this.#size; // todo: recursive calculate the size
     };
 }
 
@@ -352,7 +352,7 @@ class Nodes {
 
         const resultArray = [...folders.values(), ...files];
 
-        //todo rework – make an iterable class with these getters
+        // todo: rework – make an iterable class with these getters
         const root = folders.get(rootId);
         const selected = resultArray.find(node => node.id === share.selectedId);
         Object.defineProperty(resultArray, "root",     { get: () => root });
