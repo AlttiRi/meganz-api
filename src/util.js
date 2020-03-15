@@ -163,7 +163,7 @@ const util = {
      * @param {number|Date} [mtime]
      */
     saveFile(arrayBuffer, name, mtime = new Date()) {
-        this.logger.info("Saving \"" + name + "\" file to \"temp\" folder...");
+        this.logger.info(`Saving "${name}" file to "temp" folder...`);
 
         const fs = require("fs");
         fs.mkdirSync("temp", {recursive: true});
