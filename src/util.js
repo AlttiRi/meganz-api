@@ -112,7 +112,7 @@ const util = {
      */
     decryptAES(data, key, {iv, mode, padding} = {}) {
 
-        const CryptoJS = require("crypto-js");
+        const CryptoJS = require("crypto-js"); //todo remove from here
 
         /** Default parameters initialization */
         iv = iv || new Uint8Array(key.length);
@@ -144,7 +144,7 @@ const util = {
          * @returns {Uint8Array}
          * @private
          */
-        const _wordArrayToArrayBuffer = function (wordArray) {
+        const _wordArrayToArrayBuffer = function(wordArray) {
             const bites = [];
             for (let i = 0; i < wordArray.sigBytes; i++) {
                 const bite = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff; // [*]
