@@ -63,11 +63,19 @@ const util = {
      * console.log(result);
      * // [29, 125, 1, 218, 233, 169, 248, 111] // 29 (!) (trims `8221` to one byte)
      * ```
+     * UPD:
+     * Well, it works not so good as I expected
+     * ```
+     * String.fromCharCode(...new Uint8Array(125830)) // OK
+     * String.fromCharCode(...new Uint8Array(125831)) // RangeError: Maximum call stack size exceeded
+     * ```
+     * Replaced with `reduce`.
+     *
      * @param {Uint8Array} arrayBuffer
      * @returns {string} binaryString
      * */
     arrayBufferToBinaryString(arrayBuffer) {
-        return String.fromCharCode(...arrayBuffer);
+        return arrayBuffer.reduce((accumulator, byte) => accumulator + String.fromCharCode(byte), "");
     },
 
 

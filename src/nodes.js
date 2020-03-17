@@ -1,5 +1,6 @@
 const { mega } = require("./mega");
 const { util } = require("./util");
+const FileAttributes = require("./file-attributes");
 
 class Share {
     id;
@@ -31,6 +32,8 @@ class Share {
         return this.selectedFileId ? this.selectedFileId : this.selectedFolderId ? this.selectedFolderId : null;
     }
 }
+
+//todo the most basic class with [Symbol.toStringTag]: "MegaNode"
 
 class BasicFolderShareNode {
     constructor(node, masterKey) {
@@ -107,6 +110,7 @@ class FileNode extends BasicFolderShareNode {
     }
 }
 
+// todo: add file attribute support for 8, 9 (9 may not exists)
 class MediaFileNode extends FileNode {
     constructor(node, masterKey) {
         super(node, masterKey);
@@ -114,16 +118,16 @@ class MediaFileNode extends FileNode {
         this.fileAttributes = node.fileAttributes;
     }
     fileAttributes; // [requires nodeKey to work later]
-    // todo: add fileAttributes getters for 8, 9 (9 may not exists)
 
-    // /** @returns {Promise<Uint8Array>} */
-    // getPreview() {
-    //     return mega.requestFileAttributeData(this, 1);
-    // };
-    // /** @returns {Promise<Uint8Array>} */
-    // getThumbnail() {
-    //     return mega.requestFileAttributeData(this, 0);
-    // };
+    //todo mixin for it
+    /** @returns {Promise<Uint8Array>} */
+    getThumbnail() {
+        return FileAttributes.getThumbnail(this);
+    };
+    /** @returns {Promise<Uint8Array>} */
+    getPreview() {
+        return FileAttributes.getPreview(this);
+    };
 }
 
 class FolderNode extends BasicFolderShareNode {
@@ -237,6 +241,16 @@ class SharedMediaFileNode extends SharedFileNode {
         this.fileAttributes = nodeInfo.fileAttributes;
     }
     fileAttributes;
+
+    //todo mixin for it
+    /** @returns {Promise<Uint8Array>} */
+    getThumbnail() {
+        return FileAttributes.getThumbnail(this);
+    };
+    /** @returns {Promise<Uint8Array>} */
+    getPreview() {
+        return FileAttributes.getPreview(this);
+    };
 }
 
 
@@ -279,10 +293,10 @@ class Nodes {
      * @returns {Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>}
      */
     static async nodes(url) {
-        if (!Share.isFolder(url)) {
-            return [await Nodes.getSharedNode(url)];
-        } else {
+        if (Share.isFolder(url)) {
             return Nodes.getFolderNodes(url);
+        } else {
+            return [await Nodes.getSharedNode(url)];
         }
     }
 
