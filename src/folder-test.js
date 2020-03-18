@@ -4,12 +4,13 @@ const {util} = require("./util");
 const logger = util.logger;
 const {mega} = require("./mega");
 const {Nodes} = require("./nodes");
+const Semaphore = require("./semaphore");
 
 
 !async function test() {
 
     const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
-    await saveNodesThumbnail_3(folderNodes);
+    await saveNodesThumbnail_1(folderNodes);
 
 }();
 
@@ -44,10 +45,14 @@ async function example_2() {
 // Need the semaphore (in case of a lot of files in a folder)
 // There are errors if thumbnails are over 63
 async function saveNodesThumbnail_1(folderNodes) {
+    let i = 0;
     for (const node of folderNodes) {
         if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
+            console.log(i++ + " " + node.name);
             node.getThumbnail()
-                .then(thumb => util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime));
+                .then(thumb => {
+                    util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
+                });
         }
     }
 }
