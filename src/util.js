@@ -242,6 +242,13 @@ const util = {
         return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + " " + sizes[i];
     },
 
+    /**
+     * @param {number} ms milliseconds
+     * @returns {Promise}
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 };
 
 

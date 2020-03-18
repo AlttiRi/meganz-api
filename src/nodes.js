@@ -38,8 +38,8 @@ class Share {
 class BasicFolderShareNode {
     constructor(node, masterKey) {
         this.id           = node.id;
-        this.parent       = node.parent;
-        this.owner        = node.owner;
+        this.parent       = node.parent; //todo node, not node id //todo full path getter
+        this.owner        = node.owner;  //todo ownerId
         this.creationDate = node.creationDate;
 
         if (masterKey) {

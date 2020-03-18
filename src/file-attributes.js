@@ -19,6 +19,7 @@ class FileAttributes {
         return FileAttributes.getAttribute(node, FileAttributes.previewType);
     }
 
+    //todo semaphore for limiting api requests (up to 63 connections, + delay 4 seconds)
     static async getAttribute(node, type) {
         if (!FileAttributes.values.get(node.fileAttributes)) { //todo rename to `node.fileAttributesStr`
             FileAttributes.values.set(node.fileAttributes, parseFileAttributes(node.fileAttributes))
