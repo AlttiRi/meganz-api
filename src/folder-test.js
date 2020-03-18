@@ -1,4 +1,4 @@
-const URLS = require("./test-urls");
+const URLS = require("./private-test-urls");
 const FileAttributes = require("./file-attributes");
 const {util} = require("./util");
 const logger = util.logger;
@@ -8,10 +8,7 @@ const {Nodes} = require("./nodes");
 
 !async function test() {
 
-    // await example_1();
-    // await example_2();
-
-    const folderNodes = await Nodes.nodes(URLS.CAT_FOLDER);
+    const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
     await saveNodesThumbnail_3(folderNodes);
 
 }();
@@ -80,7 +77,7 @@ async function saveNodesThumbnail_3(folderNodes) {
                 // max safe connection count is 63
                 if (count === 63) {
                     console.log("---await---");
-                    await util.sleep(4000);
+                    await util.sleep(4000); // will be errors if it is less
                     console.log("---reset---");
                     count = 0;
                 }
@@ -89,9 +86,12 @@ async function saveNodesThumbnail_3(folderNodes) {
                     .then(thumb => {
                         util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
                     })
-                    .catch(_ => {
+                    .catch(error => {
                         errors++;
-                        console.error(errors + " " + folder.name + "/" + node.name + " -------ERROR-------")
+                        console.error(errors + " " + folder.name + "/" + node.name + " -------ERROR-------");
+
+                        // FetchError: request to https://g.api.mega.co.nz/cs failed, reason: write EPROTO 1264...
+                        //console.error(error);
                     });
             }
         }
