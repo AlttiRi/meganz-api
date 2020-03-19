@@ -40,6 +40,7 @@ const mega = {
 
     ssl: 2, // Is there a difference between "1" and "2" [???]
     apiGateway: "https://g.api.mega.co.nz/cs",
+    DEBUG: true,
 
     /**
      * @param {string} url - URL
@@ -198,7 +199,7 @@ const mega = {
      * @param {*} [searchParams]
      * @returns {Promise<*>} responseData
      */
-    //todo handle bad urls (revoked, banned)
+    //todo handle bad urls (revoked or 404 [-9], banned [-16])
     async requestAPI(payload, searchParams = {}) {
         const url = new URL(this.apiGateway);
         Object.entries(searchParams).forEach(([key, value]) => {
@@ -209,8 +210,18 @@ const mega = {
             method: "post",
             body: JSON.stringify([payload])
         });
-        const responseArray = await response.json();
-        return responseArray[0];
+
+        if (this.DEBUG) { // todo remove this block {} later, currently it is for testing
+            const responseText = await response.text();
+            console.log(responseText);
+            if (responseText.length === 0) {
+                console.log("0!!!");  // can be empty string, JSON.parse("") -> an exception
+            }
+            return JSON.parse(responseText)[0];
+        } else {
+            const responseArray = await response.json(); // it may throw an exception while Mega limits your connections
+            return responseArray[0];
+        }
     },
 
     /**

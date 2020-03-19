@@ -1,6 +1,6 @@
 const { mega } = require("./mega");
 const { util } = require("./util");
-const Semaphore = require("./semaphore");
+const {Semaphore, CountDownLatch} = require("./semaphore");
 
 class FileAttributes {
     /**

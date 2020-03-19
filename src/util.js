@@ -249,6 +249,16 @@ const util = {
      */
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    /**
+     * Applies Array's `filter` on one element
+     * @param {Object} target
+     * @param {function(Object): boolean} predicate
+     * @returns {boolean}
+     */
+    filter(target, predicate) {
+        return Boolean([target].filter(predicate).length);
     }
 };
 

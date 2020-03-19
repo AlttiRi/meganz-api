@@ -4,14 +4,17 @@ const {util} = require("./util");
 const logger = util.logger;
 const {mega} = require("./mega");
 const {Nodes} = require("./nodes");
-const Semaphore = require("./semaphore");
+const {Semaphore, CountDownLatch} = require("./semaphore");
 
 
 !async function test() {
+    console.time("test");
 
     const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
     await saveNodesThumbnail_1(folderNodes);
 
+    console.log("        ---the end---        ");
+    console.timeEnd("test");
 }();
 
 async function example_1() {
@@ -43,18 +46,27 @@ async function example_2() {
 }
 
 async function saveNodesThumbnail_1(folderNodes) {
+
+    const isMediaNode = node => node.type === "sharedMediaFile" || node.type === "mediaFile";
+    const mediaNodesCount = folderNodes.filter(isMediaNode).length;
+    let countDownLatch = new CountDownLatch(mediaNodesCount);
+    console.log(mediaNodesCount);
+
     let i = 0;
     for (const node of folderNodes) {
-        if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
+        //if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
+        if (util.filter(node, isMediaNode)) {
             const index = ++i; // a block closure
             console.log(`${index} ${node.name}`);
             node.getThumbnail()
                 .then(thumb => {
                     // NB: async – the creation time order will be not the same as the order of pictures // todo add mutex?
                     util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
+                    countDownLatch.countDown();
                 });
         }
     }
+    return countDownLatch.wait();
 }
 
 // Too slow, needs the parallel downloading
