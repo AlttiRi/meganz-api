@@ -67,9 +67,8 @@ const mega = {
      */
     decryptionKeyToParts(decryptedKey) {
 
-        const iv      = new Uint8Array(decryptedKey.buffer, 16, 8); // todo use `subarray`?
-        const metaMac = new Uint8Array(decryptedKey.buffer, 24, 8);
-
+        const iv      = decryptedKey.subarray(16, 24);
+        const metaMac = decryptedKey.subarray(24, 32);
         const nodeKey = new Uint8Array(16);
 
         // 256 bits -> 128 bits

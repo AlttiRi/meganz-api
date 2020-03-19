@@ -164,6 +164,7 @@ const util = {
         return _wordArrayToArrayBuffer(plaintextWA);
     },
 
+    //todo array of names for folders
     /**
      * Save with Node.js API to `temp/` folder
      * @param {Uint8Array} arrayBuffer

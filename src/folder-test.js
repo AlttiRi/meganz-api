@@ -42,16 +42,16 @@ async function example_2() {
     console.log(nodeFromFolder);
 }
 
-// Need the semaphore (in case of a lot of files in a folder)
-// There are errors if thumbnails are over 63
 async function saveNodesThumbnail_1(folderNodes) {
     let i = 0;
     for (const node of folderNodes) {
         if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
-            console.log(i++ + " " + node.name);
+            const index = ++i; // a block closure
+            console.log(`${index} ${node.name}`);
             node.getThumbnail()
                 .then(thumb => {
-                    util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
+                    // NB: async – the creation time order will be not the same as the order of pictures // todo add mutex?
+                    util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
                 });
         }
     }
@@ -67,7 +67,8 @@ async function saveNodesThumbnail_2(folderNodes) {
     }
 }
 
-// Not ideal, but works
+// Not ideal, but works (old version, now there is a semaphore)
+//todo remove or rework
 async function saveNodesThumbnail_3(folderNodes) {
     let errors = 0;
     let count = 0 ;
