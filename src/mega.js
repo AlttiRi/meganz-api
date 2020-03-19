@@ -379,6 +379,17 @@ const mega = {
             }
         }
 
+        // todo remove or something other
+        // if the node has no key string (empty)
+        rawNodes.filter(node => node.k === "").forEach(node => console.log(node));
+
+        function parseKey(decryptionKeyStr) {
+            if (decryptionKeyStr === "") { // very rarely, but it can be
+                return null;
+            }
+            return decryptionKeyStr.match(/(?<=:)[\w-_]+/)[0];
+        }
+
         function prettifyNodes(rawNodes) {
             return rawNodes.map(node => {
                 const prettyNode = {
@@ -387,7 +398,7 @@ const mega = {
                     owner: node.u,
                     type: prettifyType(node.t),
                     attributes: node.a,
-                    decryptionKeyStr: node.k.match(/(?<=:)[\w-_]+/)[0],
+                    decryptionKeyStr: parseKey(node.k),
                     creationDate: node.ts, // (timestamp)
                 };
                 if (prettyNode.type === "file") {

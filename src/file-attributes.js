@@ -24,6 +24,7 @@ class FileAttributes {
     //
     // NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
     // https://en.wikipedia.org/wiki/List_of_file_signatures
+    //todo cases when node.nodeKey === null
     static async getAttribute(node, type) {
         if (!FileAttributes.values.get(node.fileAttributes)) { //todo rename to `node.fileAttributesStr`
             FileAttributes.values.set(node.fileAttributes, parseFileAttributes(node.fileAttributes))

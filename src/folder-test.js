@@ -10,8 +10,9 @@ const {Semaphore, CountDownLatch} = require("./semaphore");
 !async function test() {
     console.time("test");
 
-    const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
-    await saveNodesThumbnail_1(folderNodes);
+    const folderNodes = await Nodes.nodes(URLS.SELECTED_FOLDER_WITH_UNDECRYPTED_FILE);
+    //console.log(folderNodes);
+    //await saveNodesThumbnail_1(folderNodes);
 
     console.log("        ---the end---        ");
     console.timeEnd("test");

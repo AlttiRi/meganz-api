@@ -42,7 +42,7 @@ class BasicFolderShareNode {
         this.owner        = node.owner;  //todo ownerId
         this.creationDate = node.creationDate;
 
-        if (masterKey) {
+        if (masterKey && node.decryptionKeyStr) {
             const decryptionKeyEncrypted = mega.megaBase64ToArrayBuffer(node.decryptionKeyStr);
             this.#decryptionKey = mega.decryptKey(decryptionKeyEncrypted, masterKey);
         } else {
@@ -68,7 +68,7 @@ class FileNode extends BasicFolderShareNode {
         this.type = "file";
         this.size = node.size;
 
-        if (masterKey) {
+        if (masterKey && node.decryptionKeyStr) {
             const {
                 name,
                 serializedFingerprint
