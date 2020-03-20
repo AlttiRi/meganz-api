@@ -16,7 +16,7 @@ class Semaphore {
      * 12, 100
      * 8, 0
      */
-    constructor(max = 16, delay = 150) {
+    constructor(max = 12, delay = 100) {
         this.max = max;
         this.delay = delay;
     }

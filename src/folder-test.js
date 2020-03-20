@@ -10,9 +10,9 @@ const {Semaphore, CountDownLatch} = require("./semaphore");
 !async function test() {
     console.time("test");
 
-    const folderNodes = await Nodes.nodes(URLS.SELECTED_FOLDER_WITH_UNDECRYPTED_FILE);
+    const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
     //console.log(folderNodes);
-    //await saveNodesThumbnail_1(folderNodes);
+    await saveNodesThumbnail_1(folderNodes);
 
     console.log("        ---the end---        ");
     console.timeEnd("test");
@@ -56,7 +56,7 @@ async function saveNodesThumbnail_1(folderNodes) {
     let i = 0;
     for (const node of folderNodes) {
         //if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
-        if (util.filter(node, isMediaNode)) {
+        if (isMediaNode(node)) {
             const index = ++i; // a block closure
             console.log(`${index} ${node.name}`);
             node.getThumbnail()
