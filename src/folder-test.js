@@ -4,7 +4,7 @@ const {util} = require("./util");
 const logger = util.logger;
 const {mega} = require("./mega");
 const {Nodes} = require("./nodes");
-const {Semaphore, CountDownLatch} = require("./semaphore");
+const {CountDownLatch} = require("./synchronization");
 
 
 !async function test() {

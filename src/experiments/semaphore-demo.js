@@ -1,4 +1,4 @@
-const Semaphore = require("./semaphore");
+const {Semaphore} = require("../synchronization");
 
 // Not the best demo for a semaphore
 !async function demo() {

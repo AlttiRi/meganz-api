@@ -9,14 +9,13 @@ class Semaphore {
 
     /**
      * max parallel requests count is `63`,
-     * but in this case it needs sleepAfterRealise ~ `3500`+ or Fetch error (reason: write EPROTO) will happen
+     * but in this case it needs delay before realise ~ `3500`+ or Fetch error (reason: write EPROTO) will happen
      *
      * Example values:
      * 63, 3500
-     * 12, 100
      * 8, 0
      */
-    constructor(max = 12, delay = 100) {
+    constructor(max = 12, delay = 200) {
         this.max = max;
         this.delay = delay;
     }
