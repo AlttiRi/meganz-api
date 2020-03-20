@@ -1,4 +1,4 @@
-const URLS = require("./private-test-urls");
+const URLS = require("./test-urls-private");
 const FileAttributes = require("./file-attributes");
 const {util} = require("./util");
 const logger = util.logger;
@@ -7,7 +7,7 @@ const {Nodes} = require("./nodes");
 const {CountDownLatch} = require("./synchronization");
 
 
-!async function test() {
+!async function main() {
     console.time("test");
 
     const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
