@@ -3,39 +3,6 @@ const { util } = require("./util");
 const logger = util.logger;
 
 
-// node for share with single file
-// todo delete (replace with the new class)
-class Node {
-
-    id;
-    decryptionKeyStr;
-    isFolder;
-    nodeKey;
-
-    size;
-    name;
-    modificationDate; // Unix time (seconds)
-    get modificationDateFormatted() {
-        return util.secondsToFormattedString(this.modificationDate);
-    }
-    get mtime() {    // An alias
-        return this.modificationDate;
-    }
-
-    fileAttributes;
-    /** @returns {Promise<Uint8Array>} */
-    getPreview() {
-        return mega.requestFileAttributeData(this, 1);
-    };
-    /** @returns {Promise<Uint8Array>} */
-    getThumbnail() {
-        return mega.requestFileAttributeData(this, 0);
-    };
-    //todo add video attributes (8 and 9)
-}
-
-
-
 const mega = {
 
     ssl: 2, // Is there a difference between "1" and "2" [???]
@@ -128,70 +95,6 @@ const mega = {
         }
 
         return paddingLength;
-    },
-
-    /**
-     * @param {string} url
-     * @returns {Promise<Node>}
-     */
-    async getNode(url) {
-        const node = new Node();
-
-        logger.info("Parsing URL...");
-        const {
-            id,
-            decryptionKeyStr,
-            isFolder,
-            selectedFolderId, // [unused]
-            selectedFileId    // [unused]
-        } = this.parseUrl(url);
-        Object.assign(node, {isFolder, id, decryptionKeyStr});
-
-
-        logger.info("Decode and parse decryption key...");
-        const decryptionKeyDecoded = this.megaBase64ToArrayBuffer(node.decryptionKeyStr);
-        const {
-            iv,      // [unused][???]
-            metaMac, // [unused][???]
-            nodeKey
-        } = this.decryptionKeyToParts(decryptionKeyDecoded);
-        Object.assign(node, {nodeKey});
-
-
-        logger.info("Fetching JSON with node info...");
-        const {
-            size,
-            nodeAttributesEncoded,
-            fileAttributes: fileAttributesString,
-            downloadUrl, // [unused]
-            EFQ,         // [unused]
-            MSD          // [unused]
-        } = await this.requestNodeInfo(node.id);
-        Object.assign(node, {size});
-
-
-        logger.info("Decryption and parsing node attributes...");
-        const {
-            name,
-            serializedFingerprint
-        } = this.parseEncodedNodeAttributes(nodeAttributesEncoded, node.nodeKey);
-        Object.assign(node, {name});
-        console.log("[nodeAttributesEncoded]", nodeAttributesEncoded);
-
-
-        logger.info("Decoding and parsing node fingerprint...");
-        const {
-            modificationDate,
-            fileChecksum   // [unused][???]
-        } = this.parseFingerprint(serializedFingerprint);
-        Object.assign(node, {modificationDate});
-
-        logger.info("Parsing file attributes...");
-        const fileAttributes = this.parseFileAttributes(fileAttributesString);
-        Object.assign(node, {fileAttributes});
-
-
-        return node;
     },
 
     /**
@@ -414,39 +317,6 @@ const mega = {
         return {nodes: prettifyNodes(rawNodes), rootId: shareRootNodeId};
     },
 
-    /**
-     * Return thumbnail (type=0) or preview (type=1)
-     * @param {Node} node
-     * @param {number} type
-     * @returns {Promise<Uint8Array>}
-     */
-    async requestFileAttributeData(node, type) {
-
-        const fileAttribute = node.fileAttributes.find(att => att.type === type);
-        const faHash = fileAttribute.hash;
-        const faHashBinary = this.megaBase64ToArrayBuffer(faHash);
-
-        logger.info("Request download url...");
-        const responseData = await this.requestAPI({
-            "a": "ufa",    // action (command): u [???] file attribute
-            "fah": faHash,
-            "ssl": this.ssl,
-            "r": 1         // r [???] – It adds "." in response url (without this dot the url does not work)
-        });
-        const downloadLink = responseData["p"] + "/" + type;
-
-        logger.info("Downloading content...");
-        const responseBytes = await this.requestFile(downloadLink, faHashBinary);
-
-        const hashBytes   = responseBytes.subarray(0, 8);  // [unused]
-        const lengthBytes = responseBytes.subarray(8, 12); // [unused] bytes count – little endian 32 bit integer (enough for up to 4 GB)
-        const atBytes     = responseBytes.subarray(12);
-
-        logger.debug("Attribute (enc) size is " + util.arrayBufferToLong(lengthBytes) + " bytes"); // with zero padding
-
-        logger.info("Decryption of downloaded content...");
-        return util.decryptAES(atBytes, node.nodeKey);
-    },
 
     /**
      * Format bytes to human readable format like it do Mega.nz
