@@ -38,8 +38,9 @@ class Share {
 class BasicFolderShareNode {
     constructor(node, masterKey) {
         this.id           = node.id;
-        this.parent       = node.parent; //todo node, not node id //todo full path getter
-        this.owner        = node.owner;  //todo ownerId
+        this.parentId     = node.parentId;
+        this.parent       = node.parent ? node.parent : null;
+        this.ownerId      = node.ownerId;
         this.creationDate = node.creationDate;
 
         if (masterKey && node.decryptionKeyStr) {
@@ -51,8 +52,9 @@ class BasicFolderShareNode {
     }
     type;
     id;
+    parentId;
     parent;
-    owner;
+    ownerId;
     creationDate;
     #decryptionKey;
 
@@ -60,6 +62,22 @@ class BasicFolderShareNode {
         return this.#decryptionKey;
     };
     name; // [requires nodeKey]
+
+    /**
+     * Returns the array of parents names from the root node
+     * @return {string[]}
+     */
+    get path() {
+        if (this.parent) {
+            return [...this.parent.path, this.parent.name];
+        }
+        return [];
+    }
+
+    /** @return {RootFolderNode} */
+    get root() {
+        return this.parent.type === "rootFolder" ? this.parent : this.parent.root;
+    }
 }
 
 class FileNode extends BasicFolderShareNode {
@@ -157,6 +175,10 @@ class RootFolderNode extends FolderNode {
     constructor(node, masterKey) {
         super(node, masterKey);
         this.type = "rootFolder";
+    }
+    /** @return {RootFolderNode} */
+    get root() {
+        return this;
     }
 }
 
@@ -340,6 +362,8 @@ class Nodes {
             const node = nodes[i];
             let resultNode;
 
+            node.parent = folders.get(node.parentId); // `undefine` for root
+
             if (node.type === "file") {
                 if (node.fileAttributes) {
                     resultNode = new MediaFileNode(node, masterKey);
@@ -349,14 +373,14 @@ class Nodes {
                 files.push(resultNode);
 
                 // the parent node is always located before the child node, no need to check its existence [1][note]
-                folders.get(resultNode.parent).files.push(resultNode);
+                folders.get(resultNode.parentId).files.push(resultNode);
 
             } else if (node.type === "folder") {
                 if (node.id === rootId) { // or `if (i === 0)`
                     resultNode = new RootFolderNode(node, masterKey);
                 } else {
                     resultNode = new FolderNode(node, masterKey);
-                    folders.get(resultNode.parent).folders.push(resultNode); // see [1] note
+                    folders.get(resultNode.parentId).folders.push(resultNode); // see [1] note
                 }
                 folders.set(node.id, resultNode);
             }
@@ -364,9 +388,8 @@ class Nodes {
             nodes[i] = null;
         }
 
-        const resultArray = [...folders.values(), ...files];
-
         // todo: rework – make an iterable class with these getters
+        const resultArray = [...folders.values(), ...files];
         const root = folders.get(rootId);
         const selected = resultArray.find(node => node.id === share.selectedId);
         Object.defineProperty(resultArray, "root",     { get: () => root });

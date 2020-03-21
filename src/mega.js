@@ -297,8 +297,8 @@ const mega = {
             return rawNodes.map(node => {
                 const prettyNode = {
                     id: node.h,
-                    parent: node.p,
-                    owner: node.u,
+                    parentId: node.p,
+                    ownerId: node.u,
                     type: prettifyType(node.t),
                     attributes: node.a,
                     decryptionKeyStr: parseKey(node.k),
