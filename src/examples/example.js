@@ -1,10 +1,8 @@
 const URLS = require("./test-urls-private");
-const FileAttributes = require("./file-attributes");
-const {util} = require("./util");
-const logger = util.logger;
-const {mega} = require("./mega");
-const {Nodes} = require("./nodes");
-const {CountDownLatch} = require("./synchronization");
+const FileAttributes = require("../file-attributes");
+const {util} = require("../util");
+const {Nodes} = require("../nodes");
+const {CountDownLatch} = require("../synchronization");
 
 
 !async function main() {
@@ -48,15 +46,13 @@ async function example_2() {
 
 async function saveNodesThumbnail_1(folderNodes) {
 
-    const isMediaNode = node => node.type === "sharedMediaFile" || node.type === "mediaFile";
     const mediaNodesCount = folderNodes.filter(isMediaNode).length;
     let countDownLatch = new CountDownLatch(mediaNodesCount);
     console.log(mediaNodesCount);
 
     let i = 0;
     for (const node of folderNodes) {
-        //if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
-        if (isMediaNode(node)) {
+        if (Nodes.isMediaNode(node)) {
             const index = ++i; // a block closure
             console.log(`${index} ${node.name}`);
             node.getThumbnail()
@@ -73,7 +69,7 @@ async function saveNodesThumbnail_1(folderNodes) {
 // Too slow, needs the parallel downloading
 async function saveNodesThumbnail_2(folderNodes) {
     for (const node of folderNodes) {
-        if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
+        if (Nodes.isMediaNode(node)) {
             const thumb = await node.getThumbnail();
             util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
         }
@@ -84,7 +80,7 @@ async function saveNodesThumbnail_2(folderNodes) {
 //todo remove or rework
 async function saveNodesThumbnail_3(folderNodes) {
     let errors = 0;
-    let count = 0 ;
+    let count = 0;
     await walkThroughFolder(folderNodes.root);
 
     async function walkThroughFolder(folder) {
@@ -92,7 +88,7 @@ async function saveNodesThumbnail_3(folderNodes) {
 
         for (const node of folder.files) {
             console.log(folder.name + "/" + node.name);
-            if (node.type === "sharedMediaFile" || node.type === "mediaFile") {
+            if (Nodes.isMediaNode(node)) {
                 // max safe connection count is 63
                 if (count === 63) {
                     console.log("---await---");

@@ -376,6 +376,10 @@ class Nodes {
 
         return resultArray;
     }
+
+    static isMediaNode(node) {
+        return node.type === "sharedMediaFile" || node.type === "mediaFile";
+    }
 }
 
 

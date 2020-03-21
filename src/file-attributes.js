@@ -12,6 +12,11 @@ class FileAttributes {
     static previewType   = 1;
     static semaphore = new Semaphore(); // 63 max, but care about pauses
 
+    //todo
+    static async of(nodes) {
+
+    }
+
     static async getThumbnail(node) {
         return FileAttributes.getAttribute(node, FileAttributes.thumbnailType);
     }

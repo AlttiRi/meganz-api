@@ -20,7 +20,7 @@ class Semaphore {
         this.delay = delay;
     }
 
-    acquire() {
+    async acquire() {
         console.log("--- acquire " + (this.count + 1));
         if (this.count < this.max) {
             this.count++;
@@ -50,6 +50,7 @@ class Semaphore {
     }
 }
 
+//todo use only one promise (create it in the constructor), no need the queue
 class CountDownLatch {
     count;
     queue = [];
@@ -67,7 +68,7 @@ class CountDownLatch {
         }
     }
 
-    wait() {
+    async wait() {
         console.log("CountDownLatch: wait" + this.count);
         if (this.count > 0) {
             let resolver;
