@@ -46,7 +46,7 @@ async function example_2() {
 
 async function saveNodesThumbnail_1(folderNodes) {
 
-    const mediaNodesCount = folderNodes.filter(isMediaNode).length;
+    const mediaNodesCount = folderNodes.filter(Nodes.isMediaNode).length;
     let countDownLatch = new CountDownLatch(mediaNodesCount);
     console.log(mediaNodesCount);
 

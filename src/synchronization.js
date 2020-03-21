@@ -50,36 +50,35 @@ class Semaphore {
     }
 }
 
-//todo use only one promise (create it in the constructor), no need the queue
 class CountDownLatch {
     count;
-    queue = [];
+    promise;
+    resolve;
+
     constructor(count = 0) {
         this.count = count;
+        if (count > 0) {
+            this.promise = new Promise((resolve, reject) => {
+                this.resolve = resolve;
+            });
+        } else {
+            this.promise = Promise.resolve();
+        }
     }
 
     countDown() {
-        console.log("countDown " + this.count);
         if (this.count > 0) {
             this.count--;
+            console.log(`Count downs left: ${this.count}`);
             if (this.count === 0) {
-                this.queue.forEach(resolver => resolver());
+                this.resolve();
             }
         }
     }
 
     async wait() {
-        console.log("CountDownLatch: wait" + this.count);
-        if (this.count > 0) {
-            let resolver;
-            const promise = new Promise((resolve, reject) => {
-                resolver = resolve;
-            });
-            this.queue.push(resolver);
-            return promise;
-        } else {
-            return Promise.resolve();
-        }
+        console.log(`Waiting of ${this.count} count downs...`);
+        return this.promise;
     }
 
     //todo auto countDown after N secs unactivity and auto realise after N secs unactivity – _options_
