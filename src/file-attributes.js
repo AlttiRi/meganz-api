@@ -10,7 +10,19 @@ class FileAttributes {
 
     static thumbnailType = 0;
     static previewType   = 1;
-    static semaphore = new Semaphore(); // 63 max, but care about pauses
+
+    /**
+     * Max parallel requests count that Mega allows are `63`,
+     * but the count decreases not instantly.
+     * For example, for 63 parallel requests you need to add a delay ~3500+ before realise the semaphore
+     * or Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
+     *
+     * Example values:
+     * 63, 3500
+     * 12, 200
+     * 8, 0
+     */
+    static semaphore = new Semaphore(12, 200); //todo move to mega.js
 
     //todo
     static async of(nodes) {

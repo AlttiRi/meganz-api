@@ -3,76 +3,89 @@ const {util} = require("./util");
 class Semaphore {
 
     max;
-    delay; // a delay before realise
-    count = 0;
-    queue = [];
+    delay;
 
     /**
-     * max parallel requests count is `63`,
-     * but in this case it needs delay before realise ~ `3500`+ or Fetch error (reason: write EPROTO) will happen
-     *
-     * Example values:
-     * 63, 3500
-     * 8, 0
+     * The count of "threads" that called `acquire` method, but not released yet
+     * @type {number}
      */
-    constructor(max = 12, delay = 200) {
+    #count = 0;
+    /**
+     * The queue of Promises's `resolve`s (callback param) for "threads" that are not fitted in `max` limit
+     * @type {function[]}
+     */
+    #queue = [];
+
+    /**
+     * By default works like a mutex
+     * To disable set `max` to `Number.MAX_SAFE_INTEGER`
+     * @param {number} max   - max count of parallel executions
+     * @param {number} delay - a delay before realise (ms)
+     */
+    constructor(max = 1, delay = 0) {
+        if (max < 1) {
+            max = 1;
+        }
         this.max = max;
         this.delay = delay;
     }
 
+    /** @return {Promise<void>} */
     async acquire() {
-        console.log("--- acquire " + (this.count + 1));
-        if (this.count < this.max) {
-            this.count++;
-            return Promise.resolve();
-        } else  {
-            this.count++;
-            let resolver;
-            const promise = new Promise((resolve, reject) => {
-                resolver = resolve;
+        console.log(`[Semaphore] Acquired: ${this.#count}${this.#count < this.max ? "" : " and added to a queue"}`);
+
+        let promise;
+        if (this.#count < this.max) {
+            promise = Promise.resolve();
+        } else {
+            promise = new Promise((resolve, reject) => {
+                this.#queue.push(resolve);
             });
-            this.queue.push(resolver);
-            return promise;
         }
+
+        this.#count++;
+        return promise;
     }
 
+    /** @return {Promise<void>} */
     async release() {
-        this.count--;
-        console.log("--- release " + (this.count + 1));
-        if (this.queue.length > 0) {
-            console.log("--- queue.length " + this.queue.length);
-            let resolver = this.queue.shift();
+        console.log(`[Semaphore] Released: ${this.#count}${this.#queue.length > 0 ? " from the queue" : ""}`);
+
+        if (this.#queue.length > 0) {
+            let resolve = this.#queue.shift();
             if (this.delay > 0) {
                 await util.sleep(this.delay);
             }
-            resolver();
+            resolve();
         }
+
+        this.#count--;
     }
 }
 
 class CountDownLatch {
     count;
-    promise;
-    resolve;
+    #promise;
+    #resolve;
 
     /** @param {number} count */
     constructor(count = 0) {
         this.count = count;
         if (count > 0) {
-            this.promise = new Promise((resolve, reject) => {
-                this.resolve = resolve;
+            this.#promise = new Promise((resolve, reject) => {
+                this.#resolve = resolve;
             });
         } else {
-            this.promise = Promise.resolve();
+            this.#promise = Promise.resolve();
         }
     }
 
     countDown() {
         if (this.count > 0) {
             this.count--;
-            console.log(`Count downs left: ${this.count}`);
+            console.log(`[CountDownLatch] Left: ${this.count}`);
             if (this.count === 0) {
-                this.resolve();
+                this.#resolve();
             }
         }
     }
@@ -80,17 +93,20 @@ class CountDownLatch {
     /** @return {Promise} */
     async wait() {
         if (this.count > 0) {
-            console.log(`Waiting of ${this.count} count downs...`);
+            console.log(`[CountDownLatch] Waiting for ${this.count} count downs...`);
         }
-        return this.promise;
+        return this.#promise;
     }
 
-    //todo auto countDown after N secs unactivity and auto realise after N secs unactivity – _options_
+    /** @return {boolean} */
+    get released() {
+        return this.count > 0;
+    }
+
+    release() {
+        this.#resolve();
+    }
 }
 
 
-
-
 module.exports = {Semaphore, CountDownLatch};
-
-
