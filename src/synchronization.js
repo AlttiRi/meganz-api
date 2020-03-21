@@ -55,6 +55,7 @@ class CountDownLatch {
     promise;
     resolve;
 
+    /** @param {number} count */
     constructor(count = 0) {
         this.count = count;
         if (count > 0) {
@@ -76,8 +77,11 @@ class CountDownLatch {
         }
     }
 
+    /** @return {Promise} */
     async wait() {
-        console.log(`Waiting of ${this.count} count downs...`);
+        if (this.count > 0) {
+            console.log(`Waiting of ${this.count} count downs...`);
+        }
         return this.promise;
     }
 
