@@ -5,7 +5,8 @@ const {CountDownLatch} = require("../synchronization");
 
 
 async function example() {
-    // see others ex files
+    const nodesFromFolder = await Nodes.nodes(URLS.SELECTED_FOLDER_WITH_UNDECRYPTED_FILE);
+    //console.log(nodesFromFolder);
 }
 
 

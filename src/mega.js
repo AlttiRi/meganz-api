@@ -284,10 +284,13 @@ const mega = {
 
         // todo remove or something other
         // if the node has no key string (empty)
-        rawNodes.filter(node => node.k === "").forEach(node => console.log(node));
+        rawNodes.filter(node => node.k === "").forEach(node => {
+            console.log("A missed key!");
+            console.log(node);
+        });
 
-        function parseKey(decryptionKeyStr) {
-            if (decryptionKeyStr === "") { // very rarely, but it can be
+        function parseKey(decryptionKeyStr) { // a missing key (an empty string)
+            if (decryptionKeyStr === "") {    // very rarely, but it can be
                 return null;
             }
             return decryptionKeyStr.match(/(?<=:)[\w-_]+/)[0];

@@ -357,6 +357,10 @@ class Nodes {
         const files = [];
 
 
+        // `masterKey` is null when the share has no specified key,
+        // `node.decryptionKeyStr` is null when `k` of node info (from API) is an empty string (Mega's bug)
+        //todo either handle it here (new classes for nodes without a key)
+        // or in the node constructor modify its type to indicate this thing
         for (let i = 0; i < nodes.length; i++) {
 
             const node = nodes[i];
