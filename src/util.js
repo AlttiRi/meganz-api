@@ -12,7 +12,7 @@ const util = {
          * @param {*} arguments
          */
         debug() {
-            if (!this.DEBUG) {
+            if (!util.DEBUG) {
                 return;
             }
             [...arguments].forEach(el => {
@@ -24,7 +24,7 @@ const util = {
          * @param {*} arguments
          */
         info() {
-            if (!this.INFO) {
+            if (!util.INFO) {
                 return;
             }
             [...arguments].forEach(el => {
@@ -38,7 +38,7 @@ const util = {
      * @returns {string}
      */
     arrayBufferToUtf8String(arrayBuffer) {
-        return this.utf8Decoder.decode(arrayBuffer);
+        return util.utf8Decoder.decode(arrayBuffer);
     },
 
     /**
@@ -97,7 +97,7 @@ const util = {
      */
     base64BinaryStringToArrayBuffer(base64BinaryString) {
         const binaryString = atob(base64BinaryString);
-        return this.binaryStringToArrayBuffer(binaryString);
+        return util.binaryStringToArrayBuffer(binaryString);
     },
 
     /**
@@ -128,9 +128,9 @@ const util = {
         padding = padding || "ZeroPadding";
 
 
-        const _data = this.arrayBufferToBinaryString(data);
-        const _key = this.arrayBufferToBinaryString(key);
-        const _iv = this.arrayBufferToBinaryString(iv);
+        const _data = util.arrayBufferToBinaryString(data);
+        const _key = util.arrayBufferToBinaryString(key);
+        const _iv = util.arrayBufferToBinaryString(iv);
 
         const plaintextWA = CryptoJS.AES.decrypt(
             {
@@ -172,7 +172,7 @@ const util = {
      * @param {number|Date} [mtime]
      */
     saveFile(arrayBuffer, name, mtime = new Date()) {
-        this.logger.info(`Saving "${name}" file to "temp" folder...`);
+        util.logger.info(`Saving "${name}" file to "temp" folder...`);
 
         const fs = require("fs");
         fs.mkdirSync("temp", {recursive: true});
