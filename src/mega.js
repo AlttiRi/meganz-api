@@ -1,9 +1,23 @@
 const { btoa, atob, fetch } = require("./browser-context");
 const { util } = require("./util");
 const logger = util.logger;
+const {Semaphore} = require("./synchronization");
 
 
 const mega = {
+
+    /**
+     * Max parallel requests count that Mega allows are `63`,
+     * but the count decreases not instantly.
+     * For example, for 63 parallel requests you need to add a delay ~4000+ before realise the semaphore
+     * or Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
+     *
+     * Example values:
+     * 63, 4000
+     * 12, 600
+     * 3, 0
+     */
+    semaphore: new Semaphore(12, 600),
 
     ssl: 2, // Is there a difference between "1" and "2" [???]
     apiGateway: "https://g.api.mega.co.nz/cs",
@@ -52,7 +66,7 @@ const mega = {
      * @returns {Uint8Array}
      */
     megaBase64ToArrayBuffer(megaBase64) {
-        const base64 = this.megaBase64ToBase64(megaBase64);
+        const base64 = mega.megaBase64ToBase64(megaBase64);
         return util.base64BinaryStringToArrayBuffer(base64);
     },
 
@@ -66,7 +80,7 @@ const mega = {
      */
     megaBase64ToBase64(megaBase64EncodedStr) {
 
-        const paddingLength = this._getPaddingLengthForMegaBase64(megaBase64EncodedStr);
+        const paddingLength = mega._getPaddingLengthForMegaBase64(megaBase64EncodedStr);
         let result = megaBase64EncodedStr + "=".repeat(paddingLength);
 
         result = result.replace(/-/g, "+")
@@ -103,30 +117,92 @@ const mega = {
      * @returns {Promise<*>} responseData
      */
     //todo handle bad urls (revoked or 404 [-9], banned [-16])
+    // todo simplify the code
     async requestAPI(payload, searchParams = {}) {
-        const url = new URL(this.apiGateway);
-        Object.entries(searchParams).forEach(([key, value]) => {
-            url.searchParams.append(key, value.toString());
-        });
 
-        const response = await fetch(url, {
-            method: "post",
-            body: JSON.stringify([payload])
-        });
+        function _handleUrl(searchParams) {
+            const url = new URL(mega.apiGateway);
+            Object.entries(searchParams).forEach(([key, value]) => {
+                url.searchParams.append(key, value.toString());
+            });
+            return url;
+        }
 
-        if (this.DEBUG) { // todo remove this block {} later, currently it is for testing
-            const responseText = await response.text();
-            console.log(responseText);
-            if (responseText.length === 0) {
-                console.log("0!!!");  // can be empty string, JSON.parse("") -> an exception
+        /**
+         * Uses the semaphore to limit the parallel connection count
+         * @param {URL} url
+         * @param {*} payload
+         * @return {Promise<Body>}
+         * @private
+         */
+        async function _handleFetch(url, payload) {
+            let response;
+            try {
+                response = await fetch(url, {
+                    method: "post",
+                    body: JSON.stringify([payload])
+                });
+            } catch (e) {
+                throw e;
+            } finally {
+                // await util.sleep(300);
             }
-            return JSON.parse(responseText)[0];
-        } else {
-            const responseArray = await response.json(); // it may throw an exception while Mega limits your connections
+
+            return response;
+        }
+
+        /**
+         * Mega can return an empty string as a response when you load it high
+         * And parsing an empty string as JSON leads to an exception
+         * */
+        async function _handleResponse(response) {
+            let responseArray;
+            if (mega.DEBUG) {
+                const rawText = await response.text();
+                console.log(rawText);
+                responseArray = JSON.parse(rawText);
+            } else {
+                responseArray = await response.json(); // [???] does it work faster?
+            }
             return responseArray[0];
         }
+
+        async function _repeatIfErrorAsync(callback, count = 5, delay = 5000) {
+            let result;
+            for (let i = 0;; i++) {
+                if (i > 0) {
+                    console.log(`Repeat count: ${i}`);
+                }
+                try {
+                    result = await callback();
+                } catch (e) {
+                    //console.error(e);
+                    console.error("ERROR!");
+                    if (i < count) {
+                        await util.sleep(delay);
+                        continue;
+                    } else {
+                        throw e;
+                    }
+                }
+                break;
+            }
+            return result;
+        }
+
+
+        const url    = _handleUrl(searchParams);
+        await mega.semaphore.acquire();
+        const result = await _repeatIfErrorAsync(async () =>{
+            const response = await _handleFetch(url, payload);
+            return await _handleResponse(response);
+        });
+        await mega.semaphore.release(); //todo move in finally block (if exceptions happens more than `count` times)
+
+        return result;
     },
 
+    //todo add an error handling (just in case)
     /**
      * @param {string} url
      * @param {*} [payload]
@@ -217,12 +293,12 @@ const mega = {
      */
     async requestNodeInfo(shareId) {
 
-        const responseData = await this.requestAPI({
+        const responseData = await mega.requestAPI({
             "a": "g",        // Command type
             "p": shareId,    // Content ID
             "g": 1,          // The download link
             //"v": 2,        // Multiple links for big files
-            "ssl": this.ssl  // HTTPS for the download link
+            "ssl": mega.ssl  // HTTPS for the download link
         });
 
         //logger.debug(responseData);

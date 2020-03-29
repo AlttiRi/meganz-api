@@ -1,6 +1,6 @@
 const { mega } = require("./mega");
 const { util } = require("./util");
-const {Semaphore} = require("./synchronization");
+
 
 class FileAttributes {
     /**
@@ -11,18 +11,7 @@ class FileAttributes {
     static thumbnailType = 0;
     static previewType   = 1;
 
-    /**
-     * Max parallel requests count that Mega allows are `63`,
-     * but the count decreases not instantly.
-     * For example, for 63 parallel requests you need to add a delay ~3500+ before realise the semaphore
-     * or Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
-     *
-     * Example values:
-     * 63, 3500
-     * 12, 200
-     * 8, 0
-     */
-    static semaphore = new Semaphore(12, 200); //todo move to mega.js
+
 
     //todo
     static async of(nodes) {
@@ -37,44 +26,33 @@ class FileAttributes {
         return FileAttributes.getAttribute(node, FileAttributes.previewType);
     }
 
-    //todo semaphore for limiting api requests (up to 63 connections, + delay 4 seconds)
-    //
     // NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
     // https://en.wikipedia.org/wiki/List_of_file_signatures
     //todo cases when node.nodeKey === null
     static async getAttribute(node, type) {
+        // todo FileAttributes.get/set
         if (!FileAttributes.values.get(node.fileAttributes)) { //todo rename to `node.fileAttributesStr`
             FileAttributes.values.set(node.fileAttributes, parseFileAttributes(node.fileAttributes))
         }
         const fileAttributes = FileAttributes.values.get(node.fileAttributes);
-
         const fileAttribute = fileAttributes.find(att => att.type === type);
 
-        await FileAttributes.semaphore.acquire(); //todo move it to `mega`
-        try {
-            const responseBytes = await requestFileAttributeBytes(fileAttribute);
+        const responseBytes = await requestFileAttributeBytes(fileAttribute);
 
-            const idBytes     = responseBytes.subarray(0, 8);  // [unused] // todo: verify (may be useful for bunched data)
-            const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bit integer (enough for up to 4 GB)
-            const length      = util.arrayBufferToLong(lengthBytes);
-            const dataBytes   = responseBytes.subarray(12, 12 + length);
+        const idBytes     = responseBytes.subarray(0, 8);  // [unused] // todo: verify (may be useful for bunched data)
+        const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bit integer (enough for up to 4 GB)
+        const length      = util.arrayBufferToLong(lengthBytes);
+        const dataBytes   = responseBytes.subarray(12, 12 + length);
 
-            console.log("Attribute (enc) size is " + length + " bytes"); // with zero padding
+        console.log(`Encoded file attribute size is ${length} bytes`); // with zero padding
 
-            console.log("Decryption of downloaded content...");
-            return util.decryptAES(dataBytes, node.nodeKey);
-        } catch (e) {  //todo move it to `mega`
-            console.error(e);
-            await util.sleep(9000); // todo make it a parameter
-            return FileAttributes.getAttribute(node, type); // recursion // todo rework, add retry count
-        } finally {
-            await FileAttributes.semaphore.release();
-        }
-
+        console.log("Decryption of downloaded content...");
+        return util.decryptAES(dataBytes, node.nodeKey);
     }
 }
 
 //todo move to `mega`
+//todo split to 2 methods request url and request bytes
 /**
  * Returns a thumbnail (type === 0) or a preview (type === 1)
  * @param {FileAttribute} fileAttribute
