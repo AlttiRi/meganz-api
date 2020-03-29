@@ -7,13 +7,13 @@ const {Semaphore} = require("./synchronization");
 const mega = {
 
     /**
-     * Max parallel requests count that Mega allows are `63`,
+     * Max parallel requests count that Mega allows for API access are `64`,
      * but the count decreases not instantly.
-     * For example, for 63 parallel requests you need to add a delay ~4000+ before realise the semaphore
+     * For example, for 64 parallel requests you need to add a delay ~4000+ before realise the semaphore
      * or Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
      *
      * Example values:
-     * 63, 4000
+     * 64, 4000
      * 12, 600
      * 3, 0
      */
@@ -132,7 +132,7 @@ const mega = {
                     result = await callback();
                 } catch (e) {
                     //console.error(e);
-                    console.error(`ERROR! Will be repeated. Thr try ${i} of ${count}.`);
+                    console.error(`ERROR! Will be repeated. The try ${i} of ${count}.`);
                     if (i < count) {
                         await util.sleep(delay);
                         continue;
@@ -184,7 +184,7 @@ const mega = {
         try {
             return await _repeatIfErrorAsync(callback); // todo make it configurable `count` and `delay`
         } finally { // if an exceptions happens more than `count` times
-            await mega.semaphore.release();
+            mega.semaphore.release();
         }
     },
 

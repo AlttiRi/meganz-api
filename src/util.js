@@ -248,6 +248,9 @@ const util = {
      * @returns {Promise}
      */
     sleep(ms) {
+        if (ms === 0) {
+            return Promise.resolve(); // It's not the same thing as `setImmediate`
+        }
         return new Promise(resolve => setTimeout(resolve, ms));
     },
 

@@ -5,7 +5,7 @@ const {CountDownLatch} = require("../synchronization");
 
 
 async function example() {
-    const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
+    const folderNodes = await Nodes.nodes(URLS.FOLDER_OVER_9000_FILES);
 
     const mediaNodesCount = folderNodes.filter(Nodes.isMediaNode).length;
     let countDownLatch = new CountDownLatch(mediaNodesCount);

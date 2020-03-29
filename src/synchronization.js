@@ -47,19 +47,19 @@ class Semaphore {
         return promise;
     }
 
-    /** @return {Promise<void>} */
-    async release() {
-        console.log(`[Semaphore] Released: ${this.#count}${this.#queue.length > 0 ? " from the queue" : ""}`);
-
-        if (this.#queue.length > 0) {
-            let resolve = this.#queue.shift();
-            if (this.delay > 0) {
-                await util.sleep(this.delay);
-            }
-            resolve();
-        }
-
-        this.#count--;
+    /**
+     * You may note the delay before finishing of a program because of the delay of the semaphore
+     */
+    release() {
+        util.sleep(this.delay)
+            .then(_ => {
+                console.log(`[Semaphore] Released: ${this.#count}${this.#queue.length > 0 ? " from the queue" : ""}`);
+                if (this.#queue.length > 0) {
+                    const resolve = this.#queue.shift();
+                    resolve();
+                }
+                this.#count--;
+            });
     }
 }
 
@@ -72,7 +72,7 @@ class CountDownLatch {
     constructor(count = 0) {
         this.count = count;
         if (count > 0) {
-            this.#promise = new Promise((resolve, reject) => {
+            this.#promise = new Promise(resolve => {
                 this.#resolve = resolve;
             });
         } else {
