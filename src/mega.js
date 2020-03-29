@@ -118,49 +118,8 @@ const mega = {
     //todo handle bad urls (revoked or 404 [-9], banned [-16])
     async requestAPI(payload, searchParams = {}) {
 
-        /**
-         * @param {function} callback - a function to repeat if it throws an exception
-         * @param {number} count=5 - count of the repeats
-         * @param {number} delay=5000 - ms to wait before repeating
-         * @return {Promise<*>}
-         * @private
-         */
-        async function _repeatIfErrorAsync(callback, count = 5, delay = 5000) {
-            let result;
-            for (let i = 0;; i++) {
-                try {
-                    result = await callback();
-                } catch (e) {
-                    //console.error(e);
-                    console.error(`ERROR! Will be repeated. The try ${i} of ${count}.`);
-                    if (i < count) {
-                        await util.sleep(delay);
-                        continue;
-                    } else {
-                        throw e;
-                    }
-                }
-                break;
-            }
-            return result;
-        }
-
-        /**
-         * Transforms an object like this: `{"n": "e1ogxQ7T"}` to `"n=e1ogxQ7T"`
-         * and adds it to the url as search params. The example result: `${url}?n=e1ogxQ7T`.
-         *
-         * @param {URL} url
-         * @param {Object} searchParams
-         * @private
-         */
-        function _addSearchParamsToURL(url, searchParams) {
-            Object.entries(searchParams).forEach(([key, value]) => {
-                url.searchParams.append(key, value.toString());
-            });
-        }
-
         const url = new URL(mega.apiGateway);
-        _addSearchParamsToURL(url, searchParams);
+        util.addSearchParamsToURL(url, searchParams);
 
         /**
          * The main function.
@@ -182,7 +141,7 @@ const mega = {
 
         await mega.semaphore.acquire();
         try {
-            return await _repeatIfErrorAsync(callback); // todo make it configurable `count` and `delay`
+            return await util.repeatIfErrorAsync(callback); // todo make it configurable `count` and `delay`
         } finally { // if an exceptions happens more than `count` times
             mega.semaphore.release();
         }

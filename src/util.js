@@ -254,6 +254,45 @@ const util = {
         return new Promise(resolve => setTimeout(resolve, ms));
     },
 
+    /**
+     * Transforms an object like this: `{"n": "e1ogxQ7T"}` to `"n=e1ogxQ7T"`
+     * and adds it to the url as search params. The example result: `${url}?n=e1ogxQ7T`.
+     *
+     * @param {URL} url
+     * @param {Object} searchParams
+     */
+    addSearchParamsToURL(url, searchParams) {
+        Object.entries(searchParams).forEach(([key, value]) => {
+            url.searchParams.append(key, value.toString());
+        });
+    },
+
+    /**
+     * @param {function} callback - a function to repeat if it throws an exception
+     * @param {number} count=5 - count of the repeats
+     * @param {number} delay=5000 - ms to wait before repeating
+     * @return {Promise<*>}
+     */
+    async repeatIfErrorAsync(callback, count = 5, delay = 5000) {
+        let result;
+        for (let i = 0;; i++) {
+            try {
+                result = await callback();
+            } catch (e) {
+                //console.error(e);
+                console.error(`ERROR! Will be repeated. The try ${i} of ${count}.`);
+                if (i < count) {
+                    await util.sleep(delay);
+                    continue;
+                } else {
+                    throw e;
+                }
+            }
+            break;
+        }
+        return result;
+    },
+
 };
 
 
