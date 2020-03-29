@@ -166,31 +166,6 @@ const mega = {
         return new Uint8Array(await response.arrayBuffer());
     },
 
-
-    //todo remove
-    /**
-     * Parses string like this: "924:1*sqbpWSbonCU/925:0*lH0B2ump-G8"
-     * @param {string} fileAttributesString
-     * @returns {[{hash: string, type: number, plain: number}]}
-     */
-    parseFileAttributes(fileAttributesString) {
-        const fileAttributes = [];
-
-        const chunks = fileAttributesString.split("\/");
-        chunks.forEach(chunk => {
-            const groups = chunk.match(/(?<bunch>\d+):(?<type>\d+)\*(?<hash>.+)/).groups;
-            const {hash, type, bunch} = groups;
-            fileAttributes.push({
-                hash,                // todo rename to `id`
-                type:  Number(type),
-                //todo rename to `bunch`
-                plain: Number(bunch) // Attributes with the same bunch number can be requested within one API request
-            });
-        });
-
-        return fileAttributes;
-    },
-
     /**
      * @param {string} serializedFingerprint
      * @returns {{modificationDate: number, fileChecksum: Uint8Array}}
