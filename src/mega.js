@@ -147,7 +147,8 @@ const mega = {
         }
     },
 
-    //todo add an error handling (just in case)
+    //todo add an error handling
+    // (sometimes it can throw `FetchError`: `reason: connect ETIMEDOUT` or `reason: read ECONNRESET` exception)
     /**
      * @param {string} url
      * @param {*} [payload]

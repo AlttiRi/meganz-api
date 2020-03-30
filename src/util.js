@@ -164,22 +164,25 @@ const util = {
         return _wordArrayToArrayBuffer(plaintextWA);
     },
 
-    //todo array of names for folders
     /**
      * Save with Node.js API to `temp/` folder
      * @param {Uint8Array} arrayBuffer
      * @param {string} name
      * @param {number|Date} [mtime]
+     * @param {string[]} path - array of folders names
      */
-    saveFile(arrayBuffer, name, mtime = new Date()) {
-        util.logger.info(`Saving "${name}" file to "temp" folder...`);
+    saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
+        const pathStr = "temp/" + (path.length ? path.join("/") + "/" : "");
+        console.log(`Saving "${name}" file to "${pathStr}" folder...`);
 
         const fs = require("fs");
-        fs.mkdirSync("temp", {recursive: true});
+        fs.mkdirSync(pathStr, {recursive: true});
 
+        // todo improve https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
         name = name.replace("/", "_");
-        fs.writeFileSync("temp/" + name, Buffer.from(arrayBuffer));
-        fs.utimesSync("temp/" + name, new Date(), mtime);
+
+        fs.writeFileSync(pathStr + name, Buffer.from(arrayBuffer));
+        fs.utimesSync(pathStr + name, new Date(), mtime);
     },
 
     /**
