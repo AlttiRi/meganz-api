@@ -130,7 +130,7 @@ const mega = {
          *
          * @return {Promise<*>}
          */
-        const callback = async () => {
+        const callback = async () => { //todo refactor (move to private method or smth other)
             const response = await fetch(url, {
                 method: "post",
                 body: JSON.stringify([payload])
@@ -141,30 +141,33 @@ const mega = {
 
         await mega.semaphore.acquire();
         try {
-            return await util.repeatIfErrorAsync(callback); // todo make it configurable `count` and `delay`
+            return await util.repeatIfErrorAsync(callback);
         } finally { // if an exceptions happens more than `count` times
             mega.semaphore.release();
         }
     },
 
-    //todo add an error handling
-    // (sometimes it can throw `FetchError`: `reason: connect ETIMEDOUT` or `reason: read ECONNRESET` exception)
-    /**
+    // todo add semaphore (the new one) or it's OK without it? need to test it later
+   /**
      * @param {string} url
      * @param {*} [payload]
      * @returns {Promise<Uint8Array>} responseBytes
      */
-    async requestFile(url, payload) {
-        const response = await fetch(url, {
-            method: "post",
-            body: payload,
-            headers: {
-                // It's important for `node-fetch` (Node.js)
-                // But it is not needed in a browser
-                "connection": "keep-alive"
-            }
-        });
-        return new Uint8Array(await response.arrayBuffer());
+   async requestFile(url, payload) {
+        /** Sometimes it can throw `connect ETIMEDOUT` or `read ECONNRESET` exception */
+        const callback = async () => {
+            const response = await fetch(url, {
+                method: "post",
+                body: payload,
+                headers: {
+                    // It's important for `node-fetch` (Node.js)
+                    // But it is not needed in a browser
+                    "connection": "keep-alive"
+                }
+            });
+            return new Uint8Array(await response.arrayBuffer());
+        };
+        return await util.repeatIfErrorAsync(callback);
     },
 
     /**

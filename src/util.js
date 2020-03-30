@@ -270,6 +270,7 @@ const util = {
         });
     },
 
+    // todo make it configurable (in mega.js) `count` and `delay`
     /**
      * @param {function} callback - a function to repeat if it throws an exception
      * @param {number} count=5 - count of the repeats
@@ -282,7 +283,7 @@ const util = {
             try {
                 result = await callback();
             } catch (e) {
-                //console.error(e);
+                console.error(e);
                 console.error(`ERROR! Will be repeated. The try ${i} of ${count}.`);
                 if (i < count) {
                     await util.sleep(delay);
