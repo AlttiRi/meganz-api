@@ -101,7 +101,7 @@ const { mega } = require("../mega");
 
         console.log("Decryption of attributes...");
 
-        const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey);
+        const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
 
         const attributesPlane = util.arrayBufferToUtf8String(attributesArrayBuffer);
 

@@ -106,8 +106,7 @@ const util = {
      *
      * Modes: "CBC" (the default), "CFB", "CTR", "OFB", "ECB".
      *
-     * Padding schemes: "Pkcs7", "ZeroPadding" (the default), "NoPadding", "Iso97971", "AnsiX923", "Iso10126".
-     * NB! "ZeroPadding" is the default padding only for this project.
+     * Padding schemes: "Pkcs7" (the default), "ZeroPadding", "NoPadding", "Iso97971", "AnsiX923", "Iso10126".
      *
      * Default IV is zero filled ArrayBuffer.
      *
@@ -116,7 +115,7 @@ const util = {
      * @param {Object} [config]
      * @param {Uint8Array} [config.iv]
      * @param {"CBC"|"CFB"|"CTR"|"OFB",|"ECB"} [config.mode="CBC"]
-     * @param {"Pkcs7"|"ZeroPadding"|"NoPadding"|"Iso97971"|"AnsiX923"|"Iso10126"} [config.padding="ZeroPadding"]
+     * @param {"Pkcs7"|"ZeroPadding"|"NoPadding"|"Iso97971"|"AnsiX923"|"Iso10126"} [config.padding="Pkcs7"]
      * @returns {Uint8Array}
      */
     decryptAES(data, key, {iv, mode, padding} = {}) {
@@ -124,7 +123,7 @@ const util = {
         /** Default parameters initialization */
         iv = iv || new Uint8Array(key.length);
         mode = mode || "CBC";
-        padding = padding || "ZeroPadding";
+        padding = padding || "Pkcs7";
 
         const _data = util.arrayBufferToBinaryString(data);
         const _key = util.arrayBufferToBinaryString(key);

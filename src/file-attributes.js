@@ -47,7 +47,7 @@ class FileAttributes {
         console.log(`Encoded file attribute size is ${length} bytes`); // with zero padding
 
         console.log("Decryption of downloaded content...");
-        return util.decryptAES(dataBytes, node.nodeKey);
+        return util.decryptAES(dataBytes, node.nodeKey, {padding: "ZeroPadding"});
     }
 }
 

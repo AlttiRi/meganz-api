@@ -210,7 +210,7 @@ const mega = {
      */
     parseEncodedNodeAttributes(attributesEncoded, nodeKey) {
         const attributesEncrypted   = util.base64BinaryStringToArrayBuffer(attributesEncoded);
-        const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey);
+        const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
         const attributesPlane       = util.arrayBufferToUtf8String(attributesArrayBuffer);
 
         const trimmedAttributesPlaneString = attributesPlane.substring("MEGA".length);

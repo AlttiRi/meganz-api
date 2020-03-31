@@ -106,7 +106,7 @@ const { mega } = require("../mega");
 
 
 
-    let decrypted = util.decryptAES(thumbnailBytes, nodeKey);
+    let decrypted = util.decryptAES(thumbnailBytes, nodeKey, {padding: "ZeroPadding"});
     console.log(decrypted);
 // Uint8Array(2546) [
 //   255, 216, 255, 224,     0,  16,  74,  70,   73,  70,  0,   1,    1,   0,   0,   1,
