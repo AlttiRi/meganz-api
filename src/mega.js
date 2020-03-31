@@ -115,7 +115,6 @@ const mega = {
      * @param {*} [searchParams]
      * @returns {Promise<*>} responseData
      */
-    //todo handle bad urls (revoked or 404 [-9], banned [-16])
     async requestAPI(payload, searchParams = {}) {
 
         const url = new URL(mega.apiGateway);
@@ -124,6 +123,8 @@ const mega = {
         /**
          * The main function.
          * Represented as a callback to pass it in `_repeatIfErrorAsync`.
+         *
+         * Returns an array with one item (multiple request are not implemented) or an error code (number)
          *
          * An exception may be thrown by `fetch`, for example, if you perform to much connections
          * or `json()` when Mega returns an empty string (a bug?)
@@ -135,13 +136,24 @@ const mega = {
                 method: "post",
                 body: JSON.stringify([payload])
             });
-            const responseArray = await response.json();
-            return responseArray[0];
+            return await response.json();
         };
 
         await mega.semaphore.acquire();
         try {
-            return await util.repeatIfErrorAsync(callback);
+            const response = await util.repeatIfErrorAsync(callback);
+            if (Array.isArray(response)) {
+                return response[0];
+            } else {
+                // todo create separate method to handle all errors
+                if (response === -9) {
+                    throw new Error("ERROR CODE: -9. NOT FOUND");
+                } else if (response === -16) {
+                    throw new Error("ERROR CODE: -16. USER IS BLOCKED");
+                } else {
+                    throw new Error("ERROR CODE: " + response);
+                }
+            }
         } finally { // if an exceptions happens more than `count` times
             mega.semaphore.release();
         }
