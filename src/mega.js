@@ -154,7 +154,7 @@ const mega = {
                     throw new Error("ERROR CODE: " + response);
                 }
             }
-        } finally { // if an exceptions happens more than `count` times
+        } finally { // if an exceptions happens more than `count` times or the error code was returned
             mega.semaphore.release();
         }
     },

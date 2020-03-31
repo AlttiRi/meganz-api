@@ -1,4 +1,5 @@
-const { btoa, atob, fetch } = require("./browser-context");
+const {btoa, atob, fetch} = require("./browser-context");
+const {CryptoJS} = require("./libs");
 
 /** @namespace */
 const util = {
@@ -120,13 +121,10 @@ const util = {
      */
     decryptAES(data, key, {iv, mode, padding} = {}) {
 
-        const CryptoJS = require("crypto-js"); //todo remove from here
-
         /** Default parameters initialization */
         iv = iv || new Uint8Array(key.length);
         mode = mode || "CBC";
         padding = padding || "ZeroPadding";
-
 
         const _data = util.arrayBufferToBinaryString(data);
         const _key = util.arrayBufferToBinaryString(key);
