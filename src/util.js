@@ -169,17 +169,17 @@ const util = {
      * @param {string[]} path - array of folders names
      */
     saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
-        const pathStr = "temp/" + (path.length ? path.join("/") + "/" : "");
+        const safePath = path.map(util.getSafeName);
+        const pathStr = "temp/" + (safePath.length ? safePath.join("/") + "/" : "");
         console.log(`Saving "${name}" file to "${pathStr}" folder...`);
 
         const fs = require("fs");
         fs.mkdirSync(pathStr, {recursive: true});
 
-        // todo improve https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-        name = name.replace("/", "_");
+        const safeName = util.getSafeName(name);
 
-        fs.writeFileSync(pathStr + name, Buffer.from(arrayBuffer));
-        fs.utimesSync(pathStr + name, new Date(), mtime);
+        fs.writeFileSync(pathStr + safeName, Buffer.from(arrayBuffer));
+        fs.utimesSync(pathStr + safeName, new Date(), mtime);
     },
 
     /**
@@ -267,7 +267,6 @@ const util = {
         });
     },
 
-    // todo make it configurable (in mega.js) `count` and `delay`
     /**
      * @param {function} callback - a function to repeat if it throws an exception
      * @param {number} count=5 - count of the repeats
@@ -294,6 +293,19 @@ const util = {
         return result;
     },
 
+    /**
+     * @param {string} name
+     * @return {string}
+     */
+    getSafeName(name) {
+        //todo
+        // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+        //todo isSafeName
+        if (name.includes("/")) {
+            console.log(`Bad filename: "${name}"`); // for debugging currently
+        }
+        return name.replace("/", "_");
+    }
 };
 
 

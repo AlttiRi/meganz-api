@@ -19,6 +19,8 @@ const mega = {
      */
     semaphore: new Semaphore(12, 600),
 
+    // todo make `util.repeatIfErrorAsync` configurable – use not default `count` and `delay` params
+
     ssl: 2, // Is there a difference between "1" and "2" [???]
     apiGateway: "https://g.api.mega.co.nz/cs",
 
