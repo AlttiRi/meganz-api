@@ -161,7 +161,8 @@ const mega = {
         }
     },
 
-    // todo add semaphore (the new one) or it's OK without it? need to test it later
+    // todo add semaphore (the new one) or is it OK without it? [???]
+    //  need to test it later
    /**
      * @param {string} url
      * @param {*} [payload]
@@ -283,12 +284,24 @@ const mega = {
         } = responseData;
 
 
-        // Every node has a prefix in its `k` value – `shareRootNodeId:decryptionKey`
-        const shareRootNodeId = rawNodes[0].k.match(/^[^:]+/)[0];
-        //logger.debug("[sharedRootId]", shareRootNodeId);
+        function _getShareRootNodeId(rawNodes) {
+            // Every node has a prefix in its `k` value – `shareRootNodeId:decryptionKey`
+            const id = rawNodes[0].k.match(/^[^:]+/)[0];
+
+            // In fact the first node is the share root
+            // Recheck:
+            if (id !== rawNodes[0].h) {
+                console.warn("ShareRootNodeId does not equal to id of the first node.");
+            }
+
+            return id;
+        }
+
+        const shareRootNodeId = _getShareRootNodeId(rawNodes);
+        //logger.debug("[shareRootNodeId]", shareRootNodeId);
 
 
-        function prettifyType(type) {
+        function _prettifyType(type) {
             switch (type) {
                 case  0: return "file";
                 case  1: return "folder";
@@ -296,29 +309,25 @@ const mega = {
             }
         }
 
-        // todo remove or something other
-        // if the node has no key string (empty)
-        rawNodes.filter(node => node.k === "").forEach(node => {
-            console.log("A missed key!");
-            console.log(node);
-        });
-
-        function parseKey(decryptionKeyStr) { // a missing key (an empty string)
-            if (decryptionKeyStr === "") {    // very rarely, but it can be
+        function _parseKeyFromNode(node) {
+            const decryptionKeyStr = node.k;
+            // a missing key (an empty string), it's very rarely, but it can be
+            if (decryptionKeyStr === "") {
+                console.log("A missed key!", node);
                 return null;
             }
             return decryptionKeyStr.match(/(?<=:)[\w-_]+/)[0];
         }
 
-        function prettifyNodes(rawNodes) {
+        function _prettifyNodes(rawNodes) {
             return rawNodes.map(node => {
                 const prettyNode = {
                     id: node.h,
                     parentId: node.p,
                     ownerId: node.u,
-                    type: prettifyType(node.t),
+                    type: _prettifyType(node.t),
                     attributes: node.a,
-                    decryptionKeyStr: parseKey(node.k),
+                    decryptionKeyStr: _parseKeyFromNode(node),
                     creationDate: node.ts, // (timestamp)
                 };
                 if (prettyNode.type === "file") {
@@ -331,7 +340,7 @@ const mega = {
             });
         }
 
-        return {nodes: prettifyNodes(rawNodes), rootId: shareRootNodeId};
+        return {nodes: _prettifyNodes(rawNodes), rootId: shareRootNodeId};
     },
 
 

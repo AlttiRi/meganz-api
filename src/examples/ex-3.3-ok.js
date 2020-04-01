@@ -18,7 +18,7 @@ async function example() {
             node.getThumbnail()
                 .then(thumb => {
                     // NB: async – the creation time order will be not the same as the order of pictures
-                    util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime, node.path);
+                    util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
                     countDownLatch.countDown();
                 });
         }
