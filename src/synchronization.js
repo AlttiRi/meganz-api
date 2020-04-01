@@ -38,7 +38,7 @@ class Semaphore {
         if (this.#count < this.max) {
             promise = Promise.resolve();
         } else {
-            promise = new Promise((resolve, reject) => {
+            promise = new Promise(resolve => {
                 this.#queue.push(resolve);
             });
         }

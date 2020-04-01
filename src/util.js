@@ -206,7 +206,7 @@ const util = {
     },
 
     /**
-     * 1436853891 -> "2015.06.14 09:04:51"
+     * 1436853891 -> "2015.07.14 09:04:51"
      * @param {number} seconds
      * @returns {string}
      */
@@ -218,7 +218,7 @@ const util = {
             return ("0" + str).slice(-2);
         }
 
-        return date.getFullYear() + "." + pad(date.getMonth()) + "." + pad(date.getDate()) + " " +
+        return date.getFullYear() + "." + pad(date.getMonth() + 1) + "." + pad(date.getDate()) + " " +
             pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
     },
 
