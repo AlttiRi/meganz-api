@@ -26,9 +26,17 @@ const mega = {
 
     //todo add the support of the new links format [2020.04.02]
     // https://github.com/meganz/webclient/commit/a43b633bb156515bb9d6d79e0a3e0cedcdadb143
+    // https://github.com/meganz/chrome-extension/commit/01fefe263b7f273bff3abefcf21f258bbb1a63e9
+    // -
+    // "https://mega.nz/file/SHARE_ID#DECTYPTION_KEY"
+    // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY"
     // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY/file/SELECTED_NODE_ID"
     // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY/folder/SELECTED_NODE_ID"
-    // "https://mega.nz/file/SHARE_ID#DECTYPTION_KEY"
+    // -
+    // The old format:
+    // "https://mega.nz/#!SHARE_ID!DECRYPTION_KEY" – for a file
+    // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY" – for a folder
+    // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY!SELECTED_NODE_ID"
     /**
      * @param {string} url - URL
      * @returns {{id: string, decryptionKeyStr: string, isFolder: boolean, selectedFolderId: string , selectedFileId: string}}
@@ -245,7 +253,7 @@ const mega = {
             "ssl": mega.ssl  // HTTPS for the download link
         });
 
-        //logger.debug(responseData);
+        console.log(responseData);
 
         return {
             size:                  responseData["s"],
@@ -280,7 +288,7 @@ const mega = {
         }, {
             "n": shareId
         });
-        //logger.debug("[responseData]", responseData);
+        console.log("[responseData]", responseData);
 
         const {
             f: rawNodes, // array of file and folder nodes
@@ -332,7 +340,7 @@ const mega = {
                     ownerId: node.u,
                     type: _prettifyType(node.t),
                     attributes: node.a,
-                    decryptionKeyStr: _parseKeyFromNode(node),
+                    decryptionKeyStr: _parseKeyFromNode(node), // from node.k
                     creationDate: node.ts, // (timestamp)
                 };
                 if (prettyNode.type === "file") {
