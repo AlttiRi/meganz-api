@@ -38,22 +38,41 @@ const mega = {
     // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY" – for a folder
     // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY!SELECTED_NODE_ID"
     /**
-     * @param {string} url - URL
+     * @param {string|URL} url - URL
      * @returns {{id: string, decryptionKeyStr: string, isFolder: boolean, selectedFolderId: string , selectedFileId: string}}
      */
     parseUrl(url) {
+        const _url = url.toString(); // if passed a URL object
+
         const regExp = /(?<=#)(?<isF>F)?!(?<id>[\w-_]+)(!(?<key>[\w-_]+))?(?:!(?<folder>[\w-_]+))?(?:\?(?<file>[\w-_]+))?/;
-        const groups = url.match(regExp).groups;
+        const groups = _url.match(regExp).groups;
 
         const isFolder = Boolean(groups.isF);
         /** Content ID */
         const id = groups.id;
         /** Decryption key encoded with Mega's base64 */
-        const decryptionKeyStr = groups.key ? groups.key : "";
+        const decryptionKeyStr = groups.key    ? groups.key    : "";
         const selectedFolderId = groups.folder ? groups.folder : "";
-        const selectedFileId   = groups.file ? groups.file : "";
+        const selectedFileId   = groups.file   ? groups.file   : "";
 
         return {id, decryptionKeyStr, isFolder, selectedFolderId, selectedFileId};
+    },
+
+    /**
+     * Return the url string for a share.
+     *
+     * @param {Share} share
+     * @param {string} share.id
+     * @param {string} share.decryptionKeyStr
+     * @param {boolean} share.isFolder
+     * @param {string} share.selectedFolderId
+     * @param {string} share.selectedFileId
+     * @param {boolean} oldFormat
+     * @returns {string}
+     */
+    getUrl({id, decryptionKeyStr = "", isFolder = false, selectedFolderId = "", selectedFileId = ""}, oldFormat = false) {
+        // todo
+        return `https://#!${id}!${decryptionKeyStr}`;
     },
 
     /**

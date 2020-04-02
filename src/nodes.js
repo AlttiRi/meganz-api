@@ -31,6 +31,11 @@ class Share {
     get selectedId() {
         return this.selectedFileId ? this.selectedFileId : this.selectedFolderId ? this.selectedFolderId : null;
     }
+
+    getUrl(oldFormat = false) {
+        return mega.getUrl(this, oldFormat);
+    }
+
 }
 
 //todo the most basic class with [Symbol.toStringTag]: "MegaNode"
