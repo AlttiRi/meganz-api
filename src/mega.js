@@ -24,6 +24,11 @@ const mega = {
     ssl: 2, // Is there a difference between "1" and "2" [???]
     apiGateway: "https://g.api.mega.co.nz/cs",
 
+    //todo add the support of the new links format [2020.04.02]
+    // https://github.com/meganz/webclient/commit/a43b633bb156515bb9d6d79e0a3e0cedcdadb143
+    // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY/file/SELECTED_NODE_ID"
+    // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY/folder/SELECTED_NODE_ID"
+    // "https://mega.nz/file/SHARE_ID#DECTYPTION_KEY"
     /**
      * @param {string} url - URL
      * @returns {{id: string, decryptionKeyStr: string, isFolder: boolean, selectedFolderId: string , selectedFileId: string}}
