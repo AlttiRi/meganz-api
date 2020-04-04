@@ -24,37 +24,17 @@ const mega = {
     ssl: 2, // Is there a difference between "1" and "2" [???]
     apiGateway: "https://g.api.mega.co.nz/cs",
 
-    //todo add the support of the new links format [2020.04.02]
-    // https://github.com/meganz/webclient/commit/a43b633bb156515bb9d6d79e0a3e0cedcdadb143
-    // https://github.com/meganz/chrome-extension/commit/01fefe263b7f273bff3abefcf21f258bbb1a63e9
-    // ---
-    // "https://mega.nz/file/SHARE_ID#DECTYPTION_KEY"
-    // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY"
-    // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY/file/SELECTED_NODE_ID"
-    // "https://mega.nz/folder/SHARE_ID#DECTYPTION_KEY/folder/SELECTED_NODE_ID"
-    // ---
-    // The old format:
-    // "https://mega.nz/#!SHARE_ID!DECRYPTION_KEY" – for a file
-    // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY" – for a folder
-    // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY?SELECTED_FILE_NODE_ID"
-    // "https://mega.nz/#F!SHARE_ID!DECRYPTION_KEY!SELECTED_FOLDER_NODE_ID"
-    // ---
-    // I open the secret, "?" is a selector – it also can be used to select a folder without opening it, and "!" is an opener
-    // – in case a file it opens additional info about a file – a page about a file versioning (".fm-versioning.overlay"),
-    // (that uses only for text files), and this page is useless in shares,
-    // it contains only row about the last version of file (note: every version of a file is a different node (id)),
-    // in home directory file versioning works ok).
-    // But assume that "?" used only to select a folder, and "!" to select a file. (Mega works the same way when you
-    // creates a direct link to a selected file/folder, and it looks that the new url format does not support these features.)
 
     /**
+     * @see URLS
      * @param {string|URL} url - URL
      * @returns {{id: string, decryptionKeyStr: string, isFolder: boolean, selectedFolderId: string , selectedFileId: string}}
      */
     parseUrl(url) {
         const _url = url.toString(); // if passed a URL object
 
-        const regExp = /(?<type>(?<isFolder>folder\/|#F!)|(?<isFile>file\/|#!))(?<id>[\w-_]+)(?<keyPrefix>#|!)?(?<key>(?<=(#|!))[\w-_]+)?(?<selected>((?<selectedFilePrefix>\/file\/|\?)|(?<selectedFolderPrefix>\/folder\/|!))((?<file>(?<=\/file\/|\?)[\w-_]+)|(?<folder>(?<=\/folder\/|!)[\w-_]+)))?/;
+        // key length is 22 for folders and 43 for files
+        const regExp = /(?<type>(?<isFolder>folder\/|#F!)|(?<isFile>file\/|#!))(?<id>[\w-_]+)(?<keyPrefix>#|!(?=[\w-_]{22,43})|!(?=!|\?)|!(?![\w-_]{8}))?(?<key>(?<=#|!)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\/file\/|\?)|(?<selectedFolderPrefix>\/folder\/|!?))((?<file>(?<=\/file\/|\?)[\w-_]+)|(?<folder>(?<=\/folder\/|!)[\w-_]+)))?/;
         const groups = _url.match(regExp).groups;
 
         const isFolder = Boolean(groups.isFolder);
@@ -432,4 +412,4 @@ const mega = {
     },
 };
 
-module.exports.mega = mega;
+module.exports = {mega};

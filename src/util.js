@@ -309,4 +309,4 @@ const util = {
 };
 
 
-module.exports.util = util;
+module.exports = {util};

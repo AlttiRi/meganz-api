@@ -5,7 +5,7 @@ const {util} = require("../util");
 
 
 async function example() {
-    const nodeFromFile = await Nodes.node(URLS.CAT_IMAGE_FILE);
+    const nodeFromFile = await Nodes.node(URLS.CAT_FILE_IMAGE);
     console.log(nodeFromFile);
 
     //const thumb = await FileAttributes.getThumbnail(nodeFromFile);

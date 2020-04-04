@@ -3,8 +3,8 @@ const {Nodes} = require("../nodes");
 const {util} = require("../util");
 
 // to simulate old behavior (without a semaphore)
-const FileAttributes = require("../file-attributes");
-FileAttributes.semaphore.max = Number.MAX_SAFE_INTEGER;
+const {mega} = require("../mega");
+mega.semaphore.max = Number.MAX_SAFE_INTEGER;
 
 
 // Not ideal, but works (old version, now there is a semaphore)

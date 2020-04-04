@@ -4,7 +4,7 @@ const {Nodes} = require("../nodes");
 
 async function example() {
     const nodesFromFolder = await Nodes.nodes(URLS.CAT_FOLDER);
-    const nodesFromFile   = await Nodes.nodes(URLS.CAT_IMAGE_FILE);
+    const nodesFromFile   = await Nodes.nodes(URLS.CAT_FILE_IMAGE);
     console.log(nodesFromFolder.root);
     console.log("[1] ---");
     console.log(nodesFromFolder);
