@@ -33,15 +33,15 @@ const mega = {
     parseUrl(url) {
         const _url = url.toString(); // if passed a URL object
         const isLegacyURL = /#F!|#!/;
-        let groups;
+        let regExp;
 
         if (_url.match(isLegacyURL)) {
-            const regExp = /(?<type>(?<isFolder>#F!)|(?<isFile>#!))(?<id>[\w-_]+)(?<keyPrefix>!(?=[\w-_]{22,43})|!(?=[!?])|!(?![\w-_]{8}))?(?<key>(?<=!)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\?)|(?<selectedFolderPrefix>!?))((?<file>(?<=\?)[\w-_]+)|(?<folder>(?<=!)[\w-_]+)))?/;
-            groups = _url.match(regExp).groups;
+            regExp = /(?<type>(?<isFolder>#F!)|(?<isFile>#!))(?<id>[\w-_]+)(?<keyPrefix>!(?=[\w-_]{22,43})|!(?=[!?])|!(?![\w-_]{8}))?(?<key>(?<=!)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\?)|(?<selectedFolderPrefix>!?))((?<file>(?<=\?)[\w-_]+)|(?<folder>(?<=!)[\w-_]+)))?/;
         } else {
-            const regExp = /(?<type>(?<isFolder>folder\/)|(?<isFile>file\/))(?<id>[\w-_]+)(?<keyPrefix>#)?(?<key>(?<=#)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\/file\/)|(?<selectedFolderPrefix>\/folder\/))((?<file>(?<=\/file\/)[\w-_]+)|(?<folder>(?<=\/folder\/)[\w-_]+)))?/;
-            groups = _url.match(regExp).groups;
+            regExp = /(?<type>(?<isFolder>folder\/)|(?<isFile>file\/))(?<id>[\w-_]+)(?<keyPrefix>#)?(?<key>(?<=#)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\/file\/)|(?<selectedFolderPrefix>\/folder\/))((?<file>(?<=\/file\/)[\w-_]+)|(?<folder>(?<=\/folder\/)[\w-_]+)))?/;
         }
+
+        const groups = _url.match(regExp).groups;
 
         const isFolder = Boolean(groups.isFolder);
         /** Content ID */
