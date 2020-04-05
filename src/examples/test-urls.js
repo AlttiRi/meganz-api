@@ -34,9 +34,9 @@
 
 class URLS {
 
-    // ----------------------------------------------------------------
-    // THE OLD FORMAT OF THE URLs
-    // ----------------------------------------------------------------
+    /** ---------------------------------------------------------------
+     * THE OLD FORMAT OF THE URLs
+     * ---------------------------------------------------------------- */
 
     // The key for the file:   "AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
     // The key for the folder: "ee4Q_ocD1bSLmNeg9B6kBw"
@@ -72,9 +72,9 @@ class URLS {
 
 
 
-    // ----------------------------------------------------------------
-    // THE NEW FORMAT OF THE URLs
-    // ----------------------------------------------------------------
+    /** ---------------------------------------------------------------
+     * THE NEW FORMAT OF THE URLs
+     * ---------------------------------------------------------------- */
 
     // The key for the file:   "AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
     // The key for the folder: "ee4Q_ocD1bSLmNeg9B6kBw"
@@ -101,7 +101,23 @@ class URLS {
     static CAT_FOLDER_NO_KEY_SELECTED_FOLDER_1 = "https://mega.nz/folder/e1ogxQ7T#/folder/CghQlTCa";
     static CAT_FOLDER_NO_KEY_SELECTED_FOLDER_2 = "https://mega.nz/folder/e1ogxQ7T/folder/CghQlTCa";
 
-    // ----------------------------------------------------------------
+
+    /** ---------------------------------------------------------------
+     * RELATIVE URLs (some examples)
+     * ----------------------------------------------------------------
+     * The RegExp checks not full URL, but only the signature.
+     * @see mega.parseUrl
+     */
+
+    static CAT_FILE_IMAGE_OLD_RELATIVE_1 = "/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk";
+    static CAT_FILE_IMAGE_OLD_RELATIVE_2 = "#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk";
+    static CAT_FOLDER_OLD_RELATIVE_1     = "/#F!e1ogxQ7T!ee4Q_ocD1bSLmNeg9B6kBw";
+    static CAT_FOLDER_OLD_RELATIVE_2     = "#F!e1ogxQ7T!ee4Q_ocD1bSLmNeg9B6kBw";
+
+    static CAT_FILE_IMAGE_RELATIVE_1     = "/file/bkwkHC7D#AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk";
+    static CAT_FILE_IMAGE_RELATIVE_2     = "file/bkwkHC7D#AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk";
+    static CAT_FOLDER_RELATIVE_1         = "/folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw";
+    static CAT_FOLDER_RELATIVE_2         = "folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw";
 
 }
 
