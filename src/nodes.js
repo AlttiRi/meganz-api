@@ -29,7 +29,7 @@ class Share {
     }
 
     get selectedId() {
-        return this.selectedFileId ? this.selectedFileId : this.selectedFolderId ? this.selectedFolderId : null;
+        return this.selectedFileId || this.selectedFolderId || null;
     }
 
     getUrl(oldFormat = false) {
