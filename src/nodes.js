@@ -138,9 +138,9 @@ class MediaFileNode extends FileNode {
     constructor(node, masterKey) {
         super(node, masterKey);
         this.type = "mediaFile";
-        this.fileAttributes = node.fileAttributes;
+        this.fileAttributesStr = node.fileAttributesStr;
     }
-    fileAttributes; // [requires nodeKey to work later]
+    fileAttributesStr; // [requires nodeKey]
 
     //todo mixin for it
     /** @returns {Promise<Uint8Array>} */
@@ -208,7 +208,6 @@ class SharedFileNode {
         const {
             size,
             nodeAttributesEncoded,
-            fileAttributes, // [unused][uses in sub classes]
             downloadUrl,
             timeLeft,
             EFQ,            // [unused]
@@ -265,9 +264,9 @@ class SharedMediaFileNode extends SharedFileNode {
     constructor(share, nodeInfo) {
         super(share, nodeInfo);
         this.type = "sharedMediaFile";
-        this.fileAttributes = nodeInfo.fileAttributes;
+        this.fileAttributesStr = nodeInfo.fileAttributesStr;
     }
-    fileAttributes;
+    fileAttributesStr;
 
     //todo mixin for it
     /** @returns {Promise<Uint8Array>} */
@@ -334,7 +333,7 @@ class Nodes {
     static async getSharedNode(url) {
         const share = new Share(url);
         const nodeInfo = await mega.requestNodeInfo(share.id);
-        if (nodeInfo.fileAttributes) {
+        if (nodeInfo.fileAttributesStr) {
             return new SharedMediaFileNode(share, nodeInfo);
         } else {
             return new SharedFileNode(share, nodeInfo);
@@ -374,7 +373,7 @@ class Nodes {
             node.parent = folders.get(node.parentId); // `undefine` for root
 
             if (node.type === "file") {
-                if (node.fileAttributes) {
+                if (node.fileAttributesStr) {
                     resultNode = new MediaFileNode(node, masterKey);
                 } else {
                     resultNode = new FileNode(node, masterKey);

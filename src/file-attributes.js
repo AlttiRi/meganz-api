@@ -26,15 +26,22 @@ class FileAttributes {
         return FileAttributes.getAttribute(node, FileAttributes.previewType);
     }
 
-    // NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
-    // https://en.wikipedia.org/wiki/List_of_file_signatures
+
     //todo cases when node.nodeKey === null
+    /**
+     * NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
+     * https://en.wikipedia.org/wiki/List_of_file_signatures
+     *
+     * @param {SharedMediaFileNode|MediaFileNode} node
+     * @param {number} type
+     * @return {Promise<Uint8Array>}
+     */
     static async getAttribute(node, type) {
         // todo FileAttributes.get/set
-        if (!FileAttributes.values.get(node.fileAttributes)) { //todo rename to `node.fileAttributesStr`
-            FileAttributes.values.set(node.fileAttributes, parseFileAttributes(node.fileAttributes))
+        if (!FileAttributes.values.get(node.fileAttributesStr)) {
+            FileAttributes.values.set(node.fileAttributesStr, parseFileAttributes(node.fileAttributesStr))
         }
-        const fileAttributes = FileAttributes.values.get(node.fileAttributes);
+        const fileAttributes = FileAttributes.values.get(node.fileAttributesStr);
         const fileAttribute = fileAttributes.find(att => att.type === type);
 
         const responseBytes = await requestFileAttributeBytes(fileAttribute);
@@ -80,13 +87,13 @@ async function requestFileAttributeBytes(fileAttribute) {
 
 /**
  * Parses string like this: "924:1*sqbpWSbonCU/925:0*lH0B2ump-G8"
- * @param {string} fileAttributesString
+ * @param {string} fileAttributesStr
  * @returns {FileAttribute[]}
  */
-function parseFileAttributes(fileAttributesString) {
+function parseFileAttributes(fileAttributesStr) {
     const fileAttributes = [];
 
-    const chunks = fileAttributesString.split("\/");
+    const chunks = fileAttributesStr.split("\/");
     chunks.forEach(chunk => {
         const groups = chunk.match(/(?<bunch>\d+):(?<type>\d+)\*(?<id>.+)/).groups;
         const {id, type, bunch} = groups;

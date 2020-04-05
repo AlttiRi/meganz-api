@@ -249,8 +249,8 @@ const mega = {
 
     /**
      * @param {string} shareId
-     * @returns {Promise<{size: number, nodeAttributesEncoded: string, fileAttributes: string,
-     *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number}>} nodeInfo
+     * @returns {Promise<{size: number, nodeAttributesEncoded: string,
+     *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number, fileAttributesStr?: string}>} nodeInfo
      */
     async requestNodeInfo(shareId) {
 
@@ -263,21 +263,28 @@ const mega = {
         });
         console.log(responseData);
 
-        return {
+        const prettyResponse = {
             size:                  responseData["s"],
             nodeAttributesEncoded: responseData["at"],  // Node attributes (name, hash (file fingerprint) -> mtime)
-            fileAttributes:        responseData["fa"],  // File attributes (thumbnail, preview, [video meta info])
-                                                        // Only for image or video – `undefine` in the other case
-            // If "g" specified:
+
+            // If "g" is specified:
             downloadUrl:           responseData["g"],
             timeLeft:              responseData["tl"],  // Time to wait of the reset of bandwidth quota.
                                                         // `0` seconds if quota is not exceeded
                                                         // (It looks it is the new parameter added
                                                         //                             at the beginning of March 2020)
-            // Useless properties:
+            // Useless properties: [unused]
             EFQ:                   responseData["efq"], // `1` – Something about the Quota – Quota enforcement?  [???]
             MSD:                   responseData["msd"]  // `1` – "MegaSync download"                             [???]
         };
+
+        if (responseData["fa"]) {
+            // File attributes (a thumbnail, a preview, [a video meta info])
+            // Only for an image or a video
+            prettyResponse.fileAttributesStr = responseData["fa"];
+        }
+
+        return prettyResponse;
     },
 
     // The logic of nodes order that Mega returns looks like it is:
@@ -356,7 +363,7 @@ const mega = {
                 if (prettyNode.type === "file") {
                     prettyNode.size = node.s;
                     if (node.fa) { // only for images and videos
-                        prettyNode.fileAttributes = node.fa;
+                        prettyNode.fileAttributesStr = node.fa;
                     }
                 }
                 return prettyNode;
