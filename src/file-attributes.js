@@ -3,14 +3,41 @@ const { util } = require("./util");
 
 
 class FileAttributes {
-    /**
-     * @type {Map<String, FileAttribute[]>}
-     */
-    static values = new Map();
 
     static thumbnailType = 0;
     static previewType   = 1;
 
+    /**
+     * @type {Map<String, FileAttribute[]>}
+     * @private
+     */
+    static values = new Map();
+
+    /**
+     * @param {string} fileAttributesStr
+     */
+    static add(fileAttributesStr) {
+        if (!FileAttributes.values.get(fileAttributesStr)) {
+            FileAttributes.values.set(fileAttributesStr, parseFileAttributes(fileAttributesStr))
+        }
+    }
+
+    /**
+     * @param {string} fileAttributesStr
+     * @return {FileAttribute[]}
+     */
+    static get(fileAttributesStr) {
+        return FileAttributes.values.get(fileAttributesStr);
+    }
+
+    /**
+     * @param {string} fileAttributesStr
+     * @return {FileAttribute[]}
+     */
+    static addAndGet(fileAttributesStr) {
+        FileAttributes.add(fileAttributesStr);
+        return FileAttributes.get(fileAttributesStr);
+    }
 
 
     //todo
@@ -37,11 +64,8 @@ class FileAttributes {
      * @return {Promise<Uint8Array>}
      */
     static async getAttribute(node, type) {
-        // todo FileAttributes.get/set
-        if (!FileAttributes.values.get(node.fileAttributesStr)) {
-            FileAttributes.values.set(node.fileAttributesStr, parseFileAttributes(node.fileAttributesStr))
-        }
-        const fileAttributes = FileAttributes.values.get(node.fileAttributesStr);
+
+        const fileAttributes = FileAttributes.addAndGet(node.fileAttributesStr);
         const fileAttribute = fileAttributes.find(att => att.type === type);
 
         const responseBytes = await requestFileAttributeBytes(fileAttribute);
