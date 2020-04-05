@@ -316,11 +316,12 @@ const mega = {
 
         function _getShareRootNodeId(rawNodes) {
             // Every node has a prefix in its `k` value – `shareRootNodeId:decryptionKey`
-            const id = rawNodes[0].k.match(/^[^:]+/)[0];
+            const firstNode = rawNodes[0];
+            const id = firstNode["k"].match(/^[^:]+/)[0];
 
             // In fact the first node is the share root
             // Recheck:
-            if (id !== rawNodes[0].h) {
+            if (id !== firstNode["h"]) {
                 console.warn("ShareRootNodeId does not equal to id of the first node.");
             }
 
@@ -340,7 +341,7 @@ const mega = {
         }
 
         function _parseKeyFromNode(node) {
-            const decryptionKeyStr = node.k;
+            const decryptionKeyStr = node["k"];
             // a missing key (an empty string), it's very rarely, but it can be
             if (decryptionKeyStr === "") {
                 console.log("A missed key!", node);
@@ -352,18 +353,18 @@ const mega = {
         function _prettifyNodes(rawNodes) {
             return rawNodes.map(node => {
                 const prettyNode = {
-                    id: node.h,
-                    parentId: node.p,
-                    ownerId: node.u,
-                    type: _prettifyType(node.t),
-                    attributes: node.a,
-                    decryptionKeyStr: _parseKeyFromNode(node), // from node.k
-                    creationDate: node.ts, // (timestamp)
+                    id: node["h"],
+                    parentId: node["p"],
+                    ownerId: node["u"],
+                    type: _prettifyType(node["t"]),
+                    attributes: node["a"],
+                    decryptionKeyStr: _parseKeyFromNode(node), // from node["k"]
+                    creationDate: node["ts"], // (timestamp)
                 };
                 if (prettyNode.type === "file") {
-                    prettyNode.size = node.s;
-                    if (node.fa) { // only for images and videos
-                        prettyNode.fileAttributesStr = node.fa;
+                    prettyNode.size = node["s"];
+                    if (node["fa"]) { // only for images and videos
+                        prettyNode.fileAttributesStr = node["fa"];
                     }
                 }
                 return prettyNode;
