@@ -9,9 +9,11 @@
   "keywords": [],
   "author": "",
   "dependencies": {
-    "aes-js": "^3.1.2",
     "buffer": "^5.4.3",
     "crypto-js": "^3.1.9-1",
     "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "aes-js": "^3.1.2"
   }
 }

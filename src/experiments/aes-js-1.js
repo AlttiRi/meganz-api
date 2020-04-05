@@ -3,6 +3,8 @@ const { encryptedStr1: data, key, iv } = require("./data");
 
 
 function decryptWithAESJS(data, key, iv) {
+    // npm install -D aes-js
+    // https://www.npmjs.com/package/aes-js
     const aesjs = require("aes-js");
     const aesCbc = new aesjs.ModeOfOperation.cbc(key, iv);
     return aesCbc.decrypt(data);
