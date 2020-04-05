@@ -210,8 +210,6 @@ class SharedFileNode {
             nodeAttributesEncoded,
             downloadUrl,
             timeLeft,
-            EFQ,            // [unused]
-            MSD             // [unused]
         } = nodeInfo;
 
         this.size = size;
