@@ -159,18 +159,14 @@ class FileAttributes {
     static Preview   = new FileAttributeBytes(1);
 
     /**
-     * @param node
-     * @param {string} node.fileAttributesStr
-     * @param {Uint8Array} node.nodeKey
+     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
      * @return {Promise<Uint8Array>}
      */
     static getThumbnail(node) {
         return FileAttributes.getAttribute(node, FileAttributes.Thumbnail);
     }
     /**
-     * @param node
-     * @param {string} node.fileAttributesStr
-     * @param {Uint8Array} node.nodeKey
+     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
      * @return {Promise<Uint8Array>}
      */
     static getPreview(node) {
