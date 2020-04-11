@@ -176,32 +176,59 @@ const mega = {
                 return response[0];
             } else {
                 // todo create separate method to handle all errors
+                // https://mega.nz/doc
                 if (response === -9) {
                     throw new Error("ERROR CODE: -9. NOT FOUND");
                 } else if (response === -16) {
                     throw new Error("ERROR CODE: -16. USER IS BLOCKED");
+                } else if (response === -3) {
+                    throw new Error("ERROR CODE: -3. AGAIN");
+                    //  A temporary congestion or server malfunction prevented your request from being processed.
+                    //  No data was altered. Retry.
+                    //  Retries must be spaced with exponential backoff. //todo
                 } else {
-                    throw new Error("ERROR CODE: " + response);
+                    throw new Error("ERROR CODE: " + response); // `response` is a number like this: `-9`
                 }
             }
-        } finally { // if an exceptions happens more than `count` times or the error code was returned
+        } finally { // if an exception happens more than `count` times, or the error code was returned
             mega.semaphore.release();
         }
+    },
+
+    /**
+     * @param {FileAttribute} fileAttribute
+     * @param {string} fileAttribute.id - file attribute ID
+     * @param {number} fileAttribute.type - file attribute type
+     * @return {Promise<string>}
+     */
+    async requestFileAttributeDownloadUrl({id, type}) {
+        console.log("Request download url...");
+        const responseData = await mega.requestAPI({
+            "a": "ufa",    // action (command): u [???] file attribute
+            "fah": id,     // `h` means handler(hash, id)
+            "ssl": mega.ssl,
+            "r": 1         // r [???] – It adds "." in response url (without this dot the url does not work)
+        });
+
+        return responseData["p"] + "/" + type;
     },
 
     // todo add semaphore (the new one) or is it OK without it? [???]
     //  need to test it later
    /**
      * @param {string} url
-     * @param {*} [payload]
+     * @param {string} id
      * @returns {Promise<Uint8Array>} responseBytes
      */
-   async requestFile(url, payload) {
+   async requestFileAttribute(url, id) {
+       const idBinary = mega.megaBase64ToArrayBuffer(id);
+
         /** Sometimes it can throw `connect ETIMEDOUT` or `read ECONNRESET` exception */
         const callback = async () => {
+            console.log("Downloading content...");
             const response = await fetch(url, {
                 method: "post",
-                body: payload,
+                body: idBinary,
                 headers: {
                     // It's important for `node-fetch` (Node.js)
                     // But it is not needed in a browser
@@ -267,7 +294,7 @@ const mega = {
             //"v": 2,        // Multiple links for big files
             "ssl": mega.ssl  // HTTPS for the download link
         });
-        console.log(responseData);
+        //console.log("[responseData]", responseData);
 
         const prettyResponse = {
             size:                  responseData["s"],
@@ -311,7 +338,7 @@ const mega = {
         }, {
             "n": shareId
         });
-        console.log("[responseData]", responseData);
+        //console.log("[responseData]", responseData);
 
         const {
             f: rawNodes, // array of file and folder nodes

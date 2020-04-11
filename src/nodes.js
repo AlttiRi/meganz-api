@@ -2,6 +2,7 @@ const { mega } = require("./mega");
 const { util } = require("./util");
 const FileAttributes = require("./file-attributes");
 
+// todo move related methods from `mega` to here
 class Share {
     id;
     decryptionKeyStr;
@@ -44,7 +45,7 @@ class BasicFolderShareNode {
     constructor(node, masterKey) {
         this.id           = node.id;
         this.parentId     = node.parentId;
-        this.parent       = node.parent ? node.parent : null;
+        this.parent       = node.parent || null;
         this.ownerId      = node.ownerId;
         this.creationDate = node.creationDate;
 

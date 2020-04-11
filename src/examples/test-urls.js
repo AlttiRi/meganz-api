@@ -119,6 +119,20 @@ class URLS {
     static CAT_FOLDER_RELATIVE_1         = "/folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw";
     static CAT_FOLDER_RELATIVE_2         = "folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw";
 
+
+
+    /** ---------------------------------------------------------------
+     * OTHER URLs
+     * ---------------------------------------------------------------- */
+
+    static CAT_FILE_IMAGE_ANCIENT = "https://mega.co.nz/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"; // ".co"
+    // Note: "https://mega.co.nz/file/bkwkHC7D#AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
+    // (".co" + the new format) is no valid for Mega.
+
+    static CAT_FILE_IMAGE_NO_KEY_EMBEDDED = "https://web.archive.org/web/20200407132523/https://mega.nz/file/bkwkHC7D";
+    // Note: web.archive.org can't properly save Mega's pages
+
+
 }
 
 module.exports = URLS;

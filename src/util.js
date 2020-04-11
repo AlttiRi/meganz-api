@@ -268,29 +268,24 @@ const util = {
     },
 
     /**
-     * @param {function} callback - a function to repeat if it throws an exception
+     * @param {function} callback - an async function to repeat if it throws an exception
      * @param {number} count=5 - count of the repeats
      * @param {number} delay=5000 - ms to wait before repeating
      * @return {Promise<*>}
      */
     async repeatIfErrorAsync(callback, count = 5, delay = 5000) {
-        let result;
         for (let i = 0;; i++) {
             try {
-                result = await callback();
+                return await callback();
             } catch (e) {
-                console.error(e);
-                console.error(`ERROR! Will be repeated. The try ${i} of ${count}.`);
+                console.error(e, `ERROR! Will be repeated. The try ${i + 1} of ${count}.`);
                 if (i < count) {
                     await util.sleep(delay);
-                    continue;
                 } else {
                     throw e;
                 }
             }
-            break;
         }
-        return result;
     },
 
     /**
