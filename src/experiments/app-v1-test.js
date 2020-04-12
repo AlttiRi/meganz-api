@@ -42,7 +42,7 @@ const { mega } = require("../mega");
 // ---------------------------------------------------------------------------------------------------------------------
 
         console.log("Parse decryption key...");
-        const { iv, metaMac, nodeKey } = mega.decryptionKeyToParts(decryptionKey);
+        const { iv, metaMac, key: nodeKey } = mega.decryptionKeyToParts(decryptionKey);
 
         logger.debug("iv:", iv, "metaMac:", metaMac, "nodeKey:", nodeKey);
 

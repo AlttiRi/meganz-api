@@ -1,5 +1,5 @@
-const { mega } = require("./mega");
-const { util } = require("./util");
+const {mega} = require("./mega");
+const {util} = require("./util");
 const FileAttributes = require("./file-attributes");
 
 // todo move related methods from `mega` to here
@@ -17,7 +17,7 @@ class Share {
     }
 
     toString() {
-        return  "" +
+        return "" +
             "[id]               " + this.id               + "\n" +
             "[decryptionKeyStr] " + this.decryptionKeyStr + "\n" +
             "[isFolder]         " + this.isFolder         + "\n" +
@@ -64,10 +64,10 @@ class BasicFolderShareNode {
     creationDate;
     #decryptionKey;
 
-    get nodeKey() {
+    get key() {
         return this.#decryptionKey;
     };
-    name; // [requires nodeKey]
+    name; // [requires key]
 
     /**
      * Returns the array of parents names from the root node
@@ -96,7 +96,7 @@ class FileNode extends BasicFolderShareNode {
             const {
                 name,
                 serializedFingerprint
-            } = mega.parseEncodedNodeAttributes(node.attributes, this.nodeKey);
+            } = mega.parseEncodedNodeAttributes(node.attributes, this.key);
             this.name = name;
 
             const {
@@ -111,17 +111,17 @@ class FileNode extends BasicFolderShareNode {
     size;
 
     #keyParts;
-    get nodeKey() {
+    get key() {
         if (!this.#keyParts) {
-            if (super.nodeKey) {
-                this.#keyParts = mega.decryptionKeyToParts(super.nodeKey);
+            if (super.key) {
+                this.#keyParts = mega.decryptionKeyToParts(super.key);
             } else {
-                this.#keyParts = {iv: null, metaMac: null, nodeKey: null};
+                this.#keyParts = {iv: null, metaMac: null, key: null};
             }
         }
-        return this.#keyParts.nodeKey;
+        return this.#keyParts.key;
     };
-    modificationDate;   // [requires nodeKey]
+    modificationDate;   // [requires key]
     get mtime() {       // An alias
         return this.modificationDate;
     }
@@ -141,7 +141,7 @@ class MediaFileNode extends FileNode {
         this.type = "mediaFile";
         this.fileAttributesStr = node.fileAttributesStr;
     }
-    fileAttributesStr; // [requires nodeKey]
+    fileAttributesStr; // [requires key]
 
     //todo mixin for it
     /** @returns {Promise<Uint8Array>} */
@@ -162,7 +162,7 @@ class FolderNode extends BasicFolderShareNode {
         if (masterKey) {
             const {
                 name
-            } = mega.parseEncodedNodeAttributes(node.attributes, this.nodeKey);
+            } = mega.parseEncodedNodeAttributes(node.attributes, this.key);
             this.name = name;
         } else {
             this.name = null;
@@ -199,11 +199,11 @@ class SharedFileNode {
             const {
                 iv,      // [unused][???] // probably it is needed for decryption (not implemented)
                 metaMac, // [unused][???]
-                nodeKey
+                key
             } = mega.decryptionKeyToParts(decryptionKey);
-            this.nodeKey = nodeKey;
+            this.key = key;
         } else {
-            this.nodeKey = null;
+            this.key = null;
         }
 
         const {
@@ -220,7 +220,7 @@ class SharedFileNode {
             const {
                 name,
                 serializedFingerprint
-            } = mega.parseEncodedNodeAttributes(nodeAttributesEncoded, this.nodeKey);
+            } = mega.parseEncodedNodeAttributes(nodeAttributesEncoded, this.key);
 
             const {
                 modificationDate,
@@ -240,7 +240,7 @@ class SharedFileNode {
     id;
     size;
 
-    nodeKey;
+    key;
     name;
     modificationDate;
     get mtime() { // An alias

@@ -74,20 +74,20 @@ const mega = {
     /**
      * @link https://github.com/gpailler/MegaApiClient/blob/93552a027cf7502292088f0ab25f45eb29ebdc64/MegaApiClient/Cryptography/Crypto.cs#L63
      * @param {Uint8Array} decryptedKey
-     * @returns {{iv: Uint8Array, metaMac: Uint8Array, nodeKey: Uint8Array}}
+     * @returns {{iv: Uint8Array, metaMac: Uint8Array, key: Uint8Array}}
      */
     decryptionKeyToParts(decryptedKey) {
 
         const iv      = decryptedKey.subarray(16, 24);
         const metaMac = decryptedKey.subarray(24, 32);
-        const nodeKey = new Uint8Array(16);
+        const key     = new Uint8Array(16);
 
         // 256 bits -> 128 bits
         for (let i = 0; i < 16; i++) {
-            nodeKey[i] = decryptedKey[i] ^ decryptedKey[i + 16];
+            key[i] = decryptedKey[i] ^ decryptedKey[i + 16];
         }
 
-        return {iv, metaMac, nodeKey};
+        return {iv, metaMac, key};
     },
 
     /**

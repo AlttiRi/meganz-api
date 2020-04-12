@@ -39,7 +39,7 @@ class FileAttributeBytes {
     /**
      * @param options
      * @param {FileAttribute} [options.fileAttribute]
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} [options.node]
+     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]
      * @return {Promise<string>} downloadUrl
      */
     getDownloadUrl({fileAttribute, node}) {
@@ -51,7 +51,7 @@ class FileAttributeBytes {
      * @param options
      * @param {FileAttribute} [options.fileAttribute]
      * @param {string} [options.downloadUrl]
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} [options.node]="null"
+     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]="null"
      * @return {Promise<Uint8Array>} encryptedBytes
      */
     async getEncryptedBytes({fileAttribute, downloadUrl, node}) {
@@ -72,7 +72,7 @@ class FileAttributeBytes {
      * @param options
      * @param {FileAttributes} [options.fileAttributes]
      * @param {Uint8Array} [options.encryptedBytes]
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} [options.node]
+     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]
      * @param {string} [options.downloadUrl]
      * @return {Promise<Uint8Array>}
      */
@@ -104,7 +104,7 @@ class FileAttributes {
         });
 
         this.fileAttributes = fileAttributes;
-        this.nodeKey = node.nodeKey;
+        this.nodeKey = node.key;
     }
 
     /** Example output: "924:1*sqbpWSbonCU/925:0*lH0B2ump-G8" */
@@ -127,7 +127,7 @@ class FileAttributes {
     static values = new Map();
 
     /**
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key: Uint8Array}} node
      */
     static add(node) {
         if (!FileAttributes.values.get(node.fileAttributesStr)) {
@@ -136,7 +136,7 @@ class FileAttributes {
     }
 
     /**
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key: Uint8Array}} node
      * @return {FileAttributes}
      */
     static get(node) {
@@ -144,7 +144,7 @@ class FileAttributes {
     }
 
     /**
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key: Uint8Array}} node
      * @return {FileAttributes}
      */
     static of(node) {
@@ -159,25 +159,25 @@ class FileAttributes {
     static Preview   = new FileAttributeBytes(1);
 
     /**
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key: Uint8Array}} node
      * @return {Promise<Uint8Array>}
      */
     static getThumbnail(node) {
         return FileAttributes.getAttribute(node, FileAttributes.Thumbnail);
     }
     /**
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key: Uint8Array}} node
      * @return {Promise<Uint8Array>}
      */
     static getPreview(node) {
         return FileAttributes.getAttribute(node, FileAttributes.Preview);
     }
-    //todo cases when node.nodeKey === null
+    //todo cases when node.key === null
     /**
      * NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
      * https://en.wikipedia.org/wiki/List_of_file_signatures
      *
-     * @param {{fileAttributesStr: string, nodeKey: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key: Uint8Array}} node
      * @param {FileAttributeBytes} typeClass
      * @return {Promise<Uint8Array>}
      */
