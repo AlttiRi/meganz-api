@@ -1,5 +1,6 @@
 const {util} = require("./util");
 
+//todo setter for `max`, `delay` (the check > 0), disable() method
 class Semaphore {
 
     max;
@@ -31,7 +32,7 @@ class Semaphore {
     }
 
     /** @return {Promise<void>} */
-    async acquire() {
+    acquire() {
         console.log(`[Semaphore] Acquired: ${this.#count}${this.#count < this.max ? "" : " and added to a queue"}`);
 
         let promise;
@@ -48,7 +49,7 @@ class Semaphore {
     }
 
     /**
-     * You may note the delay before finishing of a program because of the delay of the semaphore
+     * You may note the delay before finishing of the program because of the delay of the semaphore
      */
     release() {
         util.sleep(this.delay)
@@ -90,8 +91,8 @@ class CountDownLatch {
         }
     }
 
-    /** @return {Promise} */
-    async wait() {
+    /** @return {Promise<void>} */
+    wait() {
         if (this.count > 0) {
             console.log(`[CountDownLatch] Waiting for ${this.count} count downs...`);
         }
