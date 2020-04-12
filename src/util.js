@@ -13,7 +13,7 @@ const util = {
          * @param {*} arguments
          */
         debug() {
-            if (!util.DEBUG) {
+            if (!util.logger.DEBUG) {
                 return;
             }
             [...arguments].forEach(el => {
@@ -25,7 +25,7 @@ const util = {
          * @param {*} arguments
          */
         info() {
-            if (!util.INFO) {
+            if (!util.logger.INFO) {
                 return;
             }
             [...arguments].forEach(el => {
