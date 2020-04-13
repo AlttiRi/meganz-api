@@ -106,31 +106,28 @@ class Share {
      */
     getUrl(oldFormat = false) {
         let result;
-        if (oldFormat) {
-            let selected = "";
-            if (this.selectedFileId) {
-                selected = "?" + this.selectedFileId;
-            } else if (this.selectedFolderId) {
-                selected = "!" + this.selectedFolderId;
-            }
-            result = "https://mega.nz/#" +
-                (this.isFolder ? "F" : "") +
-                "!" + this.id +
-                (this.decryptionKeyStr ? "!" + this.decryptionKeyStr : "") +
-                (selected && !this.decryptionKeyStr ? "!" + selected : selected);
-        } else {
-            let selected = "";
-            if (this.selectedFileId) {
-                selected = "/file/" + this.selectedFileId;
-            } else if (this.selectedFolderId) {
-                selected = "/folder/" + this.selectedFolderId;
-            }
-            result = "https://mega.nz/" +
-                (this.isFolder ? "folder" : "file") +
-                "/" + this.id +
-                (this.decryptionKeyStr ? "#" + this.decryptionKeyStr : "") +
-                (selected && !this.decryptionKeyStr ? "#" + selected : selected);
+        const prefixes = {
+            folder:    oldFormat ? "#F" : "folder",
+            file:      oldFormat ? "#"  : "file",
+            id:        oldFormat ? "!"  : "/",
+            key:       oldFormat ? "!"  : "#",
+            selFile:   oldFormat ? "?"  : "/file/",
+            selFolder: oldFormat ? "!"  : "/folder/",
+        };
+
+        let selected = "";
+        if (this.selectedFileId) {
+            selected = prefixes.selFile + this.selectedFileId;
+        } else if (this.selectedFolderId) {
+            selected = prefixes.selFolder + this.selectedFolderId;
         }
+
+        result = "https://mega.nz/" +
+            (this.isFolder ? prefixes.folder : prefixes.file) +
+            prefixes.id + this.id +
+            (this.decryptionKeyStr ? prefixes.key + this.decryptionKeyStr : "") +
+            (selected && !this.decryptionKeyStr ? prefixes.key + selected : selected);
+
         return result;
     }
 }
