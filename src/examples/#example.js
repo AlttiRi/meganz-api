@@ -1,7 +1,7 @@
 const URLS = require("./test-urls-private");
 const {util} = require("../util");
 const {Nodes} = require("../nodes");
-const {Share} = require("../nodes");
+const Share = require("../share");
 
 async function example() {
     // const nodesFromFolder = await Nodes.nodes(URLS.SELECTED_FOLDER_WITH_UNDECRYPTED_FILE);

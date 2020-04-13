@@ -2,7 +2,7 @@ const { btoa, atob, fetch } = require("../browser-context");
 const { util } = require("../util");
 const logger = util.logger;
 const { mega } = require("../mega");
-const { Share } = require("../nodes");
+const Share = require("../share");
 
 
 !async function app() {
