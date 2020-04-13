@@ -2,6 +2,7 @@ const { btoa, atob, fetch } = require("../browser-context");
 const { util } = require("../util");
 const logger = util.logger;
 const { mega } = require("../mega");
+const { Share } = require("../nodes");
 
 
 !async function app() {
@@ -19,7 +20,7 @@ const { mega } = require("../mega");
             isFolder,
             selectedFolderId,
             selectedFileId
-        } = mega.parseUrl(link);
+        } = Share.fromUrl(link);
 
         logger.debug(isFolder, id, decryptionKeyStr, selectedFolderId, selectedFileId);
 

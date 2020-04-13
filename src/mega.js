@@ -24,53 +24,6 @@ const mega = {
     ssl: 2, // Is there a difference between "1" and "2" [???]
     apiGateway: "https://g.api.mega.co.nz/cs",
 
-
-    /**
-     * @see URLS
-     * @param {string|URL} url - URL
-     * @returns {{id: string, decryptionKeyStr: string, isFolder: boolean, selectedFolderId: string , selectedFileId: string}}
-     */
-    parseUrl(url) {
-        const _url = url.toString(); // if passed a URL object
-        const isLegacyURL = /#F!|#!/;
-        let regExp;
-
-        if (_url.match(isLegacyURL)) {
-            regExp = /(?<type>(?<isFolder>#F!)|(?<isFile>#!))(?<id>[\w-_]+)(?<keyPrefix>!(?=[\w-_]{22,43})|!(?=[!?])|!(?![\w-_]{8}))?(?<key>(?<=!)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\?)|(?<selectedFolderPrefix>!?))((?<file>(?<=\?)[\w-_]+)|(?<folder>(?<=!)[\w-_]+)))?/;
-        } else {
-            regExp = /(?<type>(?<isFolder>folder\/)|(?<isFile>file\/))(?<id>[\w-_]+)(?<keyPrefix>#)?(?<key>(?<=#)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\/file\/)|(?<selectedFolderPrefix>\/folder\/))((?<file>(?<=\/file\/)[\w-_]+)|(?<folder>(?<=\/folder\/)[\w-_]+)))?/;
-        }
-
-        const groups = _url.match(regExp).groups;
-
-        const isFolder = Boolean(groups.isFolder);
-        /** Content ID */
-        const id = groups.id;
-        /** Decryption key encoded with Mega's base64 */
-        const decryptionKeyStr = groups.key    || "";
-        const selectedFolderId = groups.folder || "";
-        const selectedFileId   = groups.file   || "";
-
-        return {id, decryptionKeyStr, isFolder, selectedFolderId, selectedFileId};
-    },
-
-    /**
-     * Return the url string for a share.
-     *
-     * @param {Share} share
-     * @param {string} share.id
-     * @param {string} share.decryptionKeyStr
-     * @param {boolean} share.isFolder
-     * @param {string} share.selectedFolderId
-     * @param {string} share.selectedFileId
-     * @param {boolean} oldFormat
-     * @returns {string}
-     */
-    getUrl({id, decryptionKeyStr = "", isFolder = false, selectedFolderId = "", selectedFileId = ""}, oldFormat = false) {
-        // todo
-        return `https://#!${id}!${decryptionKeyStr}`;
-    },
-
     /**
      * @link https://github.com/gpailler/MegaApiClient/blob/93552a027cf7502292088f0ab25f45eb29ebdc64/MegaApiClient/Cryptography/Crypto.cs#L63
      * @param {Uint8Array} decryptedKey

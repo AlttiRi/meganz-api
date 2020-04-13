@@ -59,16 +59,16 @@ class URLS {
     static CAT_FOLDER_NO_KEY_SELECTED_FILE_1_OLD   = "https://mega.nz/#F!e1ogxQ7T!?P8BBzaTS"; // [1]
     static CAT_FOLDER_NO_KEY_SELECTED_FILE_2_OLD   = "https://mega.nz/#F!e1ogxQ7T?P8BBzaTS";  // [2]
 
-    // These two links do not work properly in the web version (after the key entered) – no folder is selected (opened):
     static CAT_FOLDER_NO_KEY_SELECTED_FOLDER_1_OLD = "https://mega.nz/#F!e1ogxQ7T!!CghQlTCa";
+    // This link does not work properly on the web version (after the key entered) – no folder is selected (opened):
     static CAT_FOLDER_NO_KEY_SELECTED_FOLDER_2_OLD = "https://mega.nz/#F!e1ogxQ7T!CghQlTCa";
     // Using the opener (see the note above) sign ("!") for file links "works" the same way, URL examples:
-    // https://mega.nz/#F!e1ogxQ7T!P8BBzaTS or https://mega.nz/#F!e1ogxQ7T!!P8BBzaTS
+    // https://mega.nz/#F!e1ogxQ7T!P8BBzaTS (not "works"), https://mega.nz/#F!e1ogxQ7T!!P8BBzaTS (works)
     //
-    // But using the select sign ("?") for folder work OK, URL examples:
+    // But using the select sign ("?") for folder work OK in both cases, URL examples:
     // https://mega.nz/#F!e1ogxQ7T?CghQlTCa or https://mega.nz/#F!e1ogxQ7T!?CghQlTCa
     //
-    // So, Mega's web site can't handle "!" properly if the key is missing.
+    // So, Mega's website can't handle one "!" properly if the key is missing.
 
 
 
