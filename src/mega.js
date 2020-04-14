@@ -107,10 +107,10 @@ const mega = {
          * The main function.
          * Represented as a callback to pass it in `_repeatIfErrorAsync`.
          *
-         * Returns an array with one item (multiple request are not implemented) or an error code (number)
+         * Returns an array with one item (multiple request are not implemented), or an error code (number)
          *
-         * An exception may be thrown by `fetch`, for example, if you perform to much connections
-         * or `json()` when Mega returns an empty string (a bug?)
+         * An exception may be thrown by `fetch`, for example, if you perform to many connections
+         * or `json()` when Mega returns an empty string (if the server returns code 500)
          *
          * @return {Promise<*>}
          */
@@ -119,15 +119,25 @@ const mega = {
                 method: "post",
                 body: JSON.stringify([payload])
             });
-            return await response.json();
+
+            if (response.status === 500) {
+                throw Error("ERR_ABORTED 500 (Server Too Busy)"); // to do not parse the empty string
+            } else if (response.status !== 200) {
+                console.error("[response.status]", response.status);
+            }
+
+            const text = await response.text();
+            console.log(text);
+            return JSON.parse(text);
         };
 
         await mega.semaphore.acquire();
         try {
             const response = await util.repeatIfErrorAsync(callback);
-            if (Array.isArray(response)) {
+            if (Array.isArray(response)) { //todo the error code can be in an array
                 return response[0];
             } else {
+                // todo v2 api error response
                 // todo create separate method to handle all errors
                 // https://mega.nz/doc
                 if (response === -9) {
@@ -188,6 +198,9 @@ const mega = {
                     "connection": "keep-alive"
                 }
             });
+            if (response.status !== 200) {
+                console.error("[response.status]", response.status);
+            }
             return new Uint8Array(await response.arrayBuffer());
         };
         return await util.repeatIfErrorAsync(callback);
