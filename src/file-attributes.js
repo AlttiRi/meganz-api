@@ -51,7 +51,7 @@ class FileAttributeBytes {
      * @param options
      * @param {FileAttribute} [options.fileAttribute]
      * @param {string} [options.downloadUrl]
-     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]="null"
+     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]
      * @return {Promise<Uint8Array>} encryptedBytes
      */
     async getEncryptedBytes({fileAttribute, downloadUrl, node}) {
@@ -79,7 +79,7 @@ class FileAttributeBytes {
     async getBytes({fileAttributes, encryptedBytes, node, downloadUrl}) {
         const _fileAttributes = fileAttributes || FileAttributes.of(node);
         const fileAttribute = _fileAttributes.byType(this.type);
-        const _encryptedBytes = encryptedBytes || await this.getEncryptedBytes({fileAttribute, downloadUrl});
+        const _encryptedBytes = encryptedBytes || await this.getEncryptedBytes({fileAttribute, downloadUrl, node});
 
         console.log("Decryption of downloaded content...");
         return util.decryptAES(_encryptedBytes, _fileAttributes.nodeKey, {padding: "ZeroPadding"});

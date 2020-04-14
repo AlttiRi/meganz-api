@@ -1,3 +1,10 @@
+/**
+ * This class represents the share,
+ * the information that is needed to get the access to a shared content – a folder, or a file.
+ *
+ * Usually you have the URL, that contains that data.
+ * `Share.fromUrl(url)` parses the URL and returns the instance of this class.
+ */
 class Share {
     /** @type {string} */
     id;
@@ -49,6 +56,7 @@ class Share {
         return this.selectedFileId || this.selectedFolderId || null;
     }
 
+    //todo? create a singleton/caching for at least one last url? to do not parse several times the same url.
     /**
      * @see URLS
      * @param {string|URL} url - URL

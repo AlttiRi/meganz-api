@@ -253,23 +253,25 @@ class SharedMediaFileNode extends SharedFileNode {
 class Nodes {
 
     /**
-     * @param {string} url
+     * @param {string|URL} url
      * @returns {Promise<SharedFileNode|SharedMediaFileNode|RootFolderNode|FolderNode|FileNode|MediaFileNode>
      *     |Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>}
      */
     static async of(url) {
-        return Share.isFolder(url) ? Nodes.getFolderNodes(url) : Nodes.getSharedNode(url);
+        const share = Share.fromUrl(url);
+        return share.isFolder ? Nodes.getFolderNodes(share) : Nodes.getSharedNode(share);
     }
 
     /**
-     * @param {string} url
+     * @param {string|URL} url
      * @returns {Promise<SharedFileNode|SharedMediaFileNode|RootFolderNode|FolderNode|FileNode|MediaFileNode>}
      */
     static async node(url) {
-        if (!Share.isFolder(url)) {
-            return Nodes.getSharedNode(url);
+        const share = Share.fromUrl(url);
+        if (share.isFolder) {
+            return Nodes.getSharedNode(share);
         } else {
-            const nodes = await Nodes.getFolderNodes(url);
+            const nodes = await Nodes.getFolderNodes(share);
             if (nodes.selectedId) {
                 return nodes.selectedId;
             } else {
@@ -279,23 +281,23 @@ class Nodes {
     }
 
     /**
-     * @param {string} url
+     * @param {string|URL} url
      * @returns {Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>}
      */
     static async nodes(url) {
-        if (Share.isFolder(url)) {
-            return Nodes.getFolderNodes(url);
+        const share = Share.fromUrl(url);
+        if (share.isFolder) {
+            return Nodes.getFolderNodes(share);
         } else {
-            return [await Nodes.getSharedNode(url)];
+            return [await Nodes.getSharedNode(share)];
         }
     }
 
     /**
-     * @param {string} url
+     * @param {Share} share
      * @returns {Promise<SharedFileNode|SharedMediaFileNode>}
      */
-    static async getSharedNode(url) {
-        const share = Share.fromUrl(url);
+    static async getSharedNode(share) {
         const nodeInfo = await mega.requestNodeInfo(share.id);
         if (nodeInfo.fileAttributesStr) {
             return new SharedMediaFileNode(share, nodeInfo);
@@ -305,12 +307,10 @@ class Nodes {
     }
 
     /**
-     * @param {string} url
+     * @param {Share} share
      * @returns {Promise<(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>} [note] The array have mixed type content
      */
-    static async getFolderNodes(url) {
-
-        const share = Share.fromUrl(url);
+    static async getFolderNodes(share) {
 
         const masterKey = share.decryptionKeyStr ? mega.megaBase64ToArrayBuffer(share.decryptionKeyStr) : null;
         //logger.debug("[masterKey]", masterKey);
