@@ -117,6 +117,10 @@ class MediaFileNode extends FileNode {
     getPreview() {
         return FileAttributes.getPreview(this);
     };
+
+    get thumbnail() { // todo others
+        return FileAttributes.of(this).byType(FileAttributes.Thumbnail.type)
+    }
 }
 
 class FolderNode extends BasicFolderShareNode {
@@ -368,6 +372,7 @@ class Nodes {
         Object.defineProperty(resultArray, "selected", { get: () => selected });
         Object.defineProperty(resultArray, "folders",  { get: () => [...folders.values()] });
         Object.defineProperty(resultArray, "files",    { get: () => files });
+        //todo .mediaNodes
 
         return resultArray;
     }

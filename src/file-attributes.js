@@ -104,7 +104,7 @@ class FileAttributes {
         });
 
         this.fileAttributes = fileAttributes;
-        this.nodeKey = node.key;
+        this.nodeKey = node.key || null;
     }
 
     /** Example output: "924:1*sqbpWSbonCU/925:0*lH0B2ump-G8" */
@@ -127,7 +127,7 @@ class FileAttributes {
     static values = new Map();
 
     /**
-     * @param {{fileAttributesStr: string, key: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key?: Uint8Array}} node
      */
     static add(node) {
         if (!FileAttributes.values.get(node.fileAttributesStr)) {
@@ -136,7 +136,7 @@ class FileAttributes {
     }
 
     /**
-     * @param {{fileAttributesStr: string, key: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key?: Uint8Array}} node
      * @return {FileAttributes}
      */
     static get(node) {
@@ -144,7 +144,7 @@ class FileAttributes {
     }
 
     /**
-     * @param {{fileAttributesStr: string, key: Uint8Array}} node
+     * @param {{fileAttributesStr: string, key?: Uint8Array}} node
      * @return {FileAttributes}
      */
     static of(node) {
@@ -187,11 +187,118 @@ class FileAttributes {
     }
 
 
-    static getThumbnails(nodes) {
-        //todo
+
+    static async getThumbnails(nodes) {
+
+        /** @type Map<Number, FileAttribute> */ // <fa.bunch, fa>
+        const bunchFAs = new Map();
+        for (const node of nodes) {
+            const FA = FileAttributes.of(node).byType(FileAttributes.Thumbnail.type);
+            if (bunchFAs.has(FA.bunch)) {
+                continue;
+            }
+            bunchFAs.set(FA.bunch, FA);
+        }
+
+        /** @type Map<Number, String> */ // <fa.bunch, url>
+        const bunchUrls = new Map();
+        /** @type Promise[] */
+        const downloadUrlRequests = [];
+
+        for (const fileAttribute of bunchFAs.values()) {
+            const promise = FileAttributes.Thumbnail.getDownloadUrl({fileAttribute})
+                .then(url => {
+                    bunchUrls.set(fileAttribute.bunch, url);
+                });
+            downloadUrlRequests.push(promise);
+        }
+        await Promise.all(downloadUrlRequests);
+
+        console.log();
+        console.log(bunchUrls);
+
+        console.log("----------");
+
+        const promises = [];
+        let totalBytesDownloaded = 0;
+
+        for (const [bunch, url] of bunchUrls.entries()) {
+
+            // Nodes with the same bunch
+            const nodesBunched = nodes.filter(node => FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).bunch === bunch);
+
+            // The deduplicated list of IDs of the file attributes for nodes with the same bunch // Nodes can have the same FA
+            /** @type String[] */
+            const _faIds = nodesBunched.map(node => FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).id);
+            const faIds = [...new Set(_faIds)];
+
+            console.log();
+            console.log(bunch, url);
+            console.log(_faIds);
+
+            /** @type Promise<Map<String, Uint8Array>> */ // <fa.id, bytes>
+            const promise = mega.requestFileAttribute(url, faIds) //todo rename requestFileAttributeBytes
+                .then(responseBytes => {
+                    console.log("[response]", responseBytes.length, "bytes");
+                    totalBytesDownloaded += responseBytes.length;
+
+                    /** @type Map<String, Uint8Array> */ // <fa.id, bytes>
+                    const results = new Map();
+
+                    let offset = 0;
+                    for (let i = 0; i < faIds.length; i++) {
+
+                        const idBytes     = responseBytes.subarray(offset,      offset +  8);
+                        const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
+                        const length      = util.arrayBufferToLong(lengthBytes);
+                        const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
+
+                        const id = mega.arrayBufferToMegaBase64(idBytes);
+
+                        results.set(id, dataBytes);
+                        offset += 12 + length;
+                    }
+                    return results;
+                });
+
+            promises.push(promise);
+        }
+
+        console.log();
+        console.log(totalBytesDownloaded);
+
+        /** @type Map<String, Uint8Array>[] */ // <fa.id, encBytes>
+        const arrayOfMaps = await Promise.all(promises);
+
+        /** @type Map<String, Uint8Array> */ // <nodeId, bytes>
+        const result = new Map();
+
+        for (const node of nodes) {
+            const nodeFaId = FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).id;
+
+            /** @type Map<String, Uint8Array> */  // <fa.id, encBytes>
+            const map = arrayOfMaps.find(map => map.has(nodeFaId));
+            const encBytes = map.get(nodeFaId);
+            const bytes = util.decryptAES(encBytes, node.key, {padding: "ZeroPadding"});
+
+            result.set(node.id, bytes);
+        }
+
+        return result;
     }
+
+
+
+
+
+    //todo
     static getPreviews(nodes) {
-        //todo
+        // return FileAttributes.getAttributes(node, FileAttributes.Preview);
+    }
+    //todo
+    static getAttributes(node, typeClass) {
+        // const fileAttributes = FileAttributes.of(node);
+        // return typeClass.getBytes({fileAttributes});
     }
 
 
