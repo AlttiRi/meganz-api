@@ -1,4 +1,4 @@
-const { btoa, atob, fetch } = require("../browser-context");
+const {util} = require("../util");
 
 
 function decryptWithCryptoJS(data, key, iv) {
@@ -19,10 +19,10 @@ const cryptText = "2bb7a12a7e59f9fa3c3d4ff0eb502cde3187338cc3137af785995b364fc5b
 const keyBase64 = "47b79d24e3ec47c528abdaed8f3fafde";
 const initValue = "8af4d72873e4016cd73a1d5b851e9cb2";
 
-decryptedTextWithCryptoJS = decryptWithCryptoJS(cryptText, keyBase64, initValue);
+const decryptedTextWithCryptoJS = decryptWithCryptoJS(cryptText, keyBase64, initValue);
 
 console.log("Decrypted with CryptoJS [3]:\n");
 console.log(decryptedTextWithCryptoJS);
 
 console.log("\nResult (base64):");
-console.log(btoa(decryptedTextWithCryptoJS));
+console.log(util.binaryStringToBase64(decryptedTextWithCryptoJS));

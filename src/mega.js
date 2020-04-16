@@ -1,5 +1,5 @@
-const { btoa, atob, fetch } = require("./browser-context");
-const { util } = require("./util");
+const {fetch} = require("./browser-context");
+const {util} = require("./util");
 const logger = util.logger;
 const {Semaphore} = require("./synchronization");
 
@@ -50,6 +50,35 @@ const mega = {
     megaBase64ToArrayBuffer(megaBase64) {
         const base64 = mega.megaBase64ToBase64(megaBase64);
         return util.base64BinaryStringToArrayBuffer(base64);
+    },
+
+    /**
+     * @param {string} base64EncodedStr
+     * @return {string}
+     */
+    base64ToMegaBase64(base64EncodedStr) {
+        return base64EncodedStr.replace(/=/g, "")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_");
+    },
+
+    /**
+     * @param {Uint8Array} arrayBuffer
+     * @return {string}
+     */
+    arrayBufferToMegaBase64(arrayBuffer) {
+        const binaryString = util.arrayBufferToBinaryString(arrayBuffer);
+        const base64 = util.binaryStringToBase64(binaryString);
+        return mega.base64ToMegaBase64(base64);
+    },
+
+    /**
+     * @param {string} megaBase64
+     * @returns {string}
+     */
+    megaBase64ToBinaryString(megaBase64) {
+        const base64 = mega.megaBase64ToBase64(megaBase64);
+        return util.base64ToBinaryString(base64);
     },
 
     /**

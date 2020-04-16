@@ -1,4 +1,4 @@
-const { encryptedStr1: data, key, iv } = require("./data");
+const {encryptedStr1: data, key, iv} = require("./data");
 
 
 /** @returns {Promise<string>} */

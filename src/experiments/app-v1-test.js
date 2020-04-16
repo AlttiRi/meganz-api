@@ -1,7 +1,7 @@
-const { btoa, atob, fetch } = require("../browser-context");
-const { util } = require("../util");
+const {fetch} = require("../browser-context");
+const {util} = require("../util");
 const logger = util.logger;
-const { mega } = require("../mega");
+const {mega} = require("../mega");
 const Share = require("../share");
 
 

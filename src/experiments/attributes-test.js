@@ -1,6 +1,6 @@
-const { btoa, atob, fetch } = require("../browser-context");
-const { util } = require("../util");
-const { mega } = require("../mega");
+const {fetch} = require("../browser-context");
+const {util} = require("../util");
+const {mega} = require("../mega");
 
 // The test of downloading a thumbnail and a preview (file attributes)
 !async function test() {
@@ -52,7 +52,7 @@ const { mega } = require("../mega");
 
     thumbnailId = mega.megaBase64ToBase64(thumbnailId);
     console.log(thumbnailId);
-    thumbnailId = atob(thumbnailId);
+    thumbnailId = util.base64ToBinaryString(thumbnailId);
     console.log(thumbnailId);
     thumbnailId = util.binaryStringToArrayBuffer(thumbnailId);
     console.log(thumbnailId);

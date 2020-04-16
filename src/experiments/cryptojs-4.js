@@ -1,4 +1,4 @@
-const { btoa, atob, fetch } = require("../browser-context");
+const {util} = require("../util");
 
 
 function decryptWithCryptoJSHex(data, key, iv){
@@ -36,7 +36,7 @@ console.log("\nResult:");
 console.log(decryptedArrayBuffer);
 
 console.log("\nResult Base64:");
-console.log(btoa(decryptedArrayBuffer));
+console.log(util.binaryStringToBase64(decryptedArrayBuffer));
 
 
 

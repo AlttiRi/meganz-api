@@ -1,5 +1,5 @@
-const { util } = require("../util");
-const { encryptedStr1: data, key, iv } = require("./data");
+const {util} = require("../util");
+const {encryptedStr1: data, key, iv} = require("./data");
 
 
 function decryptWithAESJS(data, key, iv) {

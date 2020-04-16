@@ -35,6 +35,22 @@ const util = {
     },
 
     /**
+     * @param {string} base64
+     * @returns {string} binaryString
+     */
+    base64ToBinaryString(base64) {
+        return atob(base64);
+    },
+
+    /**
+     * @param {string} binaryString
+     * @returns {string} base64
+     */
+    binaryStringToBase64(binaryString) {
+        return btoa(binaryString);
+    },
+
+    /**
      * @param {Uint8Array} arrayBuffer
      * @returns {string}
      */
@@ -97,7 +113,7 @@ const util = {
      * @returns {Uint8Array}
      */
     base64BinaryStringToArrayBuffer(base64BinaryString) {
-        const binaryString = atob(base64BinaryString);
+        const binaryString = util.base64ToBinaryString(base64BinaryString);
         return util.binaryStringToArrayBuffer(binaryString);
     },
 
@@ -166,7 +182,7 @@ const util = {
      * @param {Uint8Array} arrayBuffer
      * @param {string} name
      * @param {number|Date} [mtime]
-     * @param {string[]} path - array of folders names
+     * @param {string[]} [path] - array of folders names
      */
     saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
         const safePath = path.map(util.getSafeName);
@@ -300,7 +316,25 @@ const util = {
             console.log(`Bad filename: "${name}"`); // for debugging currently
         }
         return name.replace("/", "_");
-    }
+    },
+
+    /**
+     * The simple implementation
+     * @param {Array|TypedArray} array1
+     * @param {Array|TypedArray} array2
+     * @return {boolean}
+     */
+    compareArrays(array1, array2) {
+        if (array1.length === array2.length) {
+            for (let i = 0; i < array1.length; i++) {
+                if (array1[i] !== array2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    },
 };
 
 
