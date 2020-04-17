@@ -119,7 +119,7 @@ class MediaFileNode extends FileNode {
     };
 
     get thumbnail() { // todo others
-        return FileAttributes.of(this).byType(FileAttributes.Thumbnail.type)
+        return FileAttributes.of(this).byType(FileAttributes.Thumbnail.type);
     }
 }
 

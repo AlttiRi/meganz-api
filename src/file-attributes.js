@@ -190,63 +190,55 @@ class FileAttributes {
 
     static async getThumbnails(nodes) {
 
-        /** @type Map<Number, FileAttribute> */ // <fa.bunch, fa>
-        const bunchFAs = new Map();
+        // Maps the bunch to the file attributes with the same bunch
+        /** @type Map<Number, {fas: FileAttribute[], nodes: Object[], url?: String}> */ // <fa.bunch, {fa[], url}>
+        const bunches = new Map(); // `fileAttributesByBunch`
+
         for (const node of nodes) {
             const FA = FileAttributes.of(node).byType(FileAttributes.Thumbnail.type);
-            if (bunchFAs.has(FA.bunch)) {
-                continue;
+            if (!bunches.has(FA.bunch)) {
+                bunches.set(FA.bunch, {fas: [], nodes: []});
             }
-            bunchFAs.set(FA.bunch, FA);
+            bunches.get(FA.bunch).fas.push(FA);
+            bunches.get(FA.bunch).nodes.push(node);
         }
 
-        /** @type Map<Number, String> */ // <fa.bunch, url>
-        const bunchUrls = new Map();
+        // --------------------------------------------------------
+
         /** @type Promise[] */
         const downloadUrlRequests = [];
 
-        for (const fileAttribute of bunchFAs.values()) {
-            const promise = FileAttributes.Thumbnail.getDownloadUrl({fileAttribute})
+        for (const holder of bunches.values()) {
+            const promise = FileAttributes.Thumbnail.getDownloadUrl({fileAttribute: holder.fas[0]})
                 .then(url => {
-                    bunchUrls.set(fileAttribute.bunch, url);
+                    holder.url = url;
                 });
             downloadUrlRequests.push(promise);
         }
         await Promise.all(downloadUrlRequests);
 
-        console.log();
-        console.log(bunchUrls);
-
-        console.log("----------");
+        // --------------------------------------------------------
 
         const promises = [];
         let totalBytesDownloaded = 0;
 
-        for (const [bunch, url] of bunchUrls.entries()) {
+        for (const [/*bunch*/, {url, fas, nodes}] of bunches.entries()) {
 
-            // Nodes with the same bunch
-            const nodesBunched = nodes.filter(node => FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).bunch === bunch);
-
-            // The deduplicated list of IDs of the file attributes for nodes with the same bunch // Nodes can have the same FA
             /** @type String[] */
-            const _faIds = nodesBunched.map(node => FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).id);
-            const faIds = [...new Set(_faIds)];
+            // The deduplicated list of IDs of the file attributes for nodes with the same bunch
+            // Nodes can have the same FA
+            const faIds = [...new Set(fas.map(fa => fa.id))];
 
-            console.log();
-            console.log(bunch, url);
-            console.log(_faIds);
-
-            /** @type Promise<Map<String, Uint8Array>> */ // <fa.id, bytes>
+            /** @type Promise<Map<String, Uint8Array>> */
             const promise = mega.requestFileAttribute(url, faIds) //todo rename requestFileAttributeBytes
                 .then(responseBytes => {
                     console.log("[response]", responseBytes.length, "bytes");
                     totalBytesDownloaded += responseBytes.length;
 
-                    /** @type Map<String, Uint8Array> */ // <fa.id, bytes>
-                    const results = new Map();
+                    /** @type [{node: Object, encBytes: Uint8Array}] */
+                    const results = [];
 
-                    let offset = 0;
-                    for (let i = 0; i < faIds.length; i++) {
+                    for (let i = 0, offset = 0; i < faIds.length; i++) {
 
                         const idBytes     = responseBytes.subarray(offset,      offset +  8);
                         const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
@@ -255,7 +247,10 @@ class FileAttributes {
 
                         const id = mega.arrayBufferToMegaBase64(idBytes);
 
-                        results.set(id, dataBytes);
+                        nodes // if nodes have the same file attribute
+                            .filter(node => FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).id === id)
+                            .forEach(node => results.push({node, encBytes: dataBytes}));
+
                         offset += 12 + length;
                     }
                     return results;
@@ -267,21 +262,15 @@ class FileAttributes {
         console.log();
         console.log(totalBytesDownloaded);
 
-        /** @type Map<String, Uint8Array>[] */ // <fa.id, encBytes>
-        const arrayOfMaps = await Promise.all(promises);
+        /** @type [{node: Object, encBytes: Uint8Array}][] */ // <node, encBytes>[]
+        const arrayOfArrays = await Promise.all(promises);
 
-        /** @type Map<String, Uint8Array> */ // <nodeId, bytes>
-        const result = new Map();
+        /** @type [{node: Object, bytes: Uint8Array}] */
+        const result = [];
 
-        for (const node of nodes) {
-            const nodeFaId = FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).id;
-
-            /** @type Map<String, Uint8Array> */  // <fa.id, encBytes>
-            const map = arrayOfMaps.find(map => map.has(nodeFaId));
-            const encBytes = map.get(nodeFaId);
+        for (const {node, encBytes} of arrayOfArrays.flat()) {
             const bytes = util.decryptAES(encBytes, node.key, {padding: "ZeroPadding"});
-
-            result.set(node.id, bytes);
+            result.push({node, bytes});
         }
 
         return result;

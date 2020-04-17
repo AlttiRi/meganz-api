@@ -10,13 +10,12 @@ const FileAttributes = require("../file-attributes");
 async function example() {
     const nodes = await Nodes.nodes(URLS.FOLDER_WITH_DUBS_1_FORK);
 
-    /** @type Map<String, Uint8Array> */ // <node.id, bytes>
-    const map = await FileAttributes.getThumbnails(nodes.filter(Nodes.isMediaNode));
+    /** @type [{node: Object, bytes: Uint8Array}] */
+    const results = await FileAttributes.getThumbnails(nodes.filter(Nodes.isMediaNode));
 
     let index = 1;
-    for (const [id, bytes] of map.entries()) {
-        const node = nodes.find(node => node.id === id);
-        util.saveFile(bytes, `thumb-${index.toString().padStart(3, "0")}-${id}.jpg`, node.mtime);
+    for (const {node, bytes} of results) {
+        util.saveFile(bytes, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
         index++;
     }
 
