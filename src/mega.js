@@ -205,26 +205,25 @@ const mega = {
         return responseData["p"] + "/" + type;
     },
 
-    // todo add semaphore (the new one) or is it OK without it? [???]
-    //  need to test it later
+    // todo add semaphore (the new one) or is it OK without it?
+    //  it handles 136 connections without problems: use `Thumbnail.getEncryptedBytes(..., false)` <- "false"
+    //  need to test it later more
     /**
      * @param {string} url
      * @param {string|string[]} ids
      * @returns {Promise<Uint8Array>} responseBytes
+     * @throws ETIMEDOUT, ECONNRESET
      */
-    async requestFileAttribute(url, ids) {
+    async requestFileAttributeBytes(url, ids) {
 
         /** @type Uint8Array */
         let selectedIdsBinary;
 
         if (Array.isArray(ids)) {
-
             selectedIdsBinary = new Uint8Array(ids.length * 8);
-
             for (let i = 0; i < ids.length; i++) {
                 selectedIdsBinary.set(mega.megaBase64ToArrayBuffer(ids[i]), i * 8);
             }
-
         } else {
             selectedIdsBinary = mega.megaBase64ToArrayBuffer(ids);
         }
@@ -246,9 +245,9 @@ const mega = {
             }
             return new Uint8Array(await response.arrayBuffer());
         };
-        let result;
-        result = await util.repeatIfErrorAsync(callback);
-        return result;
+        const responseBytes = await util.repeatIfErrorAsync(callback);
+        console.log("[downloaded]", responseBytes.length, "bytes");
+        return responseBytes;
     },
 
     /**

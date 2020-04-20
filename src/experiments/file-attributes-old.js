@@ -39,11 +39,6 @@ class FileAttributes {
         return FileAttributes.get(fileAttributesStr);
     }
 
-
-    static async _of(nodes) {
-        // ...
-    }
-
     static async getThumbnail(node) {
         return FileAttributes.getAttribute(node, FileAttributes.thumbnailType);
     }
@@ -76,7 +71,7 @@ class FileAttributes {
         console.log(`Encrypted file attribute size is ${length} bytes`); // with zero padding
 
         console.log("Decryption of downloaded content...");
-        return util.decryptAES(dataBytes, node.nodeKey, {padding: "ZeroPadding"});
+        return util.decryptAES(dataBytes, node.key, {padding: "ZeroPadding"});
     }
 }
 
@@ -88,7 +83,7 @@ class FileAttributes {
  */
 async function requestFileAttributeEncrypted(fileAttribute) {
     const downloadLink = await mega.requestFileAttributeDownloadUrl(fileAttribute);
-    return mega.requestFileAttribute(downloadLink, fileAttribute.id);
+    return mega.requestFileAttributeBytes(downloadLink, fileAttribute.id);
 }
 
 

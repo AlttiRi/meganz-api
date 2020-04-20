@@ -1,26 +1,125 @@
 const {mega} = require("./mega");
 const {util} = require("./util");
 
+/**
+ * The interface of a media file node
+ * @typedef {{fileAttributesStr: string, key?: Uint8Array}} IMediaNodeSimple
+ */
+
+/**
+ * @typedef IMediaGettersMixin
+ * @property {FileAttribute} thumbnail
+ * @property {FileAttribute} preview
+ * @property {function(): Promise<Uint8Array>} getThumbnail
+ * @property {function(): Promise<Uint8Array>} getPreview
+ */
+
+/**
+ * @typedef {IMediaNodeSimple & IMediaGettersMixin} IMediaNode
+ */
+
+
 class FileAttribute {
     /** @type {string} */
     id;
     /** @type {number} */
     type;
-    /** @type {number} */
+    /** @type {Bunch} */
     bunch;
 
     /**
      * @param {string} id - `id`, or `handler` as Mega names it
-     * @param {number|*} type - 0 – thumbnail, 1 - preview
+     * @param {number|*} type - 0 – thumbnail, 1 - preview, 8 - ..., 9 - ...
      * @param {number|*} bunch - Attributes with the same bunch number can be requested within one API request
      */
     constructor(id, type, bunch) {
         this.id = id;
         this.type = Number(type);
-        this.bunch = Number(bunch);
+        this.bunch = Bunch.of(Number(bunch));
     }
+
+    /**
+     * @param {boolean} cached=true
+     * @return {Promise<string>}
+     */
+    getDownloadUrl(cached = true) {
+        if (!Types.hasBytes(this)){
+            return null;
+        }
+        return this.bunch.getDownloadUrl(this, cached);
+    }
+
     toString() {
         return this.bunch + ":" + this.type + "*" + this.id;
+    }
+}
+
+class Bunch {
+    id;
+    #downloadUrl = null;
+
+    /**
+     * @private
+     * @type {Map<number, Bunch>}
+     */
+    static values = new Map();
+
+    /**
+     * @private
+     * @param {number} bunch
+     */
+    constructor(bunch) {
+        this.id = Number(bunch);
+    }
+
+    toString() {
+        return this.id.toString();
+    }
+
+    /**
+     * @param {number} bunch
+     * @return {Bunch}
+     */
+    static of(bunch) {
+        if (Bunch.values.has(bunch)) {
+            return Bunch.values.get(bunch);
+        }
+        const _bunch = new Bunch(bunch);
+        Bunch.values.set(bunch, _bunch);
+        return _bunch;
+    }
+
+    /**
+     * @param {FileAttribute} fileAttribute
+     * @param {boolean} cached=true
+     * @return {Promise<string>}
+     */
+    async getDownloadUrl(fileAttribute, cached= true) {
+        if (cached && this.hasDownloadUrl) {
+            return this.downloadUrl;
+        }
+        const url = await mega.requestFileAttributeDownloadUrl(fileAttribute);
+        this.#downloadUrl = url;
+        return url;
+    }
+    get hasDownloadUrl() {
+        return Boolean(this.#downloadUrl);
+    }
+    get downloadUrl() {
+        return this.#downloadUrl;
+    }
+}
+
+class Types {
+    static thumbnail = 0;
+    static preview   = 1;
+
+    /**
+     * @param {FileAttribute} fileAttribute
+     * @return {boolean}
+     */
+    static hasBytes(fileAttribute) {
+        return fileAttribute.type === Types.preview || fileAttribute.type === Types.thumbnail;
     }
 }
 
@@ -39,40 +138,174 @@ class FileAttributeBytes {
     /**
      * @param options
      * @param {FileAttribute} [options.fileAttribute]
-     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]
+     * @param {IMediaNode} [options.node]
+     * @param {boolean} cached=true - do not request the new URL, if already there is one, experimental use only
      * @return {Promise<string>} downloadUrl
      */
-    getDownloadUrl({fileAttribute, node}) {
+    getDownloadUrl({fileAttribute, node}, cached = true) {
         const _fileAttribute = fileAttribute || FileAttributes.of(node).byType(this.type);
-        return mega.requestFileAttributeDownloadUrl(_fileAttribute);
+        if (cached) {
+            return FileAttributeBytes.DlUrlQueue.getDownloadUrl(_fileAttribute);
+        }
+        return _fileAttribute.getDownloadUrl(false);
+    }
+
+    static DlUrlQueue = class {
+
+        /**
+         * @param {FileAttribute} fileAttribute
+         * @return {Promise<string>}
+         */
+        static getDownloadUrl(fileAttribute) {
+            const self = FileAttributeBytes.DlUrlQueue;
+            return new Promise(resolve => {
+                self.handle(fileAttribute, resolve);
+            });
+        }
+
+        /** @private
+         *  @type Map<String, Function[]> */
+        static queue = new Map();
+
+        /** @private */
+        static handle(fileAttribute, resolve) {
+            const self = FileAttributeBytes.DlUrlQueue;
+            const bunch = fileAttribute.bunch;
+
+            if (bunch.hasDownloadUrl) {
+                resolve(bunch.downloadUrl);
+            }
+
+            if (!self.queue.has(bunch.id)) {
+                self.queue.set(bunch.id, []);
+                self.request(fileAttribute).then(/*nothing*/);
+            }
+            self.queue.get(bunch.id).push(resolve);
+        }
+
+        /** @private */
+        static async request(fileAttribute) {
+            const self = FileAttributeBytes.DlUrlQueue;
+            const bunch = fileAttribute.bunch;
+
+            const result = await fileAttribute.getDownloadUrl();
+
+            const resolvers = self.queue.get(bunch.id);
+            for (const resolve of resolvers) {
+                resolve(result);
+            }
+            self.queue.delete(bunch.id);
+        }
     }
 
     /**
      * @param options
      * @param {FileAttribute} [options.fileAttribute]
      * @param {string} [options.downloadUrl]
-     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]
+     * @param {IMediaNode} [options.node]
+     * @param {boolean} grouped=true - with `false` it may work a bit faster, but extremely increases
+     * the connection count – one per each file attribute, currently there is no limitation of connection count
+     * in the code (a semaphore), but Mega handles 136 connections at one moment normally
      * @return {Promise<Uint8Array>} encryptedBytes
      */
-    async getEncryptedBytes({fileAttribute, downloadUrl, node}) {
+    async getEncryptedBytes({fileAttribute, downloadUrl, node}, grouped = true) {
         const _fileAttribute = fileAttribute || FileAttributes.of(node).byType(this.type);
         const _downloadUrl = downloadUrl || await this.getDownloadUrl({fileAttribute: _fileAttribute});
-        const responseBytes = await mega.requestFileAttribute(_downloadUrl, _fileAttribute.id);
 
-        const idBytes     = responseBytes.subarray(0, 8);  // [unused] // todo: verify (maybe useful for bunched data)
+        if (grouped) {
+            return FileAttributeBytes.DlBytesQueue.getBytes(_downloadUrl, _fileAttribute.id);
+        }
+
+        const responseBytes = await mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
+
+     // const idBytes     = responseBytes.subarray(0, 8);
         const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bits integer (enough for up to 4 GB)
         const length      = util.arrayBufferToLong(lengthBytes);
-        const dataBytes   = responseBytes.subarray(12, 12 + length);
-        console.log(`Encrypted file attribute size is ${length} bytes`); // with zero padding
+        const dataBytes   = responseBytes.subarray(12, 12 + length); // with zero padding
+        console.log(`Encrypted file attribute size is ${length} bytes`);
 
         return dataBytes;
+    }
+
+    static DlBytesQueue = class {
+        /** @return {Promise<Uint8Array>} */
+        static getBytes(downloadUrl, fileAttributeId) {
+            const self = FileAttributeBytes.DlBytesQueue;
+            return new Promise(resolve => {
+                self.handle({downloadUrl, fileAttributeId}, resolve);
+            });
+        }
+
+        /** @private
+         *  @type Map<String, Map<String, Function[]>> */ // url to <"fileAttributeId" to "resolve"s>
+        static queue = new Map();
+        /** @private
+         *  @type Map<String, boolean> */
+        static handledUrls  = new Map();
+
+        /** @private */
+        static handle({downloadUrl, fileAttributeId}, resolve) {
+            const self = FileAttributeBytes.DlBytesQueue;
+
+            if (!self.queue.has(downloadUrl)) {
+                /** @type Map<String, Function[]> */ // "fileAttrId" to "resolve"s (if the diff nodes have the same fa)
+                const faIds = new Map();
+                self.queue.set(downloadUrl, faIds);
+            }
+
+            const fas = self.queue.get(downloadUrl);
+            if (!fas.has(fileAttributeId)) {
+                fas.set(fileAttributeId, []);
+            }
+            fas.get(fileAttributeId).push(resolve);
+
+            self.run(downloadUrl);
+        }
+
+        /** @private */
+        static run(downloadUrl) {
+            const self = FileAttributeBytes.DlBytesQueue;
+
+            if (!self.handledUrls.get(downloadUrl)) {
+                // Delay execution with micro task queue
+                Promise.resolve().then(_ => {
+                    self.request(downloadUrl).then(/*nothing*/);
+                });
+                self.handledUrls.set(downloadUrl, true);
+            }
+        }
+
+        /** @private */
+        static async request(downloadUrl) {
+            const self = FileAttributeBytes.DlBytesQueue;
+
+            const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
+            const keys = [...map.keys()];
+
+            const responseBytes = await mega.requestFileAttributeBytes(downloadUrl, keys);
+
+            for (let i = 0, offset = 0; i < keys.length; i++) {
+                const idBytes     = responseBytes.subarray(offset,      offset +  8);
+                const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
+                const length      = util.arrayBufferToLong(lengthBytes);
+                const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
+                const id = mega.arrayBufferToMegaBase64(idBytes);
+
+                const resolvers = map.get(id);
+                for (const resolve of resolvers) {
+                    resolve(dataBytes);
+                }
+
+                offset += 12 + length;
+            }
+        }
     }
 
     /**
      * @param options
      * @param {FileAttributes} [options.fileAttributes]
      * @param {Uint8Array} [options.encryptedBytes]
-     * @param {{fileAttributesStr: string, key: Uint8Array}} [options.node]
+     * @param {IMediaNode} [options.node]
      * @param {string} [options.downloadUrl]
      * @return {Promise<Uint8Array>}
      */
@@ -127,7 +360,7 @@ class FileAttributes {
     static values = new Map();
 
     /**
-     * @param {{fileAttributesStr: string, key?: Uint8Array}} node
+     * @param {IMediaNode} node
      */
     static add(node) {
         if (!FileAttributes.values.get(node.fileAttributesStr)) {
@@ -136,7 +369,7 @@ class FileAttributes {
     }
 
     /**
-     * @param {{fileAttributesStr: string, key?: Uint8Array}} node
+     * @param {IMediaNode} node
      * @return {FileAttributes}
      */
     static get(node) {
@@ -144,7 +377,7 @@ class FileAttributes {
     }
 
     /**
-     * @param {{fileAttributesStr: string, key?: Uint8Array}} node
+     * @param {IMediaNode} node
      * @return {FileAttributes}
      */
     static of(node) {
@@ -155,18 +388,18 @@ class FileAttributes {
     // ========
 
     /** Like a static class, but with polymorphism */
-    static Thumbnail = new FileAttributeBytes(0);
-    static Preview   = new FileAttributeBytes(1);
+    static Thumbnail = new FileAttributeBytes(Types.thumbnail);
+    static Preview   = new FileAttributeBytes(Types.preview);
 
     /**
-     * @param {{fileAttributesStr: string, key: Uint8Array}} node
+     * @param {IMediaNode} node
      * @return {Promise<Uint8Array>}
      */
     static getThumbnail(node) {
         return FileAttributes.getAttribute(node, FileAttributes.Thumbnail);
     }
     /**
-     * @param {{fileAttributesStr: string, key: Uint8Array}} node
+     * @param {IMediaNode} node
      * @return {Promise<Uint8Array>}
      */
     static getPreview(node) {
@@ -177,7 +410,7 @@ class FileAttributes {
      * NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
      * https://en.wikipedia.org/wiki/List_of_file_signatures
      *
-     * @param {{fileAttributesStr: string, key: Uint8Array}} node
+     * @param {IMediaNode} node
      * @param {FileAttributeBytes} typeClass
      * @return {Promise<Uint8Array>}
      */
@@ -185,111 +418,6 @@ class FileAttributes {
         const fileAttributes = FileAttributes.of(node);
         return typeClass.getBytes({fileAttributes});
     }
-
-
-
-    static async getThumbnails(nodes) {
-
-        // Maps the bunch to the file attributes with the same bunch
-        /** @type Map<Number, {fas: FileAttribute[], nodes: Object[], url?: String}> */ // <fa.bunch, {fa[], url}>
-        const bunches = new Map(); // `fileAttributesByBunch`
-
-        for (const node of nodes) {
-            const FA = FileAttributes.of(node).byType(FileAttributes.Thumbnail.type);
-            if (!bunches.has(FA.bunch)) {
-                bunches.set(FA.bunch, {fas: [], nodes: []});
-            }
-            bunches.get(FA.bunch).fas.push(FA);
-            bunches.get(FA.bunch).nodes.push(node);
-        }
-
-        // --------------------------------------------------------
-
-        /** @type Promise[] */
-        const downloadUrlRequests = [];
-
-        for (const holder of bunches.values()) {
-            const promise = FileAttributes.Thumbnail.getDownloadUrl({fileAttribute: holder.fas[0]})
-                .then(url => {
-                    holder.url = url;
-                });
-            downloadUrlRequests.push(promise);
-        }
-        await Promise.all(downloadUrlRequests);
-
-        // --------------------------------------------------------
-
-        const promises = [];
-        let totalBytesDownloaded = 0;
-
-        for (const [/*bunch*/, {url, fas, nodes}] of bunches.entries()) {
-
-            /** @type String[] */
-            // The deduplicated list of IDs of the file attributes for nodes with the same bunch
-            // Nodes can have the same FA
-            const faIds = [...new Set(fas.map(fa => fa.id))];
-
-            /** @type Promise<Map<String, Uint8Array>> */
-            const promise = mega.requestFileAttribute(url, faIds) //todo rename requestFileAttributeBytes
-                .then(responseBytes => {
-                    console.log("[response]", responseBytes.length, "bytes");
-                    totalBytesDownloaded += responseBytes.length;
-
-                    /** @type [{node: Object, encBytes: Uint8Array}] */
-                    const results = [];
-
-                    for (let i = 0, offset = 0; i < faIds.length; i++) {
-
-                        const idBytes     = responseBytes.subarray(offset,      offset +  8);
-                        const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
-                        const length      = util.arrayBufferToLong(lengthBytes);
-                        const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
-
-                        const id = mega.arrayBufferToMegaBase64(idBytes);
-
-                        nodes // if nodes have the same file attribute
-                            .filter(node => FileAttributes.of(node).byType(FileAttributes.Thumbnail.type).id === id)
-                            .forEach(node => results.push({node, encBytes: dataBytes}));
-
-                        offset += 12 + length;
-                    }
-                    return results;
-                });
-
-            promises.push(promise);
-        }
-
-        console.log();
-        console.log(totalBytesDownloaded);
-
-        /** @type [{node: Object, encBytes: Uint8Array}][] */ // <node, encBytes>[]
-        const arrayOfArrays = await Promise.all(promises);
-
-        /** @type [{node: Object, bytes: Uint8Array}] */
-        const result = [];
-
-        for (const {node, encBytes} of arrayOfArrays.flat()) {
-            const bytes = util.decryptAES(encBytes, node.key, {padding: "ZeroPadding"});
-            result.push({node, bytes});
-        }
-
-        return result;
-    }
-
-
-
-
-
-    //todo
-    static getPreviews(nodes) {
-        // return FileAttributes.getAttributes(node, FileAttributes.Preview);
-    }
-    //todo
-    static getAttributes(node, typeClass) {
-        // const fileAttributes = FileAttributes.of(node);
-        // return typeClass.getBytes({fileAttributes});
-    }
-
 
 }
 

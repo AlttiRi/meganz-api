@@ -99,6 +99,10 @@ class FileNode extends BasicFolderShareNode {
     }
 }
 
+/**
+ * @implements IMediaNodeSimple
+ * @mixes IMediaGettersMixin
+ */
 // todo: add file attribute support for 8, 9 (9 may not exists)
 class MediaFileNode extends FileNode {
     constructor(node, masterKey) {
@@ -120,6 +124,10 @@ class MediaFileNode extends FileNode {
 
     get thumbnail() { // todo others
         return FileAttributes.of(this).byType(FileAttributes.Thumbnail.type);
+    }
+
+    get preview() {
+        return FileAttributes.of(this).byType(FileAttributes.Preview.type);
     }
 }
 
