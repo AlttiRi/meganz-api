@@ -205,9 +205,20 @@ const mega = {
         return responseData["p"] + "/" + type;
     },
 
-    // todo add semaphore (the new one) or is it OK without it?
-    //  it handles 136 connections without problems: use `Thumbnail.getEncryptedBytes(..., false)` <- "false"
-    //  need to test it later more
+    // todo delete later (for test)
+    __mapUrl: new Map(), // url, count
+    __i: 0,
+    __downloadAttByUrlCount(url) {
+        if (!mega.__mapUrl.has(url)) {
+            mega.__mapUrl.set(url, 0);
+        }
+        const count = mega.__mapUrl.get(url);
+        mega.__mapUrl.set(url, count + 1);
+        return count + 1;
+    },
+
+    // todo add semaphore, not more than 31 (included) connections for each url (of bunch)
+    //  to test it, use `Thumbnail.getEncryptedBytes(..., false)` <- "false"
     /**
      * @param {string} url
      * @param {string|string[]} ids
@@ -230,7 +241,7 @@ const mega = {
 
         /** Sometimes it can throw `connect ETIMEDOUT` or `read ECONNRESET` exception */
         const callback = async () => {
-            console.log("Downloading content...");
+            console.log("Downloading content... ", mega.__i++, " Url use count:", mega.__downloadAttByUrlCount(url));
             const response = await fetch(url, {
                 method: "post",
                 body: selectedIdsBinary,

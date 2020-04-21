@@ -2,16 +2,17 @@ const URLS = require("./test-urls-private");
 const FileAttributes = require("../file-attributes");
 const {Nodes} = require("../nodes");
 const {util} = require("../util");
+const {progress} = require("./promise-progress");
 
-const timer = new Promise(resolve => setTimeout(resolve, 1200));
+
 const urls = [];
 async function example() {
     const promises = [];
 
-    const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
-    let i = 1;
-    for (const node of folderNodes) {
-        if (Nodes.isMediaNode(node)) {
+    const nodes = await progress(Nodes.nodes(URLS.FOLDER_999));
+    let i = 0;
+    for (const node of nodes) {
+        if (Nodes.isMediaNode(node) && i < 151) {
             promises.push(handle(node, i++));
         }
     }
@@ -23,11 +24,11 @@ async function example() {
 }
 
 async function handle(node, index) {
-    const downloadUrl = await FileAttributes.Thumbnail.getDownloadUrl({node});
+    const downloadUrl = await progress(FileAttributes.Thumbnail.getDownloadUrl({node}), "URL fetching");
     urls.push(downloadUrl);
-    //await timer; // to run bytes downloading at one moment
+    await progress(util.sleep(5200), "Waiting"); // to run bytes downloading at one moment
 
-    const encryptedBytes = await FileAttributes.Thumbnail.getEncryptedBytes({node, downloadUrl},true);
+    const encryptedBytes = await FileAttributes.Thumbnail.getEncryptedBytes({node, downloadUrl},0);
     let bytes /*//*/ = await FileAttributes.Thumbnail.getBytes({node, encryptedBytes}); // comment the right part to no decryption
     // or
     //const bytes = await FileAttributes.Thumbnail.getBytes({node, downloadUrl});

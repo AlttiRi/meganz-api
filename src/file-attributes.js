@@ -18,7 +18,9 @@ const {util} = require("./util");
  * @typedef {IMediaNodeSimple & IMediaGettersMixin} IMediaNode
  */
 
-
+/**
+ *
+ */
 class FileAttribute {
     /** @type {string} */
     id;
@@ -59,12 +61,14 @@ class Bunch {
     #downloadUrl = null;
 
     /**
+     * The holder of the instances of this class.
      * @private
      * @type {Map<number, Bunch>}
      */
     static values = new Map();
 
     /**
+     * Use `of` method to get an instance.
      * @private
      * @param {number} bunch
      */
@@ -124,7 +128,7 @@ class Types {
 }
 
 class FileAttributeBytes {
-    /** @type {number} */
+    /** @type {number} */ //todo use Types?
     #type;
 
     get type() {
@@ -150,6 +154,7 @@ class FileAttributeBytes {
         return _fileAttribute.getDownloadUrl(false);
     }
 
+    /** @private */
     static DlUrlQueue = class {
 
         /**
@@ -174,13 +179,13 @@ class FileAttributeBytes {
 
             if (bunch.hasDownloadUrl) {
                 resolve(bunch.downloadUrl);
+            } else {
+                if (!self.queue.has(bunch.id)) {
+                    self.queue.set(bunch.id, []);
+                    self.request(fileAttribute).then(/*nothing*/);
+                }
+                self.queue.get(bunch.id).push(resolve);
             }
-
-            if (!self.queue.has(bunch.id)) {
-                self.queue.set(bunch.id, []);
-                self.request(fileAttribute).then(/*nothing*/);
-            }
-            self.queue.get(bunch.id).push(resolve);
         }
 
         /** @private */
@@ -218,6 +223,7 @@ class FileAttributeBytes {
 
         const responseBytes = await mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
 
+        //todo
      // const idBytes     = responseBytes.subarray(0, 8);
         const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bits integer (enough for up to 4 GB)
         const length      = util.arrayBufferToLong(lengthBytes);
@@ -227,6 +233,8 @@ class FileAttributeBytes {
         return dataBytes;
     }
 
+    //todo max group size
+    /** @private */
     static DlBytesQueue = class {
         /** @return {Promise<Uint8Array>} */
         static getBytes(downloadUrl, fileAttributeId) {
@@ -240,8 +248,8 @@ class FileAttributeBytes {
          *  @type Map<String, Map<String, Function[]>> */ // url to <"fileAttributeId" to "resolve"s>
         static queue = new Map();
         /** @private
-         *  @type Map<String, boolean> */
-        static handledUrls  = new Map();
+         *  @type Set<String> */
+        static handledUrls = new Set();
 
         /** @private */
         static handle({downloadUrl, fileAttributeId}, resolve) {
@@ -266,12 +274,12 @@ class FileAttributeBytes {
         static run(downloadUrl) {
             const self = FileAttributeBytes.DlBytesQueue;
 
-            if (!self.handledUrls.get(downloadUrl)) {
+            if (!self.handledUrls.has(downloadUrl)) {
                 // Delay execution with micro task queue
                 Promise.resolve().then(_ => {
                     self.request(downloadUrl).then(/*nothing*/);
                 });
-                self.handledUrls.set(downloadUrl, true);
+                self.handledUrls.add(downloadUrl);
             }
         }
 
@@ -280,11 +288,11 @@ class FileAttributeBytes {
             const self = FileAttributeBytes.DlBytesQueue;
 
             const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
-            const keys = [...map.keys()];
+            const fileAttrIDs = [...map.keys()];
 
-            const responseBytes = await mega.requestFileAttributeBytes(downloadUrl, keys);
+            const responseBytes = await mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
 
-            for (let i = 0, offset = 0; i < keys.length; i++) {
+            for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
                 const idBytes     = responseBytes.subarray(offset,      offset +  8);
                 const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
                 const length      = util.arrayBufferToLong(lengthBytes);
