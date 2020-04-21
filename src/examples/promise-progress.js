@@ -1,19 +1,55 @@
 const {performance} = require("../browser-context");
 
+/** @type {Map<number, Object>} */
+const queue = new Map(); // timerId to {startTime, name}
+let timerId = null;
 
-module.exports.progress = function progress(promise, name = "Loading") {
-    const timerId = startLogging(name);
-    return promise.finally(_ => clearInterval(timerId));
+module.exports.progress = function progress(promise, name = "Progress") {
+    const id = startLogging(name);
+    return promise.finally(_ => {
+        queue.delete(id);
+        if (!queue.size) {
+            clearInterval(timerId);
+            timerId = null;
+        }
+    });
 }
-
+let id = 0;
 function startLogging(name) {
-    const signs = ["\\", "|", "/", "—"];
-    let t1;
-    let index = 0;
+    id++;
     const t0 = performance.now();
-    return setInterval(_ => {
-        t1 = performance.now();
-        process.stdout.write("\r[" + name + "... " + signs[index++] + " " + Math.trunc(t1 - t0) + " ms] \r");
-        index %= 4;
-    }, 250);
+
+    queue.set(id, {t0, name});
+
+    if (!timerId) {
+        const signs = ["\\", "|", "/", "—"];
+        let index = 0;
+        timerId = setInterval(_ => {
+            const t1 = performance.now();
+
+            let str = "";
+            /** @type {Map<string, number[]>} */
+            const nameToTimes = new Map();
+            for (const elem of queue.values()) {
+                if (!nameToTimes.has(elem.name)) {
+                    nameToTimes.set(elem.name, []);
+                }
+                nameToTimes.get(elem.name).push(Math.trunc(t1 - elem.t0));
+            }
+            for (const [name, times] of nameToTimes.entries()) {
+                if (times.length > 2 ) {
+                    const maxTime = times.reduce((acc, cur) => acc > cur ? acc : cur);
+                    const minTime = times.reduce((acc, cur) => acc < cur ? acc : cur);
+                    str += " [" + times.length +"][" + name + ": " + minTime + " - " +maxTime + "]";
+                } else {
+                    str += " [" + times.length +"][" + name + ": " + times.join(", ") + "]";
+                }
+            }
+
+            process.stdout.write("\r" + signs[index++] + str + "\r");
+            index %= 4;
+        }, 250);
+    }
+
+    return id;
 }

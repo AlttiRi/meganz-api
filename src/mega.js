@@ -226,6 +226,7 @@ const mega = {
      * @throws ETIMEDOUT, ECONNRESET
      */
     async requestFileAttributeBytes(url, ids) {
+        console.log("Requesting " + (Array.isArray(ids) ? ids.length : "\"1\"") + " attrs ---")
 
         /** @type Uint8Array */
         let selectedIdsBinary;

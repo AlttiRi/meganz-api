@@ -6,9 +6,20 @@ const {util} = require("../util");
 
 
 async function example() {
-    await progress(util.sleep(1110), "Waiting");
-    const nodes = await progress(Nodes.nodes(URLS.FOLDER_999));
-    await progress(util.sleep(6660), "Waiting");
+    progress(util.sleep(18000), "Total");
+    await progress(util.sleep(2000), "Waiting");
+
+    //const nodes = await progress(Nodes.nodes(URLS.FOLDER_175));
+    //await progress(util.sleep(6000), "Waiting");
+
+    progress(util.sleep(5000), "Loading");
+    progress(util.sleep(2000), "Loading");
+    await progress(util.sleep(2000), "Waiting");
+    progress(util.sleep(5000), "Loading");
+    progress(util.sleep(2000), "Loading");
+    progress(util.sleep(9000), "Loading");
+    util.sleep(2000).then(_ => progress(util.sleep(2000), "Loading"));
+    await progress(util.sleep(12000), "Waiting");
 }
 
 

@@ -275,19 +275,29 @@ class FileAttributeBytes {
             const self = FileAttributeBytes.DlBytesQueue;
 
             if (!self.handledUrls.has(downloadUrl)) {
+
+                function callback() {
+                    const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
+                    self.queue.delete(downloadUrl);
+                    self.handledUrls.delete(downloadUrl);
+                    self.request(downloadUrl, map).then(/*nothing*/);
+                }
+
                 // Delay execution with micro task queue
-                Promise.resolve().then(_ => {
-                    self.request(downloadUrl).then(/*nothing*/);
-                });
+                //Promise.resolve().then(callback);
+                // or //
+                // Delay execution with event loop queue + delay in ms
+                //setTimeout(callback, 10);
+                // or //
+                // Delay execution with event loop queue
+                setImmediate ? setImmediate(callback) : setTimeout(callback, 0);
+
                 self.handledUrls.add(downloadUrl);
             }
         }
 
         /** @private */
-        static async request(downloadUrl) {
-            const self = FileAttributeBytes.DlBytesQueue;
-
-            const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
+        static async request(downloadUrl, map) {
             const fileAttrIDs = [...map.keys()];
 
             const responseBytes = await mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
