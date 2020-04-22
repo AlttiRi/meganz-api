@@ -4,7 +4,7 @@ const logger = util.logger;
 const {Semaphore} = require("./synchronization");
 
 
-const mega = {
+class mega {
 
     /**
      * Max parallel requests count that Mega allows for API access are `64`,
@@ -17,19 +17,19 @@ const mega = {
      * 12, 650
      * 3, 0
      */
-    semaphore: new Semaphore(12, 650),
+    static semaphore = new Semaphore(12, 650);
 
     // todo make `util.repeatIfErrorAsync` configurable – use not default `count` and `delay` params
 
-    ssl: 2, // Is there a difference between "1" and "2" [???]
-    apiGateway: "https://g.api.mega.co.nz/cs",
+    static ssl = 2; // Is there a difference between "1" and "2" [???]
+    static apiGateway = "https://g.api.mega.co.nz/cs";
 
     /**
      * @link https://github.com/gpailler/MegaApiClient/blob/93552a027cf7502292088f0ab25f45eb29ebdc64/MegaApiClient/Cryptography/Crypto.cs#L63
      * @param {Uint8Array} decryptedKey
      * @returns {{iv: Uint8Array, metaMac: Uint8Array, key: Uint8Array}}
      */
-    decryptionKeyToParts(decryptedKey) {
+    static decryptionKeyToParts(decryptedKey) {
 
         const iv      = decryptedKey.subarray(16, 24);
         const metaMac = decryptedKey.subarray(24, 32);
@@ -41,45 +41,45 @@ const mega = {
         }
 
         return {iv, metaMac, key};
-    },
+    }
 
     /**
      * @param {string} megaBase64
      * @returns {Uint8Array}
      */
-    megaBase64ToArrayBuffer(megaBase64) {
+    static megaBase64ToArrayBuffer(megaBase64) {
         const base64 = mega.megaBase64ToBase64(megaBase64);
         return util.base64BinaryStringToArrayBuffer(base64);
-    },
+    }
 
     /**
      * @param {string} base64EncodedStr
      * @return {string}
      */
-    base64ToMegaBase64(base64EncodedStr) {
+    static base64ToMegaBase64(base64EncodedStr) {
         return base64EncodedStr.replace(/=/g, "")
             .replace(/\+/g, "-")
             .replace(/\//g, "_");
-    },
+    }
 
     /**
      * @param {Uint8Array} arrayBuffer
      * @return {string}
      */
-    arrayBufferToMegaBase64(arrayBuffer) {
+    static arrayBufferToMegaBase64(arrayBuffer) {
         const binaryString = util.arrayBufferToBinaryString(arrayBuffer);
         const base64 = util.binaryStringToBase64(binaryString);
         return mega.base64ToMegaBase64(base64);
-    },
+    }
 
     /**
      * @param {string} megaBase64
      * @returns {string}
      */
-    megaBase64ToBinaryString(megaBase64) {
+    static megaBase64ToBinaryString(megaBase64) {
         const base64 = mega.megaBase64ToBase64(megaBase64);
         return util.base64ToBinaryString(base64);
-    },
+    }
 
     /**
      * Transform Mega Base64 format to normal Base64
@@ -89,7 +89,7 @@ const mega = {
      * @param {string} megaBase64EncodedStr
      * @returns {string}
      */
-    megaBase64ToBase64(megaBase64EncodedStr) {
+    static megaBase64ToBase64(megaBase64EncodedStr) {
 
         const paddingLength = mega._getPaddingLengthForMegaBase64(megaBase64EncodedStr);
         let result = megaBase64EncodedStr + "=".repeat(paddingLength);
@@ -98,14 +98,14 @@ const mega = {
                        .replace(/_/g, "/");
 
         return result;
-    },
+    }
 
     /**
      * @param {string} megaBase64EncodedStr
      * @returns {number}
      * @private
      */
-    _getPaddingLengthForMegaBase64(megaBase64EncodedStr) {
+    static _getPaddingLengthForMegaBase64(megaBase64EncodedStr) {
 
         /**
          * Base64 padding's length is "1", "2" or "0" because of the "block" size has at least "2" chars.
@@ -120,10 +120,10 @@ const mega = {
         }
 
         return paddingLength;
-    },
+    }
 
 
-    ApiQueue: class {
+    static ApiQueue = class {
         static requestAPI(url, payload) {
             const self = mega.ApiQueue;
             const _url = url.toString();
@@ -170,7 +170,7 @@ const mega = {
                 Promise.resolve().then(callback);
             }
         }
-        
+
         /** @private */
         static async request(url, objs) {
 
@@ -184,7 +184,7 @@ const mega = {
             });
         }
 
-    },
+    }
 
     /**
      * @param {*} payload
@@ -192,17 +192,17 @@ const mega = {
      * @param {boolean} [grouped]
      * @returns {Promise<*>} responseData
      */
-    async requestAPI(payload, searchParams = {}, grouped = true) {
+    static async requestAPI(payload, searchParams = {}, grouped = true) {
         const url = new URL(mega.apiGateway);
         util.addSearchParamsToURL(url, searchParams);
 
         if (grouped) {
             return mega.ApiQueue.requestAPI(url, payload);
         }
-        return mega._requestApiSafe(url, [payload]);
-    },
+        return (await mega._requestApiSafe(url, [payload]))[0];
+    }
 
-    async _requestApiSafe(url, payloads) {
+    static async _requestApiSafe(url, payloads) {
         await mega.semaphore.acquire();
         try {
             const response = await util.repeatIfErrorAsync(_ => mega._requestAPI(url, payloads));
@@ -210,7 +210,7 @@ const mega = {
         } finally { // if an exception happens more than `count` times, or the error code was returned
             mega.semaphore.release();
         }
-    },
+    }
 
     /**
      * The main function.
@@ -226,7 +226,7 @@ const mega = {
      * @return {Promise<*[]>}
      * @private
      */
-    async _requestAPI(url, payloads) {
+    static async _requestAPI(url, payloads) {
         const response = await fetch(url, {
             method: "post",
             body: JSON.stringify(payloads)
@@ -241,9 +241,9 @@ const mega = {
         const text = await response.text();
         console.log(text);
         return JSON.parse(text);
-    },
+    }
 
-    _apiErrorHandler(response) {
+    static _apiErrorHandler(response) {
         if (Array.isArray(response)) { //todo the error code can be in an array
             return response;
         } else {
@@ -263,9 +263,7 @@ const mega = {
                 throw new Error("ERROR CODE: " + response); // `response` is a number like this: `-9`
             }
         }
-    },
-
-
+    }
 
 
 
@@ -275,7 +273,7 @@ const mega = {
      * @param {number} fileAttribute.type - file attribute type
      * @return {Promise<string>}
      */
-    async requestFileAttributeDownloadUrl({id, type}) {
+    static async requestFileAttributeDownloadUrl({id, type}) {
         console.log("Request download url...");
         const responseData = await mega.requestAPI({
             "a": "ufa",    // action (command): u [???] file attribute
@@ -286,19 +284,19 @@ const mega = {
 
         //todo if [{"p":"https://gfs302n203.userstorage.mega.co.nz/.yWdyTeW","p0":"https://gfs270n873.userstorage.mega.co.nz/.Uy96JeV"}]
         return responseData["p"] + "/" + type;
-    },
+    }
 
     // todo delete later (for test)
-    __mapUrl: new Map(), // url, count
-    __i: 0,
-    __downloadAttByUrlCount(url) {
+    static __mapUrl = new Map(); // url, count
+    static __i = 0;
+    static __downloadAttByUrlCount(url) {
         if (!mega.__mapUrl.has(url)) {
             mega.__mapUrl.set(url, 0);
         }
         const count = mega.__mapUrl.get(url);
         mega.__mapUrl.set(url, count + 1);
         return count + 1;
-    },
+    }
 
     // todo add semaphore, not more than 31 (included) connections for each url (of bunch)
     //  to test it, use `Thumbnail.getEncryptedBytes(..., false)` <- "false"
@@ -308,7 +306,7 @@ const mega = {
      * @returns {Promise<Uint8Array>} responseBytes
      * @throws ETIMEDOUT, ECONNRESET
      */
-    async requestFileAttributeBytes(url, ids) {
+    static async requestFileAttributeBytes(url, ids) {
         console.log("Requesting " + (Array.isArray(ids) ? ids.length : "\"1\"") + " attrs ---")
 
         /** @type Uint8Array */
@@ -343,13 +341,13 @@ const mega = {
         const responseBytes = await util.repeatIfErrorAsync(callback);
         console.log("[downloaded]", responseBytes.length, "bytes");
         return responseBytes;
-    },
+    }
 
     /**
      * @param {string} serializedFingerprint
      * @returns {{modificationDate: number, fileChecksum: Uint8Array}}
      */
-    parseFingerprint(serializedFingerprint) {
+    static parseFingerprint(serializedFingerprint) {
         const fingerprintBytes = util.base64BinaryStringToArrayBuffer(serializedFingerprint);
 
         const fileChecksum    = fingerprintBytes.subarray(0, 16); // 4 CRC32 of the file [unused]
@@ -364,14 +362,14 @@ const mega = {
         const modificationDate = util.arrayBufferToLong(timeBytes);
 
         return {modificationDate, fileChecksum};
-    },
+    }
 
     /**
      * @param {string} attributesEncoded
      * @param {Uint8Array} nodeKey
      * @returns {{name: string, serializedFingerprint: string}}
      */
-    parseEncodedNodeAttributes(attributesEncoded, nodeKey) {
+    static parseEncodedNodeAttributes(attributesEncoded, nodeKey) {
         const attributesEncrypted   = util.base64BinaryStringToArrayBuffer(attributesEncoded);
         const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
         const attributesPlane       = util.arrayBufferToUtf8String(attributesArrayBuffer);
@@ -383,14 +381,14 @@ const mega = {
         } = JSON.parse(trimmedAttributesPlaneString);
 
         return {name, serializedFingerprint};
-    },
+    }
 
     /**
      * @param {string} shareId
      * @returns {Promise<{size: number, nodeAttributesEncoded: string,
      *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number, fileAttributesStr?: string}>} nodeInfo
      */
-    async requestNodeInfo(shareId) {
+    static async requestNodeInfo(shareId) {
 
         const responseData = await mega.requestAPI({
             "a": "g",        // Command type
@@ -423,7 +421,7 @@ const mega = {
         }
 
         return prettyResponse;
-    },
+    }
 
     // The logic of nodes order that Mega returns looks like it is:
     // The first node is root node,
@@ -434,7 +432,7 @@ const mega = {
     // So, a folder node is always located before the nodes that are inside it,       <-- [important]
     // all nodes with the same parent are listed one by one in creationDate order,
     // one level folders iterates in reverse order to `print` their children.
-    async requestFolderInfo(shareId) {
+    static async requestFolderInfo(shareId) {
         const responseData = await mega.requestAPI({
             "a": "f",
             "r":  1, // Recursive (include sub folders/files) // if not set only root node and 1th lvl file/folder nodes
@@ -510,7 +508,7 @@ const mega = {
         }
 
         return {nodes: _prettifyNodes(rawNodes), rootId: shareRootNodeId};
-    },
+    }
 
 
     /**
@@ -522,7 +520,7 @@ const mega = {
      * @param {number} [precision]
      * @returns {string}
      */
-    bytesToSize(bytes, precision) {
+    static bytesToSize(bytes, precision) {
         if (bytes === 0) {
             return "0 B";
         }
@@ -537,7 +535,7 @@ const mega = {
         const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return (bytes / Math.pow(k, i)).toFixed(precision) + " " + sizes[i];
-    },
+    }
 
     /**
      * {@link https://github.com/gpailler/MegaApiClient/blob/93552a027cf7502292088f0ab25f45eb29ebdc64/MegaApiClient/Cryptography/Crypto.cs#L33}
@@ -545,7 +543,7 @@ const mega = {
      * @param {Uint8Array} key a key to decrypt with it
      * @returns {Uint8Array} decryptionKey
      */
-    decryptKey(encryptedKey, key) {
+    static decryptKey(encryptedKey, key) {
         const result = new Uint8Array(encryptedKey.length);
 
         for (let i = 0; i < encryptedKey.length; i += 16) {
@@ -555,7 +553,7 @@ const mega = {
         }
 
         return result;
-    },
-};
+    }
+}
 
 module.exports = {mega};
