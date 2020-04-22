@@ -1,6 +1,5 @@
 const {fetch} = require("./browser-context");
 const {util} = require("./util");
-const logger = util.logger;
 const {Semaphore} = require("./synchronization");
 
 

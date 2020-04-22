@@ -2,11 +2,12 @@ const {btoa, atob, fetch} = require("./browser-context");
 const {CryptoJS} = require("./libs");
 
 /** @namespace */
-const util = {
+class util {
 
-    utf8Decoder: new TextDecoder(),
+    static utf8Decoder = new TextDecoder();
 
-    logger: {
+    // the experimental version
+    static logger = {
         DEBUG: true,
         INFO: true,
         /**
@@ -32,41 +33,41 @@ const util = {
                 console.log(el);
             });
         }
-    },
+    };
 
     /**
      * @param {string} base64
      * @returns {string} binaryString
      */
-    base64ToBinaryString(base64) {
+    static base64ToBinaryString(base64) {
         return atob(base64);
-    },
+    }
 
     /**
      * @param {string} binaryString
      * @returns {string} base64
      */
-    binaryStringToBase64(binaryString) {
+    static binaryStringToBase64(binaryString) {
         return btoa(binaryString);
-    },
+    }
 
     /**
      * @param {Uint8Array} arrayBuffer
      * @returns {string}
      */
-    arrayBufferToUtf8String(arrayBuffer) {
+    static arrayBufferToUtf8String(arrayBuffer) {
         return util.utf8Decoder.decode(arrayBuffer);
-    },
+    }
 
     /**
      * @param {Uint8Array} arrayBuffer
      * @returns {string}
      */
-    arrayBufferToHexString(arrayBuffer) {
+    static arrayBufferToHexString(arrayBuffer) {
         return Array.from(arrayBuffer)
             .map(n => ("0" + n.toString(16)).slice(-2))
             .join("");
-    },
+    }
 
     /**
      * To binary string (Latin1).
@@ -91,9 +92,9 @@ const util = {
      * @param {Uint8Array} arrayBuffer
      * @returns {string} binaryString
      * */
-    arrayBufferToBinaryString(arrayBuffer) {
+    static arrayBufferToBinaryString(arrayBuffer) {
         return arrayBuffer.reduce((accumulator, byte) => accumulator + String.fromCharCode(byte), "");
-    },
+    }
 
 
     /**
@@ -103,19 +104,19 @@ const util = {
      * @param {string} binaryString
      * @returns {Uint8Array}
      */
-    binaryStringToArrayBuffer(binaryString) {
+    static binaryStringToArrayBuffer(binaryString) {
         return Uint8Array.from(binaryString.split(""), ch => ch.charCodeAt(0));
-    },
+    }
 
     /**
      * Binary string (Latin1) encoded with Base64 to ArrayBuffer
      * @param {string} base64BinaryString
      * @returns {Uint8Array}
      */
-    base64BinaryStringToArrayBuffer(base64BinaryString) {
+    static base64BinaryStringToArrayBuffer(base64BinaryString) {
         const binaryString = util.base64ToBinaryString(base64BinaryString);
         return util.binaryStringToArrayBuffer(binaryString);
-    },
+    }
 
     /**
      * Decrypt AES with `CryptoJS`
@@ -134,7 +135,7 @@ const util = {
      * @param {"Pkcs7"|"ZeroPadding"|"NoPadding"|"Iso97971"|"AnsiX923"|"Iso10126"} [config.padding="Pkcs7"]
      * @returns {Uint8Array}
      */
-    decryptAES(data, key, {iv, mode, padding} = {}) {
+    static decryptAES(data, key, {iv, mode, padding} = {}) {
 
         /** Default parameters initialization */
         iv = iv || new Uint8Array(key.length);
@@ -175,7 +176,7 @@ const util = {
         };
 
         return _wordArrayToArrayBuffer(plaintextWA);
-    },
+    }
 
     /**
      * Save with Node.js API to `temp/` folder
@@ -184,7 +185,7 @@ const util = {
      * @param {number|Date} [mtime]
      * @param {string[]} [path] - array of folders names
      */
-    saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
+    static saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
         const safePath = path.map(util.getSafeName);
         const pathStr = "temp/" + (safePath.length ? safePath.join("/") + "/" : "");
         console.log(`Saving "${name}" file to "${pathStr}" folder...`);
@@ -196,14 +197,14 @@ const util = {
 
         fs.writeFileSync(pathStr + safeName, Buffer.from(arrayBuffer));
         fs.utimesSync(pathStr + safeName, new Date(), mtime);
-    },
+    }
 
     /**
      * Array of bytes (Little-endian) to Long (64-bits) value
      * @param {Uint8Array} arrayBuffer
      * @returns {number}
      */
-    arrayBufferToLong(arrayBuffer) {
+    static arrayBufferToLong(arrayBuffer) {
         const sizeofLong = 8; // in fact max integer value in JS has 7 bytes, see Number.MAX_SAFE_INTEGER
 
         if (arrayBuffer.length > sizeofLong) {
@@ -219,14 +220,14 @@ const util = {
         }
 
         return result;
-    },
+    }
 
     /**
      * 1436853891 -> "2015.07.14 09:04:51"
      * @param {number} seconds
      * @returns {string}
      */
-    secondsToFormattedString(seconds) {
+    static secondsToFormattedString(seconds) {
         const date = new Date(seconds * 1000);
 
         // Adds zero padding
@@ -236,7 +237,7 @@ const util = {
 
         return date.getFullYear() + "." + pad(date.getMonth() + 1) + "." + pad(date.getDate()) + " " +
             pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
-    },
+    }
 
     /**
      * Format bytes to human readable format
@@ -247,7 +248,7 @@ const util = {
      * @param {number} [decimals=2]
      * @returns {string}
      */
-    bytesToSize(bytes, decimals = 2) {
+    static bytesToSize(bytes, decimals = 2) {
         if (bytes === 0) {
             return "0 B";
         }
@@ -257,18 +258,18 @@ const util = {
 
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + " " + sizes[i];
-    },
+    }
 
     /**
      * @param {number} ms milliseconds
      * @returns {Promise}
      */
-    sleep(ms) {
+    static sleep(ms) {
         if (ms === 0) {
             return Promise.resolve(); // It's not the same thing as `setImmediate`
         }
         return new Promise(resolve => setTimeout(resolve, ms));
-    },
+    }
 
     /**
      * Transforms an object like this: `{"n": "e1ogxQ7T"}` to `"n=e1ogxQ7T"`
@@ -277,11 +278,11 @@ const util = {
      * @param {URL} url
      * @param {Object} searchParams
      */
-    addSearchParamsToURL(url, searchParams) {
+    static addSearchParamsToURL(url, searchParams) {
         Object.entries(searchParams).forEach(([key, value]) => {
             url.searchParams.append(key, value.toString());
         });
-    },
+    }
 
     /**
      * @param {function} callback - an async function to repeat if it throws an exception
@@ -289,7 +290,7 @@ const util = {
      * @param {number} delay=5000 - ms to wait before repeating
      * @return {Promise<*>}
      */
-    async repeatIfErrorAsync(callback, count = 5, delay = 5000) {
+    static async repeatIfErrorAsync(callback, count = 5, delay = 5000) {
         for (let i = 0;; i++) {
             try {
                 return await callback();
@@ -302,13 +303,13 @@ const util = {
                 }
             }
         }
-    },
+    }
 
     /**
      * @param {string} name
      * @return {string}
      */
-    getSafeName(name) {
+    static getSafeName(name) {
         //todo
         // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
         //todo isSafeName
@@ -316,7 +317,7 @@ const util = {
             console.log(`Bad filename: "${name}"`); // for debugging currently
         }
         return name.replace("/", "_");
-    },
+    }
 
     /**
      * The simple implementation
@@ -324,7 +325,7 @@ const util = {
      * @param {Array|TypedArray} array2
      * @return {boolean}
      */
-    compareArrays(array1, array2) {
+    static compareArrays(array1, array2) {
         if (array1.length === array2.length) {
             for (let i = 0; i < array1.length; i++) {
                 if (array1[i] !== array2[i]) {
@@ -334,8 +335,8 @@ const util = {
             return true;
         }
         return false;
-    },
-};
+    }
+}
 
 
 module.exports = {util};
