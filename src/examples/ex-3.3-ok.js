@@ -2,10 +2,10 @@ const URLS = require("./test-urls-private");
 const {util} = require("../util");
 const {Nodes} = require("../nodes");
 const {CountDownLatch} = require("../synchronization");
-
+const {progress} = require("./promise-progress");
 
 async function example() {
-    const folderNodes = await Nodes.nodes(URLS.FOLDER_136_FILES);
+    const folderNodes = await progress(Nodes.nodes(URLS.FOLDER_136_FILES), "Nodes.nodes");
 
     const mediaNodesCount = folderNodes.filter(Nodes.isMediaNode).length;
     let countDownLatch = new CountDownLatch(mediaNodesCount);

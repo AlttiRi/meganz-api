@@ -103,6 +103,7 @@ class Bunch {
             return this.downloadUrl;
         }
         const url = await mega.requestFileAttributeDownloadUrl(fileAttribute);
+        //todo urls
         this.#downloadUrl = url;
         return url;
     }
@@ -274,14 +275,15 @@ class FileAttributeBytes {
         static run(downloadUrl) {
             const self = FileAttributeBytes.DlBytesQueue;
 
-            if (!self.handledUrls.has(downloadUrl)) {
+            function callback() {
+                const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
+                self.queue.delete(downloadUrl);
+                self.handledUrls.delete(downloadUrl);
+                self.request(downloadUrl, map).then(/*nothing*/);
+            }
 
-                function callback() {
-                    const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
-                    self.queue.delete(downloadUrl);
-                    self.handledUrls.delete(downloadUrl);
-                    self.request(downloadUrl, map).then(/*nothing*/);
-                }
+            if (!self.handledUrls.has(downloadUrl)) {
+                self.handledUrls.add(downloadUrl);
 
                 // Delay execution with micro task queue
                 //Promise.resolve().then(callback);
@@ -291,8 +293,6 @@ class FileAttributeBytes {
                 // or //
                 // Delay execution with event loop queue
                 setImmediate ? setImmediate(callback) : setTimeout(callback, 0);
-
-                self.handledUrls.add(downloadUrl);
             }
         }
 
