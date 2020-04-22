@@ -1,6 +1,6 @@
 const {fetch} = require("../browser-context");
 const {Util} = require("../util");
-const {Mega} = require("../mega");
+const {MegaUtil} = require("../mega-util");
 
 // The test of downloading a thumbnail and a preview (file attributes)
 !async function test() {
@@ -50,7 +50,7 @@ const {Mega} = require("../mega");
     console.log(downloadLink);
 // https://gfs270n891.userstorage.mega.co.nz/.v9M_inQRPGeF3AIES08HwnBPOPhC-3rq0TTVk77EyXmJQae9smv9j3BM_THxKzmmyDsx8Q
 
-    thumbnailId = Mega.megaBase64ToBase64(thumbnailId);
+    thumbnailId = MegaUtil.megaBase64ToBase64(thumbnailId);
     console.log(thumbnailId);
     thumbnailId = Util.base64ToBinaryString(thumbnailId);
     console.log(thumbnailId);

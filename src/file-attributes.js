@@ -1,5 +1,6 @@
-const {Mega} = require("./mega");
 const {Util} = require("./util");
+const {MegaUtil} = require("./mega-util");
+const {Mega} = require("./mega");
 
 /**
  * The interface of a media file node
@@ -307,7 +308,7 @@ class FileAttributeBytes {
                 const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
                 const length      = Util.arrayBufferToLong(lengthBytes);
                 const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
-                const id          = Mega.arrayBufferToMegaBase64(idBytes);
+                const id          = MegaUtil.arrayBufferToMegaBase64(idBytes);
 
                 const resolvers = map.get(id);
                 for (const resolve of resolvers) {
