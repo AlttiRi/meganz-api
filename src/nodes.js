@@ -1,5 +1,5 @@
 const {Mega} = require("./mega");
-const {util} = require("./util");
+const {Util} = require("./util");
 const FileAttributes = require("./file-attributes");
 const Share = require("./share");
 
@@ -91,7 +91,7 @@ class FileNode extends BasicFolderShareNode {
         return this.modificationDate;
     }
     get modificationDateFormatted() {
-        return util.secondsToFormattedString(this.modificationDate);
+        return Util.secondsToFormattedString(this.modificationDate);
     }
 
     get downloadUrl() { // not implemented
@@ -224,7 +224,7 @@ class SharedFileNode {
         return this.modificationDate;
     }
     get modificationDateFormatted() {
-        return util.secondsToFormattedString(this.modificationDate);
+        return Util.secondsToFormattedString(this.modificationDate);
     }
 
     #meta;

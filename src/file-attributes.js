@@ -1,5 +1,5 @@
 const {Mega} = require("./mega");
-const {util} = require("./util");
+const {Util} = require("./util");
 
 /**
  * The interface of a media file node
@@ -227,7 +227,7 @@ class FileAttributeBytes {
         //todo
      // const idBytes     = responseBytes.subarray(0, 8);
         const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bits integer (enough for up to 4 GB)
-        const length      = util.arrayBufferToLong(lengthBytes);
+        const length      = Util.arrayBufferToLong(lengthBytes);
         const dataBytes   = responseBytes.subarray(12, 12 + length); // with zero padding
         console.log(`Encrypted file attribute size is ${length} bytes`);
 
@@ -305,7 +305,7 @@ class FileAttributeBytes {
             for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
                 const idBytes     = responseBytes.subarray(offset,      offset +  8);
                 const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
-                const length      = util.arrayBufferToLong(lengthBytes);
+                const length      = Util.arrayBufferToLong(lengthBytes);
                 const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
                 const id          = Mega.arrayBufferToMegaBase64(idBytes);
 
@@ -333,7 +333,7 @@ class FileAttributeBytes {
         const _encryptedBytes = encryptedBytes || await this.getEncryptedBytes({fileAttribute, downloadUrl, node});
 
         console.log("Decryption of downloaded content...");
-        return util.decryptAES(_encryptedBytes, _fileAttributes.nodeKey, {padding: "ZeroPadding"});
+        return Util.decryptAES(_encryptedBytes, _fileAttributes.nodeKey, {padding: "ZeroPadding"});
     }
 }
 

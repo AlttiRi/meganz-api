@@ -1,7 +1,7 @@
 const FileAttributes = require("../file-attributes");
 const URLS = require("./test-urls");
 const {Nodes} = require("../nodes");
-const {util} = require("../util");
+const {Util} = require("../util");
 
 
 async function example() {
@@ -11,10 +11,10 @@ async function example() {
     //const thumb = await FileAttributes.getThumbnail(nodeFromFile);
     // or
     const thumb = await nodeFromFile.getThumbnail();
-    util.saveFile(thumb, `thumb-${nodeFromFile.id}.jpg`, nodeFromFile.mtime);
+    Util.saveFile(thumb, `thumb-${nodeFromFile.id}.jpg`, nodeFromFile.mtime);
 
     const preview = await FileAttributes.getPreview(nodeFromFile);
-    util.saveFile(preview, `preview-${nodeFromFile.id}.jpg`, nodeFromFile.mtime);
+    Util.saveFile(preview, `preview-${nodeFromFile.id}.jpg`, nodeFromFile.mtime);
 
     const nodeFromFolder = await Nodes.node(URLS.CAT_FOLDER_SELECTED_FILE);
     console.log("");

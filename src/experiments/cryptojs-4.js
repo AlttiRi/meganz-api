@@ -1,4 +1,4 @@
-const {util} = require("../util");
+const {Util} = require("../util");
 
 
 function decryptWithCryptoJSHex(data, key, iv){
@@ -36,7 +36,7 @@ console.log("\nResult:");
 console.log(decryptedArrayBuffer);
 
 console.log("\nResult Base64:");
-console.log(util.binaryStringToBase64(decryptedArrayBuffer));
+console.log(Util.binaryStringToBase64(decryptedArrayBuffer));
 
 
 

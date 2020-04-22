@@ -1,5 +1,5 @@
 const URLS = require("./test-urls-private");
-const {util} = require("../util");
+const {Util} = require("../util");
 const {Nodes} = require("../nodes");
 const Share = require("../share");
 

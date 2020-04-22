@@ -1,4 +1,4 @@
-const {util} = require("../util");
+const {Util} = require("../util");
 const {encryptedStr1: data, key, iv} = require("./data");
 
 
@@ -15,6 +15,6 @@ console.log("Result (ArrayBuffer):");
 console.log(decryptedBytes);
 console.log("");
 
-const decryptedStr = util.arrayBufferToUtf8String(decryptedBytes);
+const decryptedStr = Util.arrayBufferToUtf8String(decryptedBytes);
 console.log("Decrypted with AES-JS:\n");
 console.log(decryptedStr);

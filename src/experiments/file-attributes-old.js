@@ -1,5 +1,5 @@
 const {Mega} = require("../mega");
-const {util} = require("../util");
+const {Util} = require("../util");
 
 
 class FileAttributes {
@@ -65,13 +65,13 @@ class FileAttributes {
 
         const idBytes     = responseBytes.subarray(0, 8);  // [unused]
         const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bits integer (enough for up to 4 GB)
-        const length      = util.arrayBufferToLong(lengthBytes);
+        const length      = Util.arrayBufferToLong(lengthBytes);
         const dataBytes   = responseBytes.subarray(12, 12 + length);
 
         console.log(`Encrypted file attribute size is ${length} bytes`); // with zero padding
 
         console.log("Decryption of downloaded content...");
-        return util.decryptAES(dataBytes, node.key, {padding: "ZeroPadding"});
+        return Util.decryptAES(dataBytes, node.key, {padding: "ZeroPadding"});
     }
 }
 

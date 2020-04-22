@@ -1,4 +1,4 @@
-const {util} = require("../util");
+const {Util} = require("../util");
 
 
 function decryptWithCryptoJS(data, key, iv) {
@@ -25,4 +25,4 @@ console.log("Decrypted with CryptoJS [3]:\n");
 console.log(decryptedTextWithCryptoJS);
 
 console.log("\nResult (base64):");
-console.log(util.binaryStringToBase64(decryptedTextWithCryptoJS));
+console.log(Util.binaryStringToBase64(decryptedTextWithCryptoJS));

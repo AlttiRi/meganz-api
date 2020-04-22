@@ -1,4 +1,4 @@
-const {util} = require("../util");
+const {Util} = require("../util");
 const {encryptedStr1: data, key, iv} = require("./data");
 
 
@@ -14,9 +14,9 @@ function decryptWithCryptoJS(data, key, iv) {
     return CryptoJS.enc.Utf8.stringify(plaintextArray);
 }
 
-const keyBase64 = util.arrayBufferToHexString(key);
-const initValue = util.arrayBufferToBinaryString(iv);
-const cryptText = util.arrayBufferToBinaryString(data);
+const keyBase64 = Util.arrayBufferToHexString(key);
+const initValue = Util.arrayBufferToBinaryString(iv);
+const cryptText = Util.arrayBufferToBinaryString(data);
 
 const decryptedTextWithCryptoJS = decryptWithCryptoJS(cryptText, keyBase64, initValue);
 

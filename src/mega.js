@@ -1,5 +1,5 @@
 const {fetch} = require("./browser-context");
-const {util} = require("./util");
+const {Util} = require("./util");
 const {Semaphore} = require("./synchronization");
 
 
@@ -18,7 +18,7 @@ class Mega {
      */
     static semaphore = new Semaphore(12, 650);
 
-    // todo make `util.repeatIfErrorAsync` configurable – use not default `count` and `delay` params
+    // todo make `Util.repeatIfErrorAsync` configurable – use not default `count` and `delay` params
 
     static ssl = 2; // Is there a difference between "1" and "2" [???]
     static apiGateway = "https://g.api.mega.co.nz/cs";
@@ -48,7 +48,7 @@ class Mega {
      */
     static megaBase64ToArrayBuffer(megaBase64) {
         const base64 = Mega.megaBase64ToBase64(megaBase64);
-        return util.base64BinaryStringToArrayBuffer(base64);
+        return Util.base64BinaryStringToArrayBuffer(base64);
     }
 
     /**
@@ -66,8 +66,8 @@ class Mega {
      * @return {string}
      */
     static arrayBufferToMegaBase64(arrayBuffer) {
-        const binaryString = util.arrayBufferToBinaryString(arrayBuffer);
-        const base64 = util.binaryStringToBase64(binaryString);
+        const binaryString = Util.arrayBufferToBinaryString(arrayBuffer);
+        const base64 = Util.binaryStringToBase64(binaryString);
         return Mega.base64ToMegaBase64(base64);
     }
 
@@ -77,7 +77,7 @@ class Mega {
      */
     static megaBase64ToBinaryString(megaBase64) {
         const base64 = Mega.megaBase64ToBase64(megaBase64);
-        return util.base64ToBinaryString(base64);
+        return Util.base64ToBinaryString(base64);
     }
 
     /**
@@ -193,7 +193,7 @@ class Mega {
      */
     static async requestAPI(payload, searchParams = {}, grouped = true) {
         const url = new URL(Mega.apiGateway);
-        util.addSearchParamsToURL(url, searchParams);
+        Util.addSearchParamsToURL(url, searchParams);
 
         if (grouped) {
             return Mega.ApiQueue.requestAPI(url, payload);
@@ -204,7 +204,7 @@ class Mega {
     static async _requestApiSafe(url, payloads) {
         await Mega.semaphore.acquire();
         try {
-            const response = await util.repeatIfErrorAsync(_ => Mega._requestAPI(url, payloads));
+            const response = await Util.repeatIfErrorAsync(_ => Mega._requestAPI(url, payloads));
             return Mega._apiErrorHandler(response); // todo Retry if -3 exception
         } finally { // if an exception happens more than `count` times, or the error code was returned
             Mega.semaphore.release();
@@ -337,7 +337,7 @@ class Mega {
             }
             return new Uint8Array(await response.arrayBuffer());
         };
-        const responseBytes = await util.repeatIfErrorAsync(callback);
+        const responseBytes = await Util.repeatIfErrorAsync(callback);
         console.log("[downloaded]", responseBytes.length, "bytes");
         return responseBytes;
     }
@@ -347,7 +347,7 @@ class Mega {
      * @returns {{modificationDate: number, fileChecksum: Uint8Array}}
      */
     static parseFingerprint(serializedFingerprint) {
-        const fingerprintBytes = util.base64BinaryStringToArrayBuffer(serializedFingerprint);
+        const fingerprintBytes = Util.base64BinaryStringToArrayBuffer(serializedFingerprint);
 
         const fileChecksum    = fingerprintBytes.subarray(0, 16); // 4 CRC32 of the file [unused]
         const timeBytesLength = fingerprintBytes[16];             // === 4, and 5 after 2106.02.07 (06:28:15 UTC on Sunday, 7 February 2106)
@@ -358,7 +358,7 @@ class Mega {
             throw "Invalid value: timeBytesLength = " + timeBytesLength;
         }
 
-        const modificationDate = util.arrayBufferToLong(timeBytes);
+        const modificationDate = Util.arrayBufferToLong(timeBytes);
 
         return {modificationDate, fileChecksum};
     }
@@ -369,9 +369,9 @@ class Mega {
      * @returns {{name: string, serializedFingerprint: string}}
      */
     static parseEncodedNodeAttributes(attributesEncoded, nodeKey) {
-        const attributesEncrypted   = util.base64BinaryStringToArrayBuffer(attributesEncoded);
-        const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
-        const attributesPlane       = util.arrayBufferToUtf8String(attributesArrayBuffer);
+        const attributesEncrypted   = Util.base64BinaryStringToArrayBuffer(attributesEncoded);
+        const attributesArrayBuffer = Util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
+        const attributesPlane       = Util.arrayBufferToUtf8String(attributesArrayBuffer);
 
         const trimmedAttributesPlaneString = attributesPlane.substring("MEGA".length);
         const {
@@ -514,7 +514,7 @@ class Mega {
      * Format bytes to human readable format like it do Mega.nz
      * {@link https://github.com/meganz/webclient/blob/8e867f2a33766872890c462e2b51561228c056a0/js/functions.js#L298}
      * (Yeah, I have rewrote this)
-     * @see util.bytesToSize
+     * @see Util.bytesToSize
      * @param {number} bytes
      * @param {number} [precision]
      * @returns {string}
@@ -547,7 +547,7 @@ class Mega {
 
         for (let i = 0; i < encryptedKey.length; i += 16) {
             const block = encryptedKey.subarray(i, i + 16);
-            const decryptedBlock = util.decryptAES(block, key, {padding: "NoPadding"}); // "NoPadding" – for the case when the last byte is zero (do not trim it)
+            const decryptedBlock = Util.decryptAES(block, key, {padding: "NoPadding"}); // "NoPadding" – for the case when the last byte is zero (do not trim it)
             result.set(decryptedBlock, i);
         }
 

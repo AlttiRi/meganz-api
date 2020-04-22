@@ -2,7 +2,7 @@ const {btoa, atob, fetch} = require("./browser-context");
 const {CryptoJS} = require("./libs");
 
 /** @namespace */
-class util {
+class Util {
 
     static utf8Decoder = new TextDecoder();
 
@@ -14,7 +14,7 @@ class util {
          * @param {*} arguments
          */
         debug() {
-            if (!util.logger.DEBUG) {
+            if (!Util.logger.DEBUG) {
                 return;
             }
             [...arguments].forEach(el => {
@@ -26,7 +26,7 @@ class util {
          * @param {*} arguments
          */
         info() {
-            if (!util.logger.INFO) {
+            if (!Util.logger.INFO) {
                 return;
             }
             [...arguments].forEach(el => {
@@ -56,7 +56,7 @@ class util {
      * @returns {string}
      */
     static arrayBufferToUtf8String(arrayBuffer) {
-        return util.utf8Decoder.decode(arrayBuffer);
+        return Util.utf8Decoder.decode(arrayBuffer);
     }
 
     /**
@@ -114,8 +114,8 @@ class util {
      * @returns {Uint8Array}
      */
     static base64BinaryStringToArrayBuffer(base64BinaryString) {
-        const binaryString = util.base64ToBinaryString(base64BinaryString);
-        return util.binaryStringToArrayBuffer(binaryString);
+        const binaryString = Util.base64ToBinaryString(base64BinaryString);
+        return Util.binaryStringToArrayBuffer(binaryString);
     }
 
     /**
@@ -142,9 +142,9 @@ class util {
         mode = mode || "CBC";
         padding = padding || "Pkcs7";
 
-        const _data = util.arrayBufferToBinaryString(data);
-        const _key = util.arrayBufferToBinaryString(key);
-        const _iv = util.arrayBufferToBinaryString(iv);
+        const _data = Util.arrayBufferToBinaryString(data);
+        const _key = Util.arrayBufferToBinaryString(key);
+        const _iv = Util.arrayBufferToBinaryString(iv);
 
         const plaintextWA = CryptoJS.AES.decrypt(
             {
@@ -186,14 +186,14 @@ class util {
      * @param {string[]} [path] - array of folders names
      */
     static saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
-        const safePath = path.map(util.getSafeName);
+        const safePath = path.map(Util.getSafeName);
         const pathStr = "temp/" + (safePath.length ? safePath.join("/") + "/" : "");
         console.log(`Saving "${name}" file to "${pathStr}" folder...`);
 
         const fs = require("fs");
         fs.mkdirSync(pathStr, {recursive: true});
 
-        const safeName = util.getSafeName(name);
+        const safeName = Util.getSafeName(name);
 
         fs.writeFileSync(pathStr + safeName, Buffer.from(arrayBuffer));
         fs.utimesSync(pathStr + safeName, new Date(), mtime);
@@ -297,7 +297,7 @@ class util {
             } catch (e) {
                 console.error(e, `ERROR! Will be repeated. The try ${i + 1} of ${count}.`);
                 if (i < count) {
-                    await util.sleep(delay);
+                    await Util.sleep(delay);
                 } else {
                     throw e;
                 }
@@ -339,4 +339,4 @@ class util {
 }
 
 
-module.exports = {util};
+module.exports = {Util};

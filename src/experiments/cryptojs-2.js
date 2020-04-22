@@ -1,4 +1,4 @@
-const {util} = require("../util");
+const {Util} = require("../util");
 const {encryptedStr1: data, key, iv} = require("./data");
 
 
@@ -6,9 +6,9 @@ const {encryptedStr1: data, key, iv} = require("./data");
 function decryptWithCryptoJS(data, key, iv = new Uint8Array(key.length)){
     const CryptoJS = require("crypto-js");
 
-    key  = util.arrayBufferToBinaryString(key);
-    iv   = util.arrayBufferToBinaryString(iv);
-    data = util.arrayBufferToBinaryString(data);
+    key  = Util.arrayBufferToBinaryString(key);
+    iv   = Util.arrayBufferToBinaryString(iv);
+    data = Util.arrayBufferToBinaryString(data);
 
     /** @see CryptoJS.enc.Latin1.stringify code */
     function _wordArrayToArrayBuffer(wordArray) {
@@ -51,10 +51,10 @@ console.log("\nResult:");
 console.log(decryptedArrayBuffer);
 
 console.log("\nResult Latin1:");
-console.log(util.arrayBufferToBinaryString(decryptedArrayBuffer));
+console.log(Util.arrayBufferToBinaryString(decryptedArrayBuffer));
 
 console.log("\nResult UTF8:");
-console.log(util.arrayBufferToUtf8String(decryptedArrayBuffer));
+console.log(Util.arrayBufferToUtf8String(decryptedArrayBuffer));
 
 console.log("\nResult length: " + decryptedArrayBuffer.length); // `64`, but `61` if uncomment padding specifying (ZeroPadding)
 

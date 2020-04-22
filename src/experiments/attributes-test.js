@@ -1,5 +1,5 @@
 const {fetch} = require("../browser-context");
-const {util} = require("../util");
+const {Util} = require("../util");
 const {Mega} = require("../mega");
 
 // The test of downloading a thumbnail and a preview (file attributes)
@@ -52,9 +52,9 @@ const {Mega} = require("../mega");
 
     thumbnailId = Mega.megaBase64ToBase64(thumbnailId);
     console.log(thumbnailId);
-    thumbnailId = util.base64ToBinaryString(thumbnailId);
+    thumbnailId = Util.base64ToBinaryString(thumbnailId);
     console.log(thumbnailId);
-    thumbnailId = util.binaryStringToArrayBuffer(thumbnailId);
+    thumbnailId = Util.binaryStringToArrayBuffer(thumbnailId);
     console.log(thumbnailId);
 // lH0B2ump+G8=
 // }Úé©øo
@@ -95,7 +95,7 @@ const {Mega} = require("../mega");
     console.log("lengthBytes", lengthBytes);
 // Uint8Array(4) [0, 10, 0, 0]
 
-    console.log("thumbnail bytes count", util.arrayBufferToLong(lengthBytes));
+    console.log("thumbnail bytes count", Util.arrayBufferToLong(lengthBytes));
 // 2560
 
     let thumbnailBytes = responseBytes.subarray(12);
@@ -106,14 +106,14 @@ const {Mega} = require("../mega");
 
 
 
-    let decrypted = util.decryptAES(thumbnailBytes, nodeKey, {padding: "ZeroPadding"});
+    let decrypted = Util.decryptAES(thumbnailBytes, nodeKey, {padding: "ZeroPadding"});
     console.log(decrypted);
 // Uint8Array(2546) [
 //   255, 216, 255, 224,     0,  16,  74,  70,   73,  70,  0,   1,    1,   0,   0,   1,
 //     0,   1,   0,   0,   255, 219,  0,   67,    0,  10,  7,   7,    8,   7,   6,  10,
 //     8,   8,   8,  11,    10,  10,  11,  14,   24,  16,  14, 13,   13,  14,  29,  21,
 
-    util.saveFile(decrypted, "123.jpg"); // -> temp/123.jpg
+    Util.saveFile(decrypted, "123.jpg"); // -> temp/123.jpg
 
 
     // in case uncommenting – download necessary asmcrypto.js file
@@ -139,7 +139,7 @@ const {Mega} = require("../mega");
 
         // It works OK, but it does not remove the tailing zero padding (the size of the image is multiple 16)
 
-        util.saveFile(decryptedByASM,"123_asm.jpg");
+        Util.saveFile(decryptedByASM,"123_asm.jpg");
     }
 
 

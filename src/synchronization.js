@@ -1,4 +1,4 @@
-const {util} = require("./util");
+const {Util} = require("./util");
 
 //todo setter for `max`, `delay` (the check > 0), disable() method
 class Semaphore {
@@ -52,7 +52,7 @@ class Semaphore {
      * You may note the delay before finishing of the program because of the delay of the semaphore
      */
     release() {
-        util.sleep(this.delay)
+        Util.sleep(this.delay)
             .then(_ => {
                 console.log(`[Semaphore] Released: ${this.#count}${this.#queue.length > 0 ? " from the queue" : ""}`);
                 if (this.#queue.length > 0) {

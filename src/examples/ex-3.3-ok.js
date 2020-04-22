@@ -1,5 +1,5 @@
 const URLS = require("./test-urls-private");
-const {util} = require("../util");
+const {Util} = require("../util");
 const {Nodes} = require("../nodes");
 const {CountDownLatch} = require("../synchronization");
 const {progress} = require("./promise-progress");
@@ -18,7 +18,7 @@ async function example() {
             node.getThumbnail()
                 .then(thumb => {
                     // NB: async – the creation time order will be not the same as the order of pictures
-                    util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
+                    Util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
                     countDownLatch.countDown();
                 });
         }

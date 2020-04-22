@@ -1,6 +1,6 @@
 const URLS = require("./test-urls-private");
 const {Nodes} = require("../nodes");
-const {util} = require("../util");
+const {Util} = require("../util");
 
 // to simulate old behavior (without a semaphore)
 const {Mega} = require("../mega");
@@ -24,14 +24,14 @@ async function example() {
                 // max safe connection count is 63
                 if (count === 63) {
                     console.log("---await---");
-                    await util.sleep(4000); // will be errors if it is less
+                    await Util.sleep(4000); // will be errors if it is less
                     console.log("---reset---");
                     count = 0;
                 }
                 console.log(++count);
                 node.getThumbnail()
                     .then(thumb => {
-                        util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
+                        Util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
                     })
                     .catch(error => {
                         errors++;

@@ -1,6 +1,6 @@
 const {fetch} = require("../browser-context");
-const {util} = require("../util");
-const logger = util.logger;
+const {Util} = require("../util");
+const logger = Util.logger;
 const {Mega} = require("../mega");
 const Share = require("../share");
 
@@ -88,7 +88,7 @@ const Share = require("../share");
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-        const attributesEncrypted = util.base64BinaryStringToArrayBuffer(serializedAttributes);
+        const attributesEncrypted = Util.base64BinaryStringToArrayBuffer(serializedAttributes);
         logger.debug("attributesEncrypted:", attributesEncrypted);
 
     // Uint8Array(64)
@@ -102,9 +102,9 @@ const Share = require("../share");
 
         console.log("Decryption of attributes...");
 
-        const attributesArrayBuffer = util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
+        const attributesArrayBuffer = Util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
 
-        const attributesPlane = util.arrayBufferToUtf8String(attributesArrayBuffer);
+        const attributesPlane = Util.arrayBufferToUtf8String(attributesArrayBuffer);
 
         logger.debug("Attributes:", attributesArrayBuffer, attributesPlane);
 
@@ -126,7 +126,7 @@ const Share = require("../share");
     // GRSM8+c1HUmlmyDuTJVrDwSDpqRV  // node hash + mtime
 
 
-        const fingerprintBytes = util.base64BinaryStringToArrayBuffer(serializedFingerprint);
+        const fingerprintBytes = Util.base64BinaryStringToArrayBuffer(serializedFingerprint);
         logger.debug(fingerprintBytes);
 
     // Uint8Array(21) [
@@ -151,7 +151,7 @@ const Share = require("../share");
 
 
 
-        const modificationDateSeconds = util.arrayBufferToLong(timeBytes);
+        const modificationDateSeconds = Util.arrayBufferToLong(timeBytes);
         logger.debug(modificationDateSeconds);
     // 1436853891
 
@@ -159,7 +159,7 @@ const Share = require("../share");
     // 14.07.2015, 09:04:51
 
         // I prefer this format
-        logger.debug(util.secondsToFormattedString(modificationDateSeconds));
+        logger.debug(Util.secondsToFormattedString(modificationDateSeconds));
     // 2015.06.14 09:04:51
 
 
