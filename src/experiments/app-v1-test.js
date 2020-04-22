@@ -1,7 +1,7 @@
 const {fetch} = require("../browser-context");
 const {util} = require("../util");
 const logger = util.logger;
-const {mega} = require("../mega");
+const {Mega} = require("../mega");
 const Share = require("../share");
 
 
@@ -33,7 +33,7 @@ const Share = require("../share");
 // ---------------------------------------------------------------------------------------------------------------------
 
         console.log("Decode decryption key...");
-        const decryptionKey = mega.megaBase64ToArrayBuffer(decryptionKeyStr);
+        const decryptionKey = Mega.megaBase64ToArrayBuffer(decryptionKeyStr);
 
 
         logger.debug("decryptionKey:", decryptionKey);
@@ -43,7 +43,7 @@ const Share = require("../share");
 // ---------------------------------------------------------------------------------------------------------------------
 
         console.log("Parse decryption key...");
-        const { iv, metaMac, key: nodeKey } = mega.decryptionKeyToParts(decryptionKey);
+        const { iv, metaMac, key: nodeKey } = Mega.decryptionKeyToParts(decryptionKey);
 
         logger.debug("iv:", iv, "metaMac:", metaMac, "nodeKey:", nodeKey);
 

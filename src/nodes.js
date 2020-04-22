@@ -1,4 +1,4 @@
-const {mega} = require("./mega");
+const {Mega} = require("./mega");
 const {util} = require("./util");
 const FileAttributes = require("./file-attributes");
 const Share = require("./share");
@@ -15,8 +15,8 @@ class BasicFolderShareNode {
         this.creationDate = node.creationDate;
 
         if (masterKey && node.decryptionKeyStr) {
-            const decryptionKeyEncrypted = mega.megaBase64ToArrayBuffer(node.decryptionKeyStr);
-            this.#decryptionKey = mega.decryptKey(decryptionKeyEncrypted, masterKey);
+            const decryptionKeyEncrypted = Mega.megaBase64ToArrayBuffer(node.decryptionKeyStr);
+            this.#decryptionKey = Mega.decryptKey(decryptionKeyEncrypted, masterKey);
         } else {
             this.#decryptionKey = null;
         }
@@ -61,13 +61,13 @@ class FileNode extends BasicFolderShareNode {
             const {
                 name,
                 serializedFingerprint
-            } = mega.parseEncodedNodeAttributes(node.attributes, this.key);
+            } = Mega.parseEncodedNodeAttributes(node.attributes, this.key);
             this.name = name;
 
             const {
                 modificationDate,
                 fileChecksum      // [unused][???]
-            } = mega.parseFingerprint(serializedFingerprint);
+            } = Mega.parseFingerprint(serializedFingerprint);
             this.modificationDate = modificationDate;
         } else {
             this.name = this.modificationDate = null;
@@ -79,7 +79,7 @@ class FileNode extends BasicFolderShareNode {
     get key() {
         if (!this.#keyParts) {
             if (super.key) {
-                this.#keyParts = mega.decryptionKeyToParts(super.key);
+                this.#keyParts = Mega.decryptionKeyToParts(super.key);
             } else {
                 this.#keyParts = {iv: null, metaMac: null, key: null};
             }
@@ -139,7 +139,7 @@ class FolderNode extends BasicFolderShareNode {
         if (masterKey) {
             const {
                 name
-            } = mega.parseEncodedNodeAttributes(node.attributes, this.key);
+            } = Mega.parseEncodedNodeAttributes(node.attributes, this.key);
             this.name = name;
         } else {
             this.name = null;
@@ -172,12 +172,12 @@ class SharedFileNode {
         this.id = share.id; // in fact it is not real file node id (for every new generated share url you get new id)
 
         if (share.decryptionKeyStr) {
-            const decryptionKey = mega.megaBase64ToArrayBuffer(share.decryptionKeyStr);
+            const decryptionKey = Mega.megaBase64ToArrayBuffer(share.decryptionKeyStr);
             const {
                 iv,      // [unused][???] // probably it is needed for decryption (not implemented)
                 metaMac, // [unused][???]
                 key
-            } = mega.decryptionKeyToParts(decryptionKey);
+            } = Mega.decryptionKeyToParts(decryptionKey);
             this.key = key;
         } else {
             this.key = null;
@@ -197,12 +197,12 @@ class SharedFileNode {
             const {
                 name,
                 serializedFingerprint
-            } = mega.parseEncodedNodeAttributes(nodeAttributesEncoded, this.key);
+            } = Mega.parseEncodedNodeAttributes(nodeAttributesEncoded, this.key);
 
             const {
                 modificationDate,
                 fileChecksum   // [unused][???]
-            } = mega.parseFingerprint(serializedFingerprint);
+            } = Mega.parseFingerprint(serializedFingerprint);
 
             this.name = name;
             this.modificationDate = modificationDate;
@@ -310,7 +310,7 @@ class Nodes {
      * @returns {Promise<SharedFileNode|SharedMediaFileNode>}
      */
     static async getSharedNode(share) {
-        const nodeInfo = await mega.requestNodeInfo(share.id);
+        const nodeInfo = await Mega.requestNodeInfo(share.id);
         if (nodeInfo.fileAttributesStr) {
             return new SharedMediaFileNode(share, nodeInfo);
         } else {
@@ -324,13 +324,13 @@ class Nodes {
      */
     static async getFolderNodes(share) {
 
-        const masterKey = share.decryptionKeyStr ? mega.megaBase64ToArrayBuffer(share.decryptionKeyStr) : null;
+        const masterKey = share.decryptionKeyStr ? Mega.megaBase64ToArrayBuffer(share.decryptionKeyStr) : null;
         //logger.debug("[masterKey]", masterKey);
 
         const {
             nodes,
             rootId
-        } = await mega.requestFolderInfo(share.id);
+        } = await Mega.requestFolderInfo(share.id);
         //logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
 
         const folders = new Map(); // [note] JS's HashMap holds the insert order

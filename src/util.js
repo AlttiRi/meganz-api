@@ -242,7 +242,7 @@ const util = {
      * Format bytes to human readable format
      * Trims the tailing zeros
      * @link https://stackoverflow.com/a/18650828/11468937
-     * @see mega.bytesToSize
+     * @see Mega.bytesToSize
      * @param {number} bytes
      * @param {number} [decimals=2]
      * @returns {string}

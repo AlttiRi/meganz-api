@@ -1,4 +1,4 @@
-const {mega} = require("../mega");
+const {Mega} = require("../mega");
 const {util} = require("../util");
 
 
@@ -82,8 +82,8 @@ class FileAttributes {
  * @returns {Promise<Uint8Array>} responseBytes – encrypted bytes
  */
 async function requestFileAttributeEncrypted(fileAttribute) {
-    const downloadLink = await mega.requestFileAttributeDownloadUrl(fileAttribute);
-    return mega.requestFileAttributeBytes(downloadLink, fileAttribute.id);
+    const downloadLink = await Mega.requestFileAttributeDownloadUrl(fileAttribute);
+    return Mega.requestFileAttributeBytes(downloadLink, fileAttribute.id);
 }
 
 

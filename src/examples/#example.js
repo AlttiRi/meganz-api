@@ -1,6 +1,6 @@
 const URLS = require("./test-urls-private");
 const {util} = require("../util");
-const {mega} = require("../mega");
+const {Mega} = require("../mega");
 const {Nodes} = require("../nodes");
 const Share = require("../share");
 const FileAttributes = require("../file-attributes");

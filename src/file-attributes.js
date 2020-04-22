@@ -1,4 +1,4 @@
-const {mega} = require("./mega");
+const {Mega} = require("./mega");
 const {util} = require("./util");
 
 /**
@@ -102,7 +102,7 @@ class Bunch {
         if (cached && this.hasDownloadUrl) {
             return this.downloadUrl;
         }
-        const url = await mega.requestFileAttributeDownloadUrl(fileAttribute);
+        const url = await Mega.requestFileAttributeDownloadUrl(fileAttribute);
         //todo urls
         this.#downloadUrl = url;
         return url;
@@ -222,7 +222,7 @@ class FileAttributeBytes {
             return FileAttributeBytes.DlBytesQueue.getBytes(_downloadUrl, _fileAttribute.id);
         }
 
-        const responseBytes = await mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
+        const responseBytes = await Mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
 
         //todo
      // const idBytes     = responseBytes.subarray(0, 8);
@@ -300,14 +300,14 @@ class FileAttributeBytes {
         static async request(downloadUrl, map) {
             const fileAttrIDs = [...map.keys()];
 
-            const responseBytes = await mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
+            const responseBytes = await Mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
 
             for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
                 const idBytes     = responseBytes.subarray(offset,      offset +  8);
                 const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
                 const length      = util.arrayBufferToLong(lengthBytes);
                 const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
-                const id = mega.arrayBufferToMegaBase64(idBytes);
+                const id          = Mega.arrayBufferToMegaBase64(idBytes);
 
                 const resolvers = map.get(id);
                 for (const resolve of resolvers) {

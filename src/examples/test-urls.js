@@ -106,7 +106,7 @@ class URLS {
      * RELATIVE URLs (some examples)
      * ----------------------------------------------------------------
      * The RegExp checks not full URL, but only the signature.
-     * @see mega.parseUrl
+     * @see Mega.parseUrl
      */
 
     static CAT_FILE_IMAGE_OLD_RELATIVE_1 = "/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk";

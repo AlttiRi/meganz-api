@@ -4,7 +4,7 @@ const logger = util.logger;
 const {Semaphore} = require("./synchronization");
 
 
-class mega {
+class Mega {
 
     /**
      * Max parallel requests count that Mega allows for API access are `64`,
@@ -48,7 +48,7 @@ class mega {
      * @returns {Uint8Array}
      */
     static megaBase64ToArrayBuffer(megaBase64) {
-        const base64 = mega.megaBase64ToBase64(megaBase64);
+        const base64 = Mega.megaBase64ToBase64(megaBase64);
         return util.base64BinaryStringToArrayBuffer(base64);
     }
 
@@ -69,7 +69,7 @@ class mega {
     static arrayBufferToMegaBase64(arrayBuffer) {
         const binaryString = util.arrayBufferToBinaryString(arrayBuffer);
         const base64 = util.binaryStringToBase64(binaryString);
-        return mega.base64ToMegaBase64(base64);
+        return Mega.base64ToMegaBase64(base64);
     }
 
     /**
@@ -77,7 +77,7 @@ class mega {
      * @returns {string}
      */
     static megaBase64ToBinaryString(megaBase64) {
-        const base64 = mega.megaBase64ToBase64(megaBase64);
+        const base64 = Mega.megaBase64ToBase64(megaBase64);
         return util.base64ToBinaryString(base64);
     }
 
@@ -91,7 +91,7 @@ class mega {
      */
     static megaBase64ToBase64(megaBase64EncodedStr) {
 
-        const paddingLength = mega._getPaddingLengthForMegaBase64(megaBase64EncodedStr);
+        const paddingLength = Mega._getPaddingLengthForMegaBase64(megaBase64EncodedStr);
         let result = megaBase64EncodedStr + "=".repeat(paddingLength);
 
         result = result.replace(/-/g, "+")
@@ -125,7 +125,7 @@ class mega {
 
     static ApiQueue = class {
         static requestAPI(url, payload) {
-            const self = mega.ApiQueue;
+            const self = Mega.ApiQueue;
             const _url = url.toString();
 
             return new Promise(resolve => {
@@ -142,7 +142,7 @@ class mega {
 
         /** @private */
         static handle({url, payload}, resolve) {
-            const self = mega.ApiQueue;
+            const self = Mega.ApiQueue;
 
             if (!self.queue.has(url)) {
                 self.queue.set(url, []);
@@ -154,7 +154,7 @@ class mega {
 
         /** @private */
         static run(url) {
-            const self = mega.ApiQueue;
+            const self = Mega.ApiQueue;
 
             function callback() {
                 /** @type {{payload: Object, resolve: Function}[]} */
@@ -175,7 +175,7 @@ class mega {
         static async request(url, objs) {
 
             const payloads = objs.map(obj => obj.payload);
-            const responseArray = await mega._requestApiSafe(url, payloads);
+            const responseArray = await Mega._requestApiSafe(url, payloads);
 
             console.log("[grouped request]", responseArray);
 
@@ -193,22 +193,22 @@ class mega {
      * @returns {Promise<*>} responseData
      */
     static async requestAPI(payload, searchParams = {}, grouped = true) {
-        const url = new URL(mega.apiGateway);
+        const url = new URL(Mega.apiGateway);
         util.addSearchParamsToURL(url, searchParams);
 
         if (grouped) {
-            return mega.ApiQueue.requestAPI(url, payload);
+            return Mega.ApiQueue.requestAPI(url, payload);
         }
-        return (await mega._requestApiSafe(url, [payload]))[0];
+        return (await Mega._requestApiSafe(url, [payload]))[0];
     }
 
     static async _requestApiSafe(url, payloads) {
-        await mega.semaphore.acquire();
+        await Mega.semaphore.acquire();
         try {
-            const response = await util.repeatIfErrorAsync(_ => mega._requestAPI(url, payloads));
-            return mega._apiErrorHandler(response); // todo Retry if -3 exception
+            const response = await util.repeatIfErrorAsync(_ => Mega._requestAPI(url, payloads));
+            return Mega._apiErrorHandler(response); // todo Retry if -3 exception
         } finally { // if an exception happens more than `count` times, or the error code was returned
-            mega.semaphore.release();
+            Mega.semaphore.release();
         }
     }
 
@@ -275,10 +275,10 @@ class mega {
      */
     static async requestFileAttributeDownloadUrl({id, type}) {
         console.log("Request download url...");
-        const responseData = await mega.requestAPI({
+        const responseData = await Mega.requestAPI({
             "a": "ufa",    // action (command): u [???] file attribute
             "fah": id,     // `h` means handler(hash, id)
-            "ssl": mega.ssl,
+            "ssl": Mega.ssl,
             "r": 1         // r [???] – It adds "." in response url (without this dot the url does not work)
         });
 
@@ -290,11 +290,11 @@ class mega {
     static __mapUrl = new Map(); // url, count
     static __i = 0;
     static __downloadAttByUrlCount(url) {
-        if (!mega.__mapUrl.has(url)) {
-            mega.__mapUrl.set(url, 0);
+        if (!Mega.__mapUrl.has(url)) {
+            Mega.__mapUrl.set(url, 0);
         }
-        const count = mega.__mapUrl.get(url);
-        mega.__mapUrl.set(url, count + 1);
+        const count = Mega.__mapUrl.get(url);
+        Mega.__mapUrl.set(url, count + 1);
         return count + 1;
     }
 
@@ -315,15 +315,15 @@ class mega {
         if (Array.isArray(ids)) {
             selectedIdsBinary = new Uint8Array(ids.length * 8);
             for (let i = 0; i < ids.length; i++) {
-                selectedIdsBinary.set(mega.megaBase64ToArrayBuffer(ids[i]), i * 8);
+                selectedIdsBinary.set(Mega.megaBase64ToArrayBuffer(ids[i]), i * 8);
             }
         } else {
-            selectedIdsBinary = mega.megaBase64ToArrayBuffer(ids);
+            selectedIdsBinary = Mega.megaBase64ToArrayBuffer(ids);
         }
 
         /** Sometimes it can throw `connect ETIMEDOUT` or `read ECONNRESET` exception */
         const callback = async () => {
-            console.log("Downloading content... ", mega.__i++, " Url use count:", mega.__downloadAttByUrlCount(url));
+            console.log("Downloading content... ", Mega.__i++, " Url use count:", Mega.__downloadAttByUrlCount(url));
             const response = await fetch(url, {
                 method: "post",
                 body: selectedIdsBinary,
@@ -390,12 +390,12 @@ class mega {
      */
     static async requestNodeInfo(shareId) {
 
-        const responseData = await mega.requestAPI({
+        const responseData = await Mega.requestAPI({
             "a": "g",        // Command type
             "p": shareId,    // Content ID
             "g": 1,          // The download link
             //"v": 2,        // Multiple links for big files
-            "ssl": mega.ssl  // HTTPS for the download link
+            "ssl": Mega.ssl  // HTTPS for the download link
         });
         //console.log("[responseData]", responseData);
 
@@ -433,7 +433,7 @@ class mega {
     // all nodes with the same parent are listed one by one in creationDate order,
     // one level folders iterates in reverse order to `print` their children.
     static async requestFolderInfo(shareId) {
-        const responseData = await mega.requestAPI({
+        const responseData = await Mega.requestAPI({
             "a": "f",
             "r":  1, // Recursive (include sub folders/files) // if not set only root node and 1th lvl file/folder nodes
             "c":  1, // [???][useless]
@@ -556,4 +556,4 @@ class mega {
     }
 }
 
-module.exports = {mega};
+module.exports = {Mega};
