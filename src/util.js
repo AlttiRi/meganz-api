@@ -60,13 +60,45 @@ class Util {
     }
 
     /**
-     * @param {Uint8Array} arrayBuffer
+     * Allows to get the precomputed hex octets table
+     * It is used only in `Util.arrayBufferToHexString()`
+     * @private
+     */
+    static #ByteToHexTable = class {
+        static get() {
+            const self = Util.#ByteToHexTable;
+            if (!self.#inited) {
+                self.#init();
+            }
+            return self.#byteToHex;
+        }
+        static #byteToHex = [];
+        static #inited = false;
+        static #init = () => {
+            const self = Util.#ByteToHexTable;
+            for (let i = 0; i < 256; i++) {
+                const hexOctet = i.toString(16).padStart(2, "0");
+                self.#byteToHex.push(hexOctet);
+            }
+            self.#inited = true;
+        }
+    }
+
+    /**
+     * @param {TypedArray} arrayBuffer
      * @returns {string}
      */
     static arrayBufferToHexString(arrayBuffer) {
-        return Array.from(arrayBuffer)
-            .map(n => ("0" + n.toString(16)).slice(-2))
-            .join("");
+        const byteToHex = Util.#ByteToHexTable.get();
+
+        const buffer = new Uint8Array(arrayBuffer);
+        const hexOctets = new Array(buffer.length);
+
+        for (let i = 0; i < buffer.length; i++) {
+            hexOctets[i] = byteToHex[buffer[i]];
+        }
+
+        return hexOctets.join("");
     }
 
     /**
@@ -304,15 +336,15 @@ class Util {
     }
 
     /**
-     * @param {function} callback - an async function to repeat if it throws an exception
+     * @param {function} executable - an async function to repeat if it throws an exception
      * @param {number} count=5 - count of the repeats
      * @param {number} delay=5000 - ms to wait before repeating
      * @return {Promise<*>}
      */
-    static async repeatIfErrorAsync(callback, count = 5, delay = 5000) {
+    static async repeatIfErrorAsync(executable, count = 5, delay = 5000) {
         for (let i = 0;; i++) {
             try {
-                return await callback();
+                return await executable();
             } catch (e) {
                 console.error(e, `ERROR! Will be repeated. The try ${i + 1} of ${count}.`);
                 if (i < count) {
