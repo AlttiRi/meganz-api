@@ -262,13 +262,32 @@ class Util {
 
     /**
      * @param {number} ms milliseconds
+     * @param {boolean} inNextEventLoopTask - if passed 0 wait for the next event loop task, or no (use micro task)
      * @returns {Promise}
      */
-    static sleep(ms) {
+    static sleep(ms, inNextEventLoopTask = false) {
         if (ms === 0) {
-            return Promise.resolve(); // It's not the same thing as `setImmediate`
+            if (inNextEventLoopTask) {
+                return Promise.resolve(); // It's not the same thing as using `setImmediate`
+            } else {
+                return Util.nextEventLoopTask();
+            }
         }
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Return promise that fulfills at the next event loop task
+     * @returns {Promise}
+     */
+    static nextEventLoopTask() {
+        return new Promise(resolve => {
+            if (setImmediate) {
+                return setImmediate(resolve);
+            }
+            // todo create the good implementation with postMessage (for the browsers)
+            return setTimeout(resolve, 0); // in fact, it's 4 ms, not 0.
+        });
     }
 
     /**

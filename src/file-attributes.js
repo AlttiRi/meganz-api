@@ -287,13 +287,13 @@ class FileAttributeBytes {
                 self.handledUrls.add(downloadUrl);
 
                 // Delay execution with micro task queue
-                //Promise.resolve().then(callback);
+                Promise.resolve().then(callback);
                 // or //
                 // Delay execution with event loop queue + delay in ms
                 //setTimeout(callback, 10);
                 // or //
                 // Delay execution with event loop queue
-                setImmediate ? setImmediate(callback) : setTimeout(callback, 0);
+                //setImmediate ? setImmediate(callback) : setTimeout(callback, 0);
             }
         }
 

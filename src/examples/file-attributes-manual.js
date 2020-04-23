@@ -13,7 +13,8 @@ async function example() {
     let i = 0;
     for (const node of nodes) {
         if (Nodes.isMediaNode(node) && i < 151) {
-            //await progress(Util.sleep(10), "Waiting for a delay in cycle");
+            //await progress(Util.sleep(1), "Waiting for a delay in cycle"); // may break grouped downloading
+            //await Util.nextEventLoopTask();
             promises.push(handle(node, i++));
         }
     }
@@ -22,7 +23,8 @@ async function example() {
 
 async function handle(node, index) {
     const downloadUrl = await progress(FileAttributes.Thumbnail.getDownloadUrl({node}), "URL fetching");
-    //await progress(Util.sleep(1), "Waiting for a delay");
+    //await progress(Util.sleep(10), "Waiting for a delay"); // may break grouped downloading
+    //await Util.nextEventLoopTask();
 
     const encryptedBytes = await FileAttributes.Thumbnail.getEncryptedBytes({node, downloadUrl},true);
     let bytes /*//*/ = await FileAttributes.Thumbnail.getBytes({node, encryptedBytes}); // comment the right part to no decryption

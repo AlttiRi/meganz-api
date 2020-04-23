@@ -184,17 +184,6 @@ class Mega {
         return responseData["p"] + "/" + type;
     }
 
-    // todo delete later (for test)
-    static __mapUrl = new Map(); // url, count
-    static __i = 0;
-    static __downloadAttByUrlCount(url) {
-        if (!Mega.__mapUrl.has(url)) {
-            Mega.__mapUrl.set(url, 0);
-        }
-        const count = Mega.__mapUrl.get(url);
-        Mega.__mapUrl.set(url, count + 1);
-        return count + 1;
-    }
 
     // todo add semaphore, not more than 31 (included) connections for each url (of bunch)
     //  to test it, use `Thumbnail.getEncryptedBytes(..., false)` <- "false"
@@ -205,8 +194,6 @@ class Mega {
      * @throws ETIMEDOUT, ECONNRESET
      */
     static async requestFileAttributeBytes(url, ids) {
-        console.log("Requesting " + (Array.isArray(ids) ? ids.length : "\"1\"") + " attrs ---")
-
         /** @type Uint8Array */
         let selectedIdsBinary;
 
@@ -221,7 +208,7 @@ class Mega {
 
         /** Sometimes it can throw `connect ETIMEDOUT` or `read ECONNRESET` exception */
         const callback = async () => {
-            console.log("Downloading content... ", Mega.__i++, " Url use count:", Mega.__downloadAttByUrlCount(url));
+            console.log("Downloading content... ");
             const response = await fetch(url, {
                 method: "post",
                 body: selectedIdsBinary,
@@ -240,6 +227,8 @@ class Mega {
         console.log("[downloaded]", responseBytes.length, "bytes");
         return responseBytes;
     }
+
+    // ----------------------------------------------------------------
 
     /**
      * @param {string} shareId
