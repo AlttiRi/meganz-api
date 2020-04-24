@@ -174,24 +174,42 @@ class Util {
         mode = mode || "CBC";
         padding = padding || "Pkcs7";
 
-        const _data = Util.arrayBufferToBinaryString(data);
-        const _key = Util.arrayBufferToBinaryString(key);
-        const _iv = Util.arrayBufferToBinaryString(iv);
+        /**
+         * The convert code [*] is from "crypto-js/lib-typedarrays.js" file
+         * @param {Uint8Array} arrayBuffer
+         * @returns {CryptoJS.lib.WordArray} wordArray
+         * @private
+         */
+        const _arrayBufferToWordArray = function(arrayBuffer) {
+            const words = [];
+            for (let i = 0; i < arrayBuffer.length; i++) {
+                words[i >>> 2] |= arrayBuffer[i] << (24 - (i % 4) * 8); // [*]
+            }
+            return CryptoJS.lib.WordArray.create(words, arrayBuffer.length);
+        };
 
+        const _data = _arrayBufferToWordArray(data);
+        const _key = _arrayBufferToWordArray(key);
+        const _iv = _arrayBufferToWordArray(iv);
+        // Just a note: You can also convert to Latin1: `const _data = _arrayBufferToWordArray(data);`
+        // in this case use `ciphertext: CryptoJS.enc.Latin1.parse(_data),`. The same thing is for `key` and `iv`.
+
+        // (CipherParamsData, WordArray, IBlockCipherCfg)
+        // Note: CipherParamsData uses only to get `ciphertext` property, the others will be ignored (iv, mode, padding...)
         const plaintextWA = CryptoJS.AES.decrypt(
             {
-                ciphertext: CryptoJS.enc.Latin1.parse(_data)
+                ciphertext: _data
             },
-            CryptoJS.enc.Latin1.parse(_key),
+            _key,
             {
-                iv: CryptoJS.enc.Latin1.parse(_iv),
+                iv: _iv,
                 mode: CryptoJS.mode[mode],
                 padding: CryptoJS.pad[padding]
             }
         );
 
         /**
-         * The convert code [*] is from CryptoJS.enc.Latin1.stringify
+         * The convert code [*] is from CryptoJS.enc.Latin1.stringify ("crypto-js/core.js")
          * @see CryptoJS.enc.Latin1 stringify()
          *
          * @param {CryptoJS.lib.WordArray} wordArray
