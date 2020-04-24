@@ -1,39 +1,7 @@
 const {btoa, atob, fetch} = require("./browser-context");
 const {CryptoJS} = require("./libs");
 
-/** @namespace */
 class Util {
-
-    static utf8Decoder = new TextDecoder();
-
-    // the experimental version
-    static logger = {
-        DEBUG: true,
-        INFO: true,
-        /**
-         * @param {*} arguments
-         */
-        debug() {
-            if (!Util.logger.DEBUG) {
-                return;
-            }
-            [...arguments].forEach(el => {
-                console.log(el);
-            });
-            console.log();
-        },
-        /**
-         * @param {*} arguments
-         */
-        info() {
-            if (!Util.logger.INFO) {
-                return;
-            }
-            [...arguments].forEach(el => {
-                console.log(el);
-            });
-        }
-    };
 
     /**
      * @param {string} base64
@@ -52,53 +20,11 @@ class Util {
     }
 
     /**
-     * @param {Uint8Array} arrayBuffer
+     * @param {TypedArray|ArrayBuffer|DataView} arrayBuffer
      * @returns {string}
      */
     static arrayBufferToUtf8String(arrayBuffer) {
-        return Util.utf8Decoder.decode(arrayBuffer);
-    }
-
-    /**
-     * Allows to get the precomputed hex octets table
-     * It is used only in `Util.arrayBufferToHexString()`
-     * @private
-     */
-    static #ByteToHexTable = class {
-        static get() {
-            const self = Util.#ByteToHexTable;
-            if (!self.#inited) {
-                self.#init();
-            }
-            return self.#byteToHex;
-        }
-        static #byteToHex = [];
-        static #inited = false;
-        static #init = () => {
-            const self = Util.#ByteToHexTable;
-            for (let i = 0; i < 256; i++) {
-                const hexOctet = i.toString(16).padStart(2, "0");
-                self.#byteToHex.push(hexOctet);
-            }
-            self.#inited = true;
-        }
-    }
-
-    /**
-     * @param {TypedArray} arrayBuffer
-     * @returns {string}
-     */
-    static arrayBufferToHexString(arrayBuffer) {
-        const byteToHex = Util.#ByteToHexTable.get();
-
-        const buffer = new Uint8Array(arrayBuffer);
-        const hexOctets = new Array(buffer.length);
-
-        for (let i = 0; i < buffer.length; i++) {
-            hexOctets[i] = byteToHex[buffer[i]];
-        }
-
-        return hexOctets.join("");
+        return new TextDecoder().decode(arrayBuffer);
     }
 
     /**
@@ -119,7 +45,7 @@ class Util {
      * String.fromCharCode(...new Uint8Array(125830)) // OK
      * String.fromCharCode(...new Uint8Array(125831)) // RangeError: Maximum call stack size exceeded
      * ```
-     * Replaced with `reduce`.
+     * Replaced with `reduce`. It works OK, no need to optimise (like `Util.arrayBufferToHexString()`).
      *
      * @param {Uint8Array} arrayBuffer
      * @returns {string} binaryString
@@ -127,7 +53,6 @@ class Util {
     static arrayBufferToBinaryString(arrayBuffer) {
         return arrayBuffer.reduce((accumulator, byte) => accumulator + String.fromCharCode(byte), "");
     }
-
 
     /**
      * Do not use `new TextEncoder().encode(binaryStr)` for binary (Latin1) strings
@@ -148,6 +73,54 @@ class Util {
     static base64BinaryStringToArrayBuffer(base64BinaryString) {
         const binaryString = Util.base64ToBinaryString(base64BinaryString);
         return Util.binaryStringToArrayBuffer(binaryString);
+    }
+
+    /**
+     * The optimised version
+     * @param {TypedArray} arrayBuffer
+     * @returns {string}
+     */
+    static arrayBufferToHexString(arrayBuffer) {
+        const byteToHex = Util.#ByteToHexTable.get();
+
+        const buffer = new Uint8Array(arrayBuffer.buffer);
+        const hexOctets = new Array(buffer.length);
+
+        for (let i = 0; i < buffer.length; i++) {
+            hexOctets[i] = byteToHex[buffer[i]];
+        }
+
+        return hexOctets.join("");
+    }
+
+    /**
+     * Allows to get the precomputed hex octets table (the array)
+     *
+     * `[0]: "00"`
+     * ...
+     * `[255]: "FF"`
+     *
+     * It is used only in `Util.arrayBufferToHexString()`. Lazy loading.
+     * @private
+     */
+    static #ByteToHexTable = class {
+        static get() {
+            const self = Util.#ByteToHexTable;
+            if (!self.#inited) {
+                self.#init();
+            }
+            return self.#byteToHex;
+        }
+        static #byteToHex = [];
+        static #inited = false;
+        static #init = () => {
+            const self = Util.#ByteToHexTable;
+            for (let i = 0; i < 256; i++) {
+                const hexOctet = i.toString(16).padStart(2, "0");
+                self.#byteToHex.push(hexOctet);
+            }
+            self.#inited = true;
+        }
     }
 
     /**
@@ -192,7 +165,7 @@ class Util {
         const _key = _arrayBufferToWordArray(key);
         const _iv = _arrayBufferToWordArray(iv);
         // Just a note: You can also convert to Latin1: `const _data = _arrayBufferToWordArray(data);`
-        // in this case use `ciphertext: CryptoJS.enc.Latin1.parse(_data),`. The same thing is for `key` and `iv`.
+        // in this case use `ciphertext: CryptoJS.enc.Latin1.parse(_data)`. The same thing is for `key` and `iv`.
 
         // (CipherParamsData, WordArray, IBlockCipherCfg)
         // Note: CipherParamsData uses only to get `ciphertext` property, the others will be ignored (iv, mode, padding...)
@@ -405,6 +378,35 @@ class Util {
         }
         return false;
     }
+
+    // the experimental version
+    static logger = {
+        DEBUG: true,
+        INFO: true,
+        /**
+         * @param {*} arguments
+         */
+        debug() {
+            if (!Util.logger.DEBUG) {
+                return;
+            }
+            [...arguments].forEach(el => {
+                console.log(el);
+            });
+            console.log();
+        },
+        /**
+         * @param {*} arguments
+         */
+        info() {
+            if (!Util.logger.INFO) {
+                return;
+            }
+            [...arguments].forEach(el => {
+                console.log(el);
+            });
+        }
+    };
 }
 
 
