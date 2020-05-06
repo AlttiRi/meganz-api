@@ -2,7 +2,7 @@ const {fetch} = require("./browser-context");
 const {Util} = require("./util");
 const {MegaUtil} = require("./mega-util");
 const {Semaphore} = require("./synchronization");
-
+const GroupedTasks = require("./grouped-tasks");
 
 // todo make `Util.repeatIfErrorAsync` configurable – use not default `count` and `delay` params
 class Mega {
@@ -19,70 +19,45 @@ class Mega {
      */
     static semaphore = new Semaphore(12, 650);
 
+    static GroupedApiRequests = class extends GroupedTasks {
+        /**
+         * @param {Mega.GroupedApiRequests.Entry} firstEntry
+         * @param {Function} firstResolve
+         * @param {Function} pullEntries
+         * @return {Promise<void>}
+         */
+        async work({entry: firstEntry, resolve: firstResolve}, pullEntries) {
+            const url = firstEntry.getId();
 
-
-    static ApiQueue = class {
-        static requestAPI(url, payload) {
-            const self = Mega.ApiQueue;
-            const _url = url.toString();
-
-            return new Promise(resolve => {
-                self.handle({url: _url, payload}, resolve);
-            });
-        }
-
-        /** @private
-         *  @type Map<String, {payload: Object, resolve: function}[]> */ // Maps URLs
-        static queue = new Map();
-        /** @private
-         *  @type Set<String> */
-        static handled = new Set();
-
-        /** @private */
-        static handle({url, payload}, resolve) {
-            const self = Mega.ApiQueue;
-
-            if (!self.queue.has(url)) {
-                self.queue.set(url, []);
-            }
-            self.queue.get(url).push({payload, resolve});
-
-            self.run(url);
-        }
-
-        /** @private */
-        static run(url) {
-            const self = Mega.ApiQueue;
-
-            function callback() {
-                /** @type {{payload: Object, resolve: Function}[]} */
-                const objs = self.queue.get(url);
-                self.queue.delete(url);
-                self.handled.delete(url);
-                self.request(url, objs).then(/*nothing*/);
+            const payloads = [];
+            const resolves = [];
+            for (const {entry, resolve} of pullEntries()) {
+                payloads.push(entry.getValue());
+                resolves.push(resolve);
             }
 
-            if (!self.handled.has(url)) {
-                self.handled.add(url);
-                // Delay execution with micro task queue
-                Promise.resolve().then(callback);
-            }
-        }
-
-        /** @private */
-        static async request(url, objs) {
-
-            const payloads = objs.map(obj => obj.payload);
             const responseArray = await Mega._requestApiSafe(url, payloads);
-
             console.log("[grouped request]", responseArray);
 
-            objs.forEach((value, index) => {
-                value.resolve(responseArray[index]);
+            resolves.forEach((resolve, index) => {
+                resolve(responseArray[index]);
             });
         }
 
+        static Entry = class extends GroupedTasks.Entry {
+            // /** @param {{url: string, payload: Object}} value */
+            // constructor(value) {
+            //     super(value);
+            // }
+            getId() {
+                return this.value.url;
+            }
+            getValue() {
+                return this.value.payload;
+            }
+        }
     }
+    static groupedApiRequests = new Mega.GroupedApiRequests();
 
     /**
      * @param {*} payload
@@ -91,15 +66,26 @@ class Mega {
      * @returns {Promise<*>} responseData
      */
     static async requestAPI(payload, searchParams = {}, grouped = true) {
-        const url = new URL(Mega.apiGateway);
-        Util.addSearchParamsToURL(url, searchParams);
+        const _url = new URL(Mega.apiGateway);
+        Util.addSearchParamsToURL(_url, searchParams);
+        const url = _url.toString();
 
         if (grouped) {
-            return Mega.ApiQueue.requestAPI(url, payload);
+            return Mega.groupedApiRequests.getPromisedResult(
+                new Mega.GroupedApiRequests.Entry({url, payload})
+            );
         }
         return (await Mega._requestApiSafe(url, [payload]))[0];
     }
 
+    /**
+     * Note: If move `semaphore` inside `_requestAPI` or `repeatIfErrorAsync`, then in case an error
+     * the repeating request will be added at the end of queue of `semaphore`
+     * @param {string|URL} url
+     * @param {Object[]} payloads
+     * @return {Promise<undefined>}
+     * @private
+     */
     static async _requestApiSafe(url, payloads) {
         await Mega.semaphore.acquire();
         try {
@@ -163,7 +149,7 @@ class Mega {
         }
     }
 
-
+    // ----------------------------------------------------------------
 
     /**
      * @param {FileAttribute} fileAttribute

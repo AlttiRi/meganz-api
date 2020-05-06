@@ -1,6 +1,7 @@
 const {Util} = require("./util");
 const {MegaUtil} = require("./mega-util");
 const {Mega} = require("./mega");
+const GroupedTasks = require("./grouped-tasks");
 
 /**
  * The interface of a media file node
@@ -141,6 +142,45 @@ class FileAttributeBytes {
         this.#type = type;
     }
 
+    static DlUrlRequests = class extends GroupedTasks {
+        /**
+         * @param {FileAttributeBytes.DlUrlRequests.Entry} firstEntry
+         * @param {Function} firstResolve
+         * @param {Function} pullEntries
+         * @return {Promise<void>}
+         */
+        async work({entry: firstEntry, resolve: firstResolve}, pullEntries) {
+
+            const fileAttribute = firstEntry.getValue();
+            const result = await fileAttribute.getDownloadUrl();
+
+            for (const {/*entry,*/ resolve} of pullEntries()) {
+                resolve(result);
+            }
+        }
+
+        static Entry = class extends GroupedTasks.Entry {
+            // /** @param {FileAttribute} value */
+            // constructor(value) {
+            //     super(value);
+            // }
+            delayStrategy = GroupedTasks.now;
+            needHandle() {
+                return !this.value.bunch.hasDownloadUrl;
+            }
+            getResult() {
+                return this.value.bunch.downloadUrl;
+            }
+            getId() {
+                return this.value.bunch.id;
+            }
+            getValue() {
+                return this.value;
+            }
+        }
+    }
+    static dlUrlRequests = new FileAttributeBytes.DlUrlRequests();
+
     /**
      * @param options
      * @param {FileAttribute} [options.fileAttribute]
@@ -151,59 +191,59 @@ class FileAttributeBytes {
     getDownloadUrl({fileAttribute, node}, cached = true) {
         const _fileAttribute = fileAttribute || FileAttributes.of(node).byType(this.type);
         if (cached) {
-            return FileAttributeBytes.DlUrlQueue.getDownloadUrl(_fileAttribute);
+            return FileAttributeBytes.dlUrlRequests.getPromisedResult(
+                new FileAttributeBytes.DlUrlRequests.Entry(_fileAttribute)
+            );
         }
         return _fileAttribute.getDownloadUrl(false);
     }
 
-    /** @private */
-    static DlUrlQueue = class {
-
+    //todo max group size
+    static DlBytesRequests = class extends GroupedTasks {
         /**
-         * @param {FileAttribute} fileAttribute
-         * @return {Promise<string>}
+         * @param {FileAttributeBytes.DlBytesRequests.Entry} firstEntry
+         * @param {Function} firstResolve
+         * @param {Function} pullEntries
+         * @return {Promise<void>}
          */
-        static getDownloadUrl(fileAttribute) {
-            const self = FileAttributeBytes.DlUrlQueue;
-            return new Promise(resolve => {
-                self.handle(fileAttribute, resolve);
-            });
-        }
+        async work({entry: firstEntry, resolve: firstResolve}, pullEntries) {
 
-        /** @private
-         *  @type Map<String, Function[]> */
-        static queue = new Map();
+            const downloadUrl = firstEntry.getId();
 
-        /** @private */
-        static handle(fileAttribute, resolve) {
-            const self = FileAttributeBytes.DlUrlQueue;
-            const bunch = fileAttribute.bunch;
-
-            if (bunch.hasDownloadUrl) {
-                resolve(bunch.downloadUrl);
-            } else {
-                if (!self.queue.has(bunch.id)) {
-                    self.queue.set(bunch.id, []);
-                    self.request(fileAttribute).then(/*nothing*/);
+            const map = new Map();
+            for (const {entry, resolve} of pullEntries()) {
+                const fileAttributeId = entry.getValue();
+                if (!map.has(fileAttributeId)) {
+                    map.set(fileAttributeId, []);
                 }
-                self.queue.get(bunch.id).push(resolve);
+                map.get(fileAttributeId).push(resolve);
             }
+
+            const fileAttrIDs = [...map.keys()];
+            const generator = FileAttributeBytes.fileAttributeBytes(downloadUrl, fileAttrIDs);
+            for await (const {id, dataBytes} of generator) {
+                const resolvers = map.get(id);
+                for (const resolve of resolvers) {
+                    resolve(dataBytes);
+                }
+            }
+
         }
 
-        /** @private */
-        static async request(fileAttribute) {
-            const self = FileAttributeBytes.DlUrlQueue;
-            const bunch = fileAttribute.bunch;
-
-            const result = await fileAttribute.getDownloadUrl();
-
-            const resolvers = self.queue.get(bunch.id);
-            for (const resolve of resolvers) {
-                resolve(result);
+        static Entry = class extends GroupedTasks.Entry {
+            // /** @param {{downloadUrl: string, fileAttributeId: string}} value */
+            // constructor(value) {
+            //     super(value);
+            // }
+            getId() {
+                return this.value.downloadUrl;
             }
-            self.queue.delete(bunch.id);
+            getValue() {
+                return this.value.fileAttributeId;
+            }
         }
     }
+    static dlBytesRequests = new FileAttributeBytes.DlBytesRequests();
 
     /**
      * @param options
@@ -220,7 +260,9 @@ class FileAttributeBytes {
         const _downloadUrl = downloadUrl || await this.getDownloadUrl({fileAttribute: _fileAttribute});
 
         if (grouped) {
-            return FileAttributeBytes.DlBytesQueue.getBytes(_downloadUrl, _fileAttribute.id);
+            return FileAttributeBytes.dlBytesRequests.getPromisedResult(
+                new FileAttributeBytes.DlBytesRequests.Entry({ downloadUrl: _downloadUrl, fileAttributeId: _fileAttribute.id })
+            );
         }
 
         const responseBytes = await Mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
@@ -235,88 +277,19 @@ class FileAttributeBytes {
         return dataBytes;
     }
 
-    //todo max group size
-    /** @private */
-    static DlBytesQueue = class {
-        /** @return {Promise<Uint8Array>} */
-        static getBytes(downloadUrl, fileAttributeId) {
-            const self = FileAttributeBytes.DlBytesQueue;
-            return new Promise(resolve => {
-                self.handle({downloadUrl, fileAttributeId}, resolve);
-            });
-        }
+    static async *fileAttributeBytes(downloadUrl, fileAttrIDs) {
+        const responseBytes = await Mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
 
-        /** @private
-         *  @type Map<String, Map<String, Function[]>> */ // url to <"fileAttributeId" to "resolve"s>
-        static queue = new Map();
-        /** @private
-         *  @type Set<String> */
-        static handledUrls = new Set();
+        for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
+            const idBytes     = responseBytes.subarray(offset,      offset +  8);
+            const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
+            const length      = Util.arrayBufferToLong(lengthBytes);
+            const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
+            const id          = MegaUtil.arrayBufferToMegaBase64(idBytes);
 
-        /** @private */
-        static handle({downloadUrl, fileAttributeId}, resolve) {
-            const self = FileAttributeBytes.DlBytesQueue;
+            yield {id, dataBytes};
 
-            if (!self.queue.has(downloadUrl)) {
-                /** @type Map<String, Function[]> */ // "fileAttrId" to "resolve"s (if the diff nodes have the same fa)
-                const faIds = new Map();
-                self.queue.set(downloadUrl, faIds);
-            }
-
-            const fas = self.queue.get(downloadUrl);
-            if (!fas.has(fileAttributeId)) {
-                fas.set(fileAttributeId, []);
-            }
-            fas.get(fileAttributeId).push(resolve);
-
-            self.run(downloadUrl);
-        }
-
-        /** @private */
-        static run(downloadUrl) {
-            const self = FileAttributeBytes.DlBytesQueue;
-
-            function callback() {
-                const map = self.queue.get(downloadUrl); // array of maps (file attr ids to `resolve` function)
-                self.queue.delete(downloadUrl);
-                self.handledUrls.delete(downloadUrl);
-                self.request(downloadUrl, map).then(/*nothing*/);
-            }
-
-            if (!self.handledUrls.has(downloadUrl)) {
-                self.handledUrls.add(downloadUrl);
-
-                // Delay execution with micro task queue
-                Promise.resolve().then(callback);
-                // or //
-                // Delay execution with event loop queue + delay in ms
-                //setTimeout(callback, 10);
-                // or //
-                // Delay execution with event loop queue
-                //setImmediate ? setImmediate(callback) : setTimeout(callback, 0);
-            }
-        }
-
-        /** @private */
-        static async request(downloadUrl, map) {
-            const fileAttrIDs = [...map.keys()];
-
-            const responseBytes = await Mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
-
-            for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
-                const idBytes     = responseBytes.subarray(offset,      offset +  8);
-                const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
-                const length      = Util.arrayBufferToLong(lengthBytes);
-                const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
-                const id          = MegaUtil.arrayBufferToMegaBase64(idBytes);
-
-                const resolvers = map.get(id);
-                for (const resolve of resolvers) {
-                    resolve(dataBytes);
-                }
-
-                offset += 12 + length;
-            }
+            offset += 12 + length;
         }
     }
 
