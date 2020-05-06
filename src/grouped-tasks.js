@@ -3,89 +3,148 @@
  */
 
 /**
- * @template T
- * @template S
+ * @template K, V, R
+ */
+class SimpleEntry {
+    /** @type {function(R): void} */
+    resolve;
+
+    /**
+     * @param {K} key - group criterion
+     * @param {V} value
+     * @param {Resolve} resolve
+     */
+    constructor(key, value, resolve) {
+        this.key     = key;
+        this.value   = value;
+        this.resolve = resolve;
+    }
+
+    /**
+     * @return {K}
+     */
+    getKey() {
+        return this.key;
+    }
+
+    /**
+     * @return {V}
+     */
+    getValue() {
+        return this.value;
+    }
+
+    /**
+     * Override if you implement `getResult()`
+     * @default
+     * @return {boolean}
+     */
+    needHandle() {
+        return true;
+    }
+
+    /**
+     * @abstract
+     * @return {R}
+     */
+    getResult() {
+        throw "SimpleEntry.getResult() method does not implemented";
+    }
+}
+
+/**
+ * @template K, V, R
+ * @abstract
  */
 class GroupedTasks {
 
+    /**
+     * @param {SimpleEntry} entryClass
+     * @param {Function} delayStrategy
+     */
+    constructor({entryClass, delayStrategy} = {}) {
+        this.entryClass = entryClass || GroupedTasks.SimpleEntry;
+        this.delayStrategy = delayStrategy || GroupedTasks.execute.afterDelayWithMicroTask;
+    }
+
+    /**
+     * @type {Class<SimpleEntry<K, V, R>>}
+     */
+    static SimpleEntry = SimpleEntry;
+
     /** @private
-     *  @type Map<String, {entry: Object, resolve: Function}[]> */
+     *  @type Map<K, SimpleEntry[]> */
     queue = new Map();
 
     /**
-     * @param {GroupedTasks.Entry} entry
-     * @return {Promise<S>}
+     * @param {Object} init
+     * @param {K?} init.key
+     * @param {V?} init.value
+     * @return {Promise<R>}
      */
-    getPromisedResult(entry) {
+    getResult({key, value}) {
         return new Promise(resolve => {
-            this.prepare(entry, resolve);
+            const entry = new this.entryClass(key, value, resolve);
+            if (entry.needHandle()) {
+                this.enqueue(entry);
+            } else {
+                resolve(entry.getResult());
+            }
         });
     }
 
-    /**
-     * @param {GroupedTasks.Entry} entry
-     * @param {Resolve} resolve
-     * @private */
-    prepare(entry, resolve) {
-        if (!entry.needHandle()) {
-            resolve(entry.getResult());
-        } else {
-            const entryId = entry.getId();
-            if (!this.queue.has(entryId)) {
-                this.queue.set(entryId, []);
-                entry.delayStrategy(() => {
-                    this.work({entry, resolve}, () => {return this.pullEntries(entryId)})
-                        .then(/**/);
-                });
-            }
-            this.queue.get(entryId).push({entry, resolve});
+    /** @param {SimpleEntry} entry
+     *  @private */
+    enqueue(entry) {
+        const entryKey = entry.getKey();
+        if (!this.queue.has(entryKey)) {
+            this.queue.set(entryKey, []);
+            this.delayStrategy(() => {
+                this.handle({
+                        firstEntry: entry,
+                        pullEntries: () => {
+                            return this.pullEntries(entryKey);
+                        }
+                    })
+                    .then(/*ignore promise*/);
+            });
         }
+        this.queue.get(entryKey).push(entry);
     }
 
-    pullEntries(entryId) {
-        /** @type {{ entry: Object, resolve: Function}[]} */
-        const array = this.queue.get(entryId);
-        this.queue.delete(entryId);
+    /**
+     * @param {K} key
+     * @return {SimpleEntry[]}
+     */
+    pullEntries(key) {
+        const array = this.queue.get(key);
+        this.queue.delete(key);
         return array;
     }
 
-    /** @abstract */
-    async work({entry: firstEntry, resolve: firstResolve}, pullEntries) { }
+    /**
+     * @abstract
+     * @param {Object} init
+     * @param {SimpleEntry} init.firstEntry
+     * @param {function(): SimpleEntry[]} init.pullEntries
+     * @return {Promise<void>}
+     */
+    async handle({firstEntry, pullEntries}) {}
 
-    /** @abstract */
-    static Entry = class {
-        delayStrategy = GroupedTasks.delayWithMicroTask; // todo move to the outer class
-        constructor(value) { // todo (key, value)
-            this.value = value;
+    static execute = class {
+        static now(executable) {
+            executable();
         }
-        needHandle() {
-            return true;
+        static afterDelayWithMicroTask(executable){ // Delay execution with micro task queue
+            Promise.resolve().then(executable);
         }
-        getValue() {
-            return this.value;
+        static afterDelayWithEventLoop(executable){
+            setImmediate ? setImmediate(executable) : setTimeout(executable, 0);
         }
-
-        getResult() {
-            throw "Not implemented";
-        }
-        getId() { //todo rename "getKey" (GroupCriterion)
-            throw "Not implemented";
+        static afterDelay(ms){
+            return executable => setTimeout(executable, ms);
         }
     }
-
-    static now(callback) {
-        callback();
-    }
-    static delayWithMicroTask(callback){ // Delay execution with micro task queue
-        Promise.resolve().then(callback);
-    }
-    static delayWithEventLoop(callback){
-        setImmediate ? setImmediate(callback) : setTimeout(callback, 0);
-    }
-    static delay(ms){
-        return (callback) => setTimeout(callback, ms);
-    }
-
 }
 
 module.exports = GroupedTasks;

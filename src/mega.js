@@ -19,42 +19,25 @@ class Mega {
      */
     static semaphore = new Semaphore(12, 650);
 
+    /**
+     * @extends {GroupedTasks<String, Object, Object>}
+     */
     static GroupedApiRequests = class extends GroupedTasks {
-        /**
-         * @param {Mega.GroupedApiRequests.Entry} firstEntry
-         * @param {Function} firstResolve
-         * @param {Function} pullEntries
-         * @return {Promise<void>}
-         */
-        async work({entry: firstEntry, resolve: firstResolve}, pullEntries) {
-            const url = firstEntry.getId();
+        async handle({firstEntry, pullEntries}) {
+            const url = firstEntry.getKey();
 
+            const entries = pullEntries();
             const payloads = [];
-            const resolves = [];
-            for (const {entry, resolve} of pullEntries()) {
+            for (const entry of entries) {
                 payloads.push(entry.getValue());
-                resolves.push(resolve);
             }
 
             const responseArray = await Mega._requestApiSafe(url, payloads);
             console.log("[grouped request]", responseArray);
 
-            resolves.forEach((resolve, index) => {
-                resolve(responseArray[index]);
+            entries.forEach((entry, index) => {
+                entry.resolve(responseArray[index]);
             });
-        }
-
-        static Entry = class extends GroupedTasks.Entry {
-            // /** @param {{url: string, payload: Object}} value */
-            // constructor(value) {
-            //     super(value);
-            // }
-            getId() {
-                return this.value.url;
-            }
-            getValue() {
-                return this.value.payload;
-            }
         }
     }
     static groupedApiRequests = new Mega.GroupedApiRequests();
@@ -71,9 +54,10 @@ class Mega {
         const url = _url.toString();
 
         if (grouped) {
-            return Mega.groupedApiRequests.getPromisedResult(
-                new Mega.GroupedApiRequests.Entry({url, payload})
-            );
+            return Mega.groupedApiRequests.getResult({
+                    key: url,
+                    value: payload
+                });
         }
         return (await Mega._requestApiSafe(url, [payload]))[0];
     }
