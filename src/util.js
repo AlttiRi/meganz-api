@@ -149,12 +149,15 @@ class Util {
 
         /**
          * The convert code [*] is from "crypto-js/lib-typedarrays.js" file
+         * Note: "word" is a 32 bits big-endian signed integer
+         *
          * @param {Uint8Array} arrayBuffer
          * @returns {CryptoJS.lib.WordArray} wordArray
          * @private
          */
         const _arrayBufferToWordArray = function(arrayBuffer) {
-            const words = [];
+            const length = Math.trunc(arrayBuffer.length / 4) + (arrayBuffer.length % 4 ? 1 : 0); // "round up"
+            const words = new Array(length);
             for (let i = 0; i < arrayBuffer.length; i++) {
                 words[i >>> 2] |= arrayBuffer[i] << (24 - (i % 4) * 8); // [*]
             }
@@ -164,12 +167,7 @@ class Util {
         const _data = _arrayBufferToWordArray(data);
         const _key = _arrayBufferToWordArray(key);
         const _iv = _arrayBufferToWordArray(iv);
-        // Just a note: You can also convert to Latin1: `const _data = _arrayBufferToWordArray(data);`
-        // in this case use `ciphertext: CryptoJS.enc.Latin1.parse(_data)`. The same thing is for `key` and `iv`.
-
-        // (CipherParamsData, WordArray, IBlockCipherCfg)
-        // Note: CipherParamsData uses only to get `ciphertext` property, the others will be ignored (iv, mode, padding...)
-        const plaintextWA = CryptoJS.AES.decrypt(
+        const plaintextWA = CryptoJS.AES.decrypt( // (CipherParamsData, WordArray, IBlockCipherCfg)
             {
                 ciphertext: _data
             },
@@ -184,18 +182,18 @@ class Util {
         /**
          * The convert code [*] is from CryptoJS.enc.Latin1.stringify ("crypto-js/core.js")
          * @see CryptoJS.enc.Latin1 stringify()
+         * Note: "word" is a 32 bits big-endian signed integer
          *
          * @param {CryptoJS.lib.WordArray} wordArray
          * @returns {Uint8Array}
          * @private
          */
         const _wordArrayToArrayBuffer = function(wordArray) {
-            const bites = [];
+            const bites = new Uint8Array(wordArray.sigBytes);
             for (let i = 0; i < wordArray.sigBytes; i++) {
-                const bite = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff; // [*]
-                bites.push(bite);
+                bites[i] = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff; // [*]
             }
-            return new Uint8Array(bites);
+            return bites;
         };
 
         return _wordArrayToArrayBuffer(plaintextWA);
