@@ -19,8 +19,8 @@ function decryptWithCryptoJS(data, key, iv = new Uint8Array(key.length)){
         }
         return new Uint8Array(bites);
     }
-
-    const plaintextArray = CryptoJS.AES.decrypt(
+    // Note: CipherParamsData uses only to get `ciphertext` property, the others will be ignored (iv, mode, padding...)
+    const plaintextArray = CryptoJS.AES.decrypt( // (CipherParamsData, WordArray, IBlockCipherCfg)
         {
             ciphertext: CryptoJS.enc.Latin1.parse(data)
         },

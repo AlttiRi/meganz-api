@@ -10,12 +10,12 @@ class Mega {
     static apiGateway = "https://g.api.mega.co.nz/cs";
     static ssl = 2; // Is there a difference between "1" and "2" [???]
     /**
-     * Max parallel requests count that Mega allows for API access are `64`,
-     * but the count decreases not instantly.
-     * For example, for 64 parallel requests you need to add a delay ~4000+ before realise the semaphore
-     * or Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
+     * Max parallel requests count that Mega allows for API access are `64` within ~4 seconds.
+     * If you perform more than 64 connection within ~4 seconds:
+     * Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
      *
      * Example values: (64, 4000);   (12, 650);   (3, 0);
+     * The second value is a delay before releasing the semaphore. // todo implement `within`, not just a `delay`
      */
     static semaphore = new Semaphore(12, 650);
 

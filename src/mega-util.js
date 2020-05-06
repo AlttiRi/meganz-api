@@ -162,24 +162,24 @@ class MegaUtil {
      * (Yeah, I have rewrote this)
      * @see Util.bytesToSize
      * @param {number} bytes
-     * @param {number} [precision]
+     * @param {number} [decimals]
      * @returns {string}
      */
-    static bytesToSize(bytes, precision) {
+    static bytesToSize(bytes, decimals) {
         if (bytes === 0) {
             return "0 B";
         }
         const k = 1024;
-        if (precision === undefined) {
+        if (!decimals) {
             if (bytes > Math.pow(k, 3)) {        // GB
-                precision = 2;
+                decimals = 2;
             } else if (bytes > Math.pow(k, 2)) { // MB
-                precision = 1;
+                decimals = 1;
             }
         }
         const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return (bytes / Math.pow(k, i)).toFixed(precision) + " " + sizes[i];
+        return (bytes / Math.pow(k, i)).toFixed(decimals) + " " + sizes[i];
     }
 }
 

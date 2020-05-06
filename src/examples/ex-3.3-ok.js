@@ -8,7 +8,7 @@ async function example() {
     const folderNodes = await progress(Nodes.nodes(URLS.FOLDER_136_FILES), "Nodes.nodes");
 
     const mediaNodesCount = folderNodes.filter(Nodes.isMediaNode).length;
-    let countDownLatch = new CountDownLatch(mediaNodesCount);
+    const countDownLatch = new CountDownLatch(mediaNodesCount);
 
     let i = 0;
     for (const node of folderNodes) {

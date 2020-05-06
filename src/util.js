@@ -255,7 +255,7 @@ class Util {
 
         // Adds zero padding
         function pad(str) {
-            return ("0" + str).slice(-2);
+            return str.toString().padStart(2, "0");
         }
 
         return date.getFullYear() + "." + pad(date.getMonth() + 1) + "." + pad(date.getDate()) + " " +
@@ -265,8 +265,9 @@ class Util {
     /**
      * Format bytes to human readable format
      * Trims the tailing zeros
-     * @link https://stackoverflow.com/a/18650828/11468937
-     * @see Mega.bytesToSize
+     *
+     * {@link https://stackoverflow.com/a/18650828/11468937}
+     * @see MegaUtil.bytesToSize
      * @param {number} bytes
      * @param {number} [decimals=2]
      * @returns {string}
@@ -326,6 +327,7 @@ class Util {
         });
     }
 
+    //todo add a semaphore?
     /**
      * @param {function} executable - an async function to repeat if it throws an exception
      * @param {number} count=5 - count of the repeats
@@ -335,6 +337,9 @@ class Util {
     static async repeatIfErrorAsync(executable, count = 5, delay = 5000) {
         for (let i = 0;; i++) {
             try {
+                if (i) {
+                    console.log("REPEAT");
+                }
                 return await executable();
             } catch (e) {
                 console.error(e, `ERROR! Will be repeated. The try ${i + 1} of ${count}.`);
