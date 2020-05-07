@@ -2,11 +2,9 @@
  * @typedef {Function} Resolve
  */
 
-/**
- * @template K, V, R
- */
+/** @template K, V, R */
 class SimpleEntry {
-    /** @type {function(R): void} */
+    /** @type {function(Resolve): void} */
     resolve;
 
     /**
@@ -20,16 +18,12 @@ class SimpleEntry {
         this.resolve = resolve;
     }
 
-    /**
-     * @return {K}
-     */
+    /** @return {K} */
     getKey() {
         return this.key;
     }
 
-    /**
-     * @return {V}
-     */
+    /** @return {V} */
     getValue() {
         return this.value;
     }
@@ -52,17 +46,17 @@ class SimpleEntry {
     }
 }
 
-/** @template K */
+/** @template K, V, R */
 class EntriesHolder {
     /** @type {K} */
     key;
-    /** @type {SimpleEntry} */
+    /** @type {SimpleEntry<K, V, R>} */
     first;
 
     /**
      * @param {K} entryKey
-     * @param {SimpleEntry} firstEntry
-     * @param {GroupedTasks} groupedTasks
+     * @param {SimpleEntry<K, V, R>} firstEntry
+     * @param {GroupedTasks<K, V, R>} groupedTasks
      */
     constructor(entryKey, firstEntry, groupedTasks) {
         this.key = entryKey;
@@ -70,7 +64,7 @@ class EntriesHolder {
         this.groupedTasks = groupedTasks;
     }
 
-    /** @return {SimpleEntry[]} */
+    /** @return {SimpleEntry<K, V, R>[]} */
     pull() {
         return this.groupedTasks.pullEntries(this.key);
     }
@@ -78,7 +72,7 @@ class EntriesHolder {
     /**
      * If passed `0` - no splitting
      * @param count
-     * @return {Generator<SimpleEntry[]>}
+     * @return {Generator<SimpleEntry<K, V, R>[]>}
      */
     parts(count) {
         return this.groupedTasks.pullParts(this.key, count);
@@ -92,7 +86,7 @@ class EntriesHolder {
 class GroupedTasks {
 
     /**
-     * @param {SimpleEntry} entryClass
+     * @param {SimpleEntry<K, V, R>} entryClass
      * @param {Function} delayStrategy
      */
     constructor({entryClass, delayStrategy} = {}) {
@@ -105,8 +99,10 @@ class GroupedTasks {
      */
     static SimpleEntry = SimpleEntry;
 
-    /** @private
-     *  @type Map<K, SimpleEntry[]> */
+    /**
+     * @type Map<K, SimpleEntry<K, V, R>[]>
+     * @private
+     */
     queue = new Map();
 
     /**
@@ -126,8 +122,10 @@ class GroupedTasks {
         });
     }
 
-    /** @param {SimpleEntry} entry
-     *  @private  */
+    /**
+     * @param {SimpleEntry<K, V, R>} entry
+     * @private
+     */
     enqueue(entry) {
         const entryKey = entry.getKey();
         if (!this.queue.has(entryKey)) {
@@ -142,7 +140,7 @@ class GroupedTasks {
 
     /**
      * @param {K} key
-     * @return {SimpleEntry[]}
+     * @return {SimpleEntry<K, V, R>[]}
      */
     pullEntries(key) {
         const array = this.queue.get(key);
@@ -153,7 +151,7 @@ class GroupedTasks {
     /**
      * @param {K} key
      * @param {Number} count
-     * @return {Generator<SimpleEntry[]>}
+     * @return {Generator<SimpleEntry<K, V, R>[]>}
      */
     *pullParts(key, count) {
         const array = this.pullEntries(key);
@@ -171,11 +169,12 @@ class GroupedTasks {
 
     /**
      * @abstract
-     * @param {EntriesHolder} entriesHolder
+     * @param {EntriesHolder<K, V, R>} entriesHolder
      * @return {Promise<void>}
      */
     async handle(entriesHolder) {}
 
+    /** Contains methods to delay the execution of the passed callback */
     static execute = class {
         static now(executable) {
             executable();
@@ -186,8 +185,8 @@ class GroupedTasks {
         static afterDelayWithEventLoop(executable){
             setImmediate ? setImmediate(executable) : setTimeout(executable, 0);
         }
-        static afterDelay(ms){
-            return executable => setTimeout(executable, ms);
+        static afterDelay(executable, ms = 0){
+            setTimeout(executable, ms);
         }
     }
 }
