@@ -1,10 +1,42 @@
 const {Util} = require("./util");
 
-//todo setter for `max`, `delay` (the check > 0), disable() method
+//todo "within"
 class Semaphore {
 
-    max;
-    delay;
+    #max;
+    #delay;
+
+    set max(value) {
+        if (value < 1) {
+            this.#max = 1;
+        } else {
+            this.#max = value;
+        }
+    }
+    get max() {
+        return this.#max;
+    }
+
+    set delay(value) {
+        if (value < 0) {
+            this.#delay = 0;
+        } else {
+            this.#delay = value;
+        }
+    }
+    get delay () {
+        return this.#delay;
+    }
+
+    /**
+     * By default works like a mutex
+     * @param {number} max   - max count of parallel executions
+     * @param {number} delay - a delay before realise (ms)
+     */
+    constructor(max = 1, delay = 0) {
+        this.max = max;
+        this.delay = delay;
+    }
 
     /**
      * The count of "threads" that called `acquire` method, but not released yet
@@ -17,24 +49,13 @@ class Semaphore {
      */
     #queue = [];
 
-    /**
-     * By default works like a mutex
-     * To disable set `max` to `Number.MAX_SAFE_INTEGER`
-     * @param {number} max   - max count of parallel executions
-     * @param {number} delay - a delay before realise (ms)
-     */
-    constructor(max = 1, delay = 0) {
-        if (max < 1) {
-            max = 1;
-        }
-        this.max = max;
-        this.delay = delay;
-    }
-
     /** @return {Promise<void>} */
     acquire() {
-        console.log(`[Semaphore] Acquired: ${this.#count}${this.#count < this.max ? "" : " and added to a queue"}`);
+        if (this.disabled) {
+            return Promise.resolve();
+        }
 
+        console.log(`[Semaphore] Acquired: ${this.#count}${this.#count < this.max ? "" : " and added to a queue"}`);
         let promise;
         if (this.#count < this.max) {
             promise = Promise.resolve();
@@ -49,9 +70,14 @@ class Semaphore {
     }
 
     /**
-     * You may note the delay before finishing of the program because of the delay of the semaphore
+     * You may note the delay before finishing of the program because of the delay of the semaphore.
+     * Recommendation: release in a finally block.
      */
     release() {
+        if (this.disabled) {
+            return;
+        }
+
         Util.sleep(this.delay)
             .then(_ => {
                 console.log(`[Semaphore] Released: ${this.#count}${this.#queue.length > 0 ? " from the queue" : ""}`);
@@ -59,7 +85,12 @@ class Semaphore {
                     const resolve = this.#queue.shift();
                     resolve();
                 }
-                this.#count--;
+                const count = this.#count - 1;
+                if(count < 0) {
+                    console.warn("Semaphore.count < 0, the possible error. Set to 0.");
+                    this.#count = 0;
+                }
+                this.#count = count;
             });
     }
 
@@ -94,6 +125,28 @@ class Semaphore {
         } finally {
             this.release();
         }
+    }
+
+    /**
+     * Release all waiters without any delay
+     */
+    releaseAll() {
+        while (this.#queue.length) {
+            const resolve = this.#queue.shift();
+            resolve();
+        }
+        this.#count = 0;
+    }
+
+    disabled = false;
+    disable(releaseAll = true) {
+        if (releaseAll) {
+            this.releaseAll();
+        }
+        this.disabled = true;
+    }
+    enable() {
+        this.disabled = false;
     }
 }
 

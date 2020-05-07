@@ -283,6 +283,9 @@ class Util {
     }
 
     /**
+     * @example
+     * await Util.sleep(50);
+     *
      * @param {number} ms milliseconds
      * @param {boolean} inNextEventLoopTask - if passed 0 wait for the next event loop task, or no (use micro task)
      * @returns {Promise}
@@ -290,9 +293,9 @@ class Util {
     static sleep(ms, inNextEventLoopTask = false) {
         if (ms === 0) {
             if (inNextEventLoopTask) {
-                return Promise.resolve(); // It's not the same thing as using `setImmediate`
-            } else {
                 return Util.nextEventLoopTask();
+            } else {
+                return Promise.resolve(); // It's not the same thing as using `setImmediate`
             }
         }
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -302,7 +305,7 @@ class Util {
      * Return promise that fulfills at the next event loop task
      * @example
      * doWorkPart1();
-     * await nextEventLoopTask();
+     * await Util.nextEventLoopTask();
      * doWorkPart2();
      * @returns {Promise}
      */
