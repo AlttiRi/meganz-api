@@ -264,15 +264,7 @@ class FileAttributeBytes {
         }
 
         const responseBytes = await Mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
-
-        //todo
-     // const idBytes     = responseBytes.subarray(0, 8);
-        const lengthBytes = responseBytes.subarray(8, 12); // bytes count – little endian 32 bits integer (enough for up to 4 GB)
-        const length      = Util.arrayBufferToLong(lengthBytes);
-        const dataBytes   = responseBytes.subarray(12, 12 + length); // with zero padding
-        console.log(`Encrypted file attribute size is ${length} bytes`);
-
-        return dataBytes;
+        return FileAttributeBytes.parseBytes(responseBytes).dataBytes;
     }
 
     /**
@@ -284,16 +276,20 @@ class FileAttributeBytes {
         const responseBytes = await Mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
 
         for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
-            const idBytes     = responseBytes.subarray(offset,      offset +  8);
-            const lengthBytes = responseBytes.subarray(offset + 8,  offset + 12);
-            const length      = Util.arrayBufferToLong(lengthBytes);
-            const dataBytes   = responseBytes.subarray(offset + 12, offset + 12 + length);
-            const id          = MegaUtil.arrayBufferToMegaBase64(idBytes);
-
+            const {id, dataBytes} = FileAttributeBytes.parseBytes(responseBytes, offset);
             yield {id, dataBytes};
-
-            offset += 12 + length;
+            offset += 12 + dataBytes.length;
         }
+    }
+
+    /** @private */
+    static parseBytes(bytes, offset = 0) {
+        const idBytes     = bytes.subarray(offset,      offset +  8);
+        const lengthBytes = bytes.subarray(offset + 8,  offset + 12);
+        const length      = Util.arrayBufferToLong(lengthBytes);
+        const dataBytes   = bytes.subarray(offset + 12, offset + 12 + length);
+        const id          = MegaUtil.arrayBufferToMegaBase64(idBytes);
+        return {id, dataBytes};
     }
 
     /**
