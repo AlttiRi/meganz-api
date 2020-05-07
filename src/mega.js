@@ -23,10 +23,10 @@ class Mega {
      * @extends {GroupedTasks<String, Object, Object>}
      */
     static GroupedApiRequests = class extends GroupedTasks {
-        async handle({firstEntry, pullEntries}) {
-            const url = firstEntry.getKey();
+        async handle(entriesHolder) {
+            const url = entriesHolder.key;
 
-            const entries = pullEntries();
+            const entries = entriesHolder.pull();
             const payloads = [];
             for (const entry of entries) {
                 payloads.push(entry.getValue());
@@ -67,7 +67,7 @@ class Mega {
      * the repeating request will be added at the end of queue of `semaphore`
      * @param {string|URL} url
      * @param {Object[]} payloads
-     * @return {Promise<undefined>}
+     * @return {Promise<*[]>}
      * @private
      */
     static async _requestApiSafe(url, payloads) {
@@ -157,6 +157,7 @@ class Mega {
 
     // todo add semaphore, not more than 31 (included) connections for each url (of bunch)
     //  to test it, use `Thumbnail.getEncryptedBytes(..., false)` <- "false"
+    //  in some kind it is implemented in `FileAttributeBytes.DlBytesRequests`
     /**
      * @param {string} url
      * @param {string|string[]} ids

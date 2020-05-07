@@ -2,6 +2,7 @@ const {Util} = require("./util");
 const {MegaUtil} = require("./mega-util");
 const {Mega} = require("./mega");
 const GroupedTasks = require("./grouped-tasks");
+const {Semaphore} = require("./synchronization");
 
 /**
  * The interface of a media file node
@@ -148,11 +149,11 @@ class FileAttributeBytes {
      * @extends {GroupedTasks<Number, FileAttribute, String>}
      */
     static DlUrlRequests = class extends GroupedTasks {
-        async handle({firstEntry, pullEntries}) {
-            const fileAttribute = firstEntry.getValue();
+        async handle(entriesHolder) {
+            const fileAttribute = entriesHolder.first.getValue();
             const result = await fileAttribute.getDownloadUrl();
 
-            for (const entry of pullEntries()) {
+            for (const entry of entriesHolder.pull()) {
                 entry.resolve(result);
             }
         }
@@ -195,18 +196,33 @@ class FileAttributeBytes {
         return _fileAttribute.getDownloadUrl(false);
     }
 
-    //todo max group size
     /**
+     * Split a grouped request (of file attribute bytes) to grouped requests of 16 requests in each.
+     * Up to 16 parallel downloading for a chunk.
      * @extends {GroupedTasks<String, String, Uint8Array>}
      */
     static DlBytesRequests = class extends GroupedTasks {
-        async handle({firstEntry, pullEntries}) {
+        async handle(entriesHolder) {
+            const downloadUrl = entriesHolder.key;
 
-            const downloadUrl = firstEntry.getKey();
+            const semaphore = new Semaphore(16); // do not use more than 31
+            for (const entries of entriesHolder.parts(16)) { // use `0` to disable splitting
+                semaphore.sync(() => {
+                    return this.handlePart(downloadUrl, entries);
+                }).then(/*ignore promise*/);
+            }
+        }
 
-            /** @type {Map<string, Resolve[]>} */
+        /** @private */
+        async handlePart(downloadUrl, entries) {
+            /**
+             * Maps fileAttributeId to resolves
+             * (different nodes may have the same file attribute)
+             * @type {Map<string, Resolve[]>}
+             */
             const map = new Map();
-            for (const entry of pullEntries()) {
+
+            for (const entry of entries) {
                 const fileAttributeId = entry.getValue();
                 if (!map.has(fileAttributeId)) {
                     map.set(fileAttributeId, []);
@@ -242,9 +258,9 @@ class FileAttributeBytes {
 
         if (grouped) {
             return FileAttributeBytes.dlBytesRequests.getResult({
-                    key: _downloadUrl,
-                    value: _fileAttribute.id
-                });
+                key: _downloadUrl,
+                value: _fileAttribute.id
+            });
         }
 
         const responseBytes = await Mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);

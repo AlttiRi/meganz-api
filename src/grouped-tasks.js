@@ -52,6 +52,39 @@ class SimpleEntry {
     }
 }
 
+/** @template K */
+class EntriesHolder {
+    /** @type {K} */
+    key;
+    /** @type {SimpleEntry} */
+    first;
+
+    /**
+     * @param {K} entryKey
+     * @param {SimpleEntry} firstEntry
+     * @param {GroupedTasks} groupedTasks
+     */
+    constructor(entryKey, firstEntry, groupedTasks) {
+        this.key = entryKey;
+        this.first = firstEntry;
+        this.groupedTasks = groupedTasks;
+    }
+
+    /** @return {SimpleEntry[]} */
+    pull() {
+        return this.groupedTasks.pullEntries(this.key);
+    }
+
+    /**
+     * If passed `0` - no splitting
+     * @param count
+     * @return {Generator<SimpleEntry[]>}
+     */
+    parts(count) {
+        return this.groupedTasks.pullParts(this.key, count);
+    }
+}
+
 /**
  * @template K, V, R
  * @abstract
@@ -94,18 +127,13 @@ class GroupedTasks {
     }
 
     /** @param {SimpleEntry} entry
-     *  @private */
+     *  @private  */
     enqueue(entry) {
         const entryKey = entry.getKey();
         if (!this.queue.has(entryKey)) {
             this.queue.set(entryKey, []);
             this.delayStrategy(() => {
-                this.handle({
-                        firstEntry: entry,
-                        pullEntries: () => {
-                            return this.pullEntries(entryKey);
-                        }
-                    })
+                this.handle(new EntriesHolder(entryKey, entry, this))
                     .then(/*ignore promise*/);
             });
         }
@@ -123,13 +151,30 @@ class GroupedTasks {
     }
 
     /**
+     * @param {K} key
+     * @param {Number} count
+     * @return {Generator<SimpleEntry[]>}
+     */
+    *pullParts(key, count) {
+        const array = this.pullEntries(key);
+
+        if (!count) {
+            yield array;
+        } else {
+            let pos = 0;
+            while (pos < array.length) {
+                yield array.slice(pos, pos + count);
+                pos += count;
+            }
+        }
+    }
+
+    /**
      * @abstract
-     * @param {Object} init
-     * @param {SimpleEntry} init.firstEntry
-     * @param {function(): SimpleEntry[]} init.pullEntries
+     * @param {EntriesHolder} entriesHolder
      * @return {Promise<void>}
      */
-    async handle({firstEntry, pullEntries}) {}
+    async handle(entriesHolder) {}
 
     static execute = class {
         static now(executable) {

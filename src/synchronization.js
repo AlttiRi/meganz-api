@@ -62,6 +62,39 @@ class Semaphore {
                 this.#count--;
             });
     }
+
+    /**
+     * Note (It's important, in other case the semaphore will not work):
+     * When you want to limit the parallel execution count of an async function
+     * use `return` statement in the "executable" callback,
+     * or use `await` statement in the "executable" callback if you do not need the result.
+     *
+     * @example
+     * const semaphore = new Semaphore(4);
+     * for (const value of values) {
+     *      semaphore.sync(() => {
+     *          return handle(value);
+     *      }).then(console.log); // result of `handle`
+     * }
+     * @example
+     * const semaphore = new Semaphore(4);
+     * for (const value of values) {
+     *      semaphore.sync(async () => {
+     *          await handle(value);
+     *      }).then(console.log); // `undefined`
+     * }
+     *
+     * @param {function(): Promise<*>} executable
+     * @return {Promise<*>}
+     */
+    async sync(executable) {
+        try {
+            await this.acquire();
+            return await executable();
+        } finally {
+            this.release();
+        }
+    }
 }
 
 class CountDownLatch {
