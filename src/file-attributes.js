@@ -305,12 +305,28 @@ class FileAttributeBytes {
         const fileAttribute = _fileAttributes.byType(this.type);
         const _encryptedBytes = encryptedBytes || await this.getEncryptedBytes({fileAttribute, downloadUrl, node});
 
-        console.log("Decryption of downloaded content...");
+        if (!_fileAttributes.nodeKey) {
+            if (FileAttributes.strictMode) {
+                throw "No key specified for the file attribute decryption.";
+            } else {
+                console.log("No key specified for the file attribute decryption. Skipping the decryption.");
+                return _encryptedBytes;
+            }
+        }
+        console.log("Decryption of a file attribute...");
         return Util.decryptAES(_encryptedBytes, _fileAttributes.nodeKey, {padding: "ZeroPadding"});
     }
 }
 
 class FileAttributes {
+
+    /**
+     * If `false` (default) returns not decrypted file attribute if no node key specified.
+     * If `true` `FileAttributes.getBytes` will throw the exception.
+     *
+     * @type {boolean}
+     */
+    static strictMode = false;
 
     /** @type {FileAttribute[]} */
     fileAttributes;
@@ -396,7 +412,7 @@ class FileAttributes {
     static getPreview(node) {
         return FileAttributes.getAttribute(node, FileAttributes.Preview);
     }
-    //todo cases when node.key === null
+
     /**
      * NB: can be not only JPG (FF D8 FF (E0)), but PNG (89 50 4E 47 0D 0A 1A 0A) too, for example.
      * https://en.wikipedia.org/wiki/List_of_file_signatures
