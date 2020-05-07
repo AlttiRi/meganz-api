@@ -300,6 +300,10 @@ class Util {
 
     /**
      * Return promise that fulfills at the next event loop task
+     * @example
+     * doWorkPart1();
+     * await nextEventLoopTask();
+     * doWorkPart2();
      * @returns {Promise}
      */
     static nextEventLoopTask() {
@@ -325,7 +329,6 @@ class Util {
         });
     }
 
-    //todo add a semaphore?
     /**
      * @param {function} executable - an async function to repeat if it throws an exception
      * @param {number} count=5 - count of the repeats
@@ -355,14 +358,14 @@ class Util {
      * @return {string}
      */
     static getSafeName(name) {
-        //todo
+        //todo implement this:
         // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-        //todo isSafeName
         if (name.includes("/")) {
             console.log(`Bad filename: "${name}"`); // for debugging currently
         }
         return name.replace("/", "_");
     }
+    //todo isSafeName() - the similar method
 
     /**
      * The simple implementation
