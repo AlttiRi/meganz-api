@@ -2,32 +2,6 @@ const {Util} = require("./util");
 
 //todo "within"
 class Semaphore {
-
-    #max;
-    #delay;
-
-    set max(value) {
-        if (value < 1) {
-            this.#max = 1;
-        } else {
-            this.#max = value;
-        }
-    }
-    get max() {
-        return this.#max;
-    }
-
-    set delay(value) {
-        if (value < 0) {
-            this.#delay = 0;
-        } else {
-            this.#delay = value;
-        }
-    }
-    get delay () {
-        return this.#delay;
-    }
-
     /**
      * By default works like a mutex
      * @param {number} max   - max count of parallel executions
@@ -51,11 +25,10 @@ class Semaphore {
 
     /** @return {Promise<void>} */
     acquire() {
-        if (this.disabled) {
+        if (this.isDisabled) {
             return Promise.resolve();
         }
 
-        console.log(`[Semaphore] Acquired: ${this.#count}${this.#count < this.max ? "" : " and added to a queue"}`);
         let promise;
         if (this.#count < this.max) {
             promise = Promise.resolve();
@@ -74,24 +47,28 @@ class Semaphore {
      * Recommendation: release in a finally block.
      */
     release() {
-        if (this.disabled) {
+        this._release().then(/*ignore promise*/); // Just to hide IDE warning
+    }
+
+    /** @private */
+    async _release() {
+        if (this.isDisabled) {
             return;
         }
 
-        Util.sleep(this.delay)
-            .then(_ => {
-                console.log(`[Semaphore] Released: ${this.#count}${this.#queue.length > 0 ? " from the queue" : ""}`);
-                if (this.#queue.length > 0) {
-                    const resolve = this.#queue.shift();
-                    resolve();
-                }
-                const count = this.#count - 1;
-                if(count < 0) {
-                    console.warn("Semaphore.count < 0, the possible error. Set to 0.");
-                    this.#count = 0;
-                }
-                this.#count = count;
-            });
+        if (this.delay > 0) {
+            await Util.sleep(this.delay);
+        }
+
+        if (this.#queue.length > 0) {
+            const resolve = this.#queue.shift();
+            resolve();
+        }
+        this.#count--;
+        if (this.#count < 0) {
+            console.warn("[Semaphore] over released"); // a possible error is in a code
+            this.#count = 0;
+        }
     }
 
     /**
@@ -138,15 +115,55 @@ class Semaphore {
         this.#count = 0;
     }
 
-    disabled = false;
+    #max;
+    #delay;
+
+    set max(value) {
+        if (value < 1) {
+            this.#max = 1;
+        } else {
+            this.#max = value;
+        }
+    }
+
+    get max() {
+        return this.#max;
+    }
+
+    set delay(value) {
+        if (value < 0) {
+            this.#delay = 0;
+        } else {
+            this.#delay = value;
+        }
+    }
+
+    get delay() {
+        return this.#delay;
+    }
+
+    isDisabled = false;
+
     disable(releaseAll = true) {
         if (releaseAll) {
             this.releaseAll();
         }
-        this.disabled = true;
+        this.isDisabled = true;
     }
+
     enable() {
-        this.disabled = false;
+        this.isDisabled = false;
+    }
+
+    /**
+     * Static factory method, works as constructor.
+     * Returns the disabled semaphore.
+     * Pass it to a code that expect a semaphore, but you do not need it.
+     */
+    static disabled(max = 1, delay = 0) {
+        const semaphore = new Semaphore(max, delay);
+        semaphore.disable();
+        return semaphore;
     }
 }
 
@@ -170,7 +187,6 @@ class CountDownLatch {
     countDown() {
         if (this.count > 0) {
             this.count--;
-            console.log(`[CountDownLatch] Left: ${this.count}`);
             if (this.count === 0) {
                 this.#resolve();
             }
@@ -179,9 +195,6 @@ class CountDownLatch {
 
     /** @return {Promise<void>} */
     wait() {
-        if (this.count > 0) {
-            console.log(`[CountDownLatch] Waiting for ${this.count} count downs...`);
-        }
         return this.#promise;
     }
 
