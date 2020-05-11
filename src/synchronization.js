@@ -113,7 +113,7 @@ class Semaphore {
             resolve();
         }
         this.#active = 0;
-        this.#completeTime = [];
+        this.#completeTimes = [];
     }
 
     #limit;
