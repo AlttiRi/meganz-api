@@ -11,11 +11,13 @@ class SimpleEntry {
      * @param {K} key - group criterion
      * @param {V} value
      * @param {Resolve} resolve
+     * @param {Function} reject
      */
-    constructor(key, value, resolve) {
+    constructor(key, value, resolve, reject) {
         this.key     = key;
         this.value   = value;
         this.resolve = resolve;
+        this.reject  = reject;
     }
 
     /** @return {K} */
@@ -112,8 +114,8 @@ class GroupedTasks {
      * @return {Promise<R>}
      */
     getResult({key, value}) {
-        return new Promise(resolve => {
-            const entry = new this.entryClass(key, value, resolve);
+        return new Promise((resolve, reject) => {
+            const entry = new this.entryClass(key, value, resolve, reject);
             if (entry.needHandle()) {
                 this.enqueue(entry);
             } else {
@@ -132,7 +134,7 @@ class GroupedTasks {
             this.queue.set(entryKey, []);
             this.delayStrategy(() => {
                 this.handle(new EntriesHolder(entryKey, entry, this))
-                    .then(/*ignore promise*/);
+                    .catch(entry.reject);
             });
         }
         this.queue.get(entryKey).push(entry);
