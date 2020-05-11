@@ -4,7 +4,18 @@ const {performance} = require("../browser-context");
 const queue = new Map(); // timerId to {startTime, name}
 let timerId = null;
 
-module.exports.progress = function progress(promise, name = "Progress") {
+/**
+ * Prints the progress(loading) line in the console until the promise is resolved.
+ * Supports parallel executions.
+ *
+ * Looks like this: `/ [1][Progress: 1771]`
+ *
+ * @template T
+ * @param {Promise<T>} promise
+ * @param {string} name
+ * @return {Promise<T>}
+ */
+function progress(promise, name = "Progress") {
     const id = startLogging(name);
     return promise.finally(_ => {
         queue.delete(id);
@@ -14,6 +25,7 @@ module.exports.progress = function progress(promise, name = "Progress") {
         }
     });
 }
+
 let id = 0;
 function startLogging(name) {
     id++;
@@ -53,3 +65,5 @@ function startLogging(name) {
 
     return id;
 }
+
+module.exports = {progress};

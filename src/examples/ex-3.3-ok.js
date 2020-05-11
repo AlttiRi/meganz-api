@@ -5,7 +5,7 @@ const {CountDownLatch} = require("../synchronization");
 const {progress} = require("./promise-progress");
 
 async function example() {
-    const folderNodes = await progress(Nodes.nodes(URLS.FOLDER_BAD_3), "Nodes.nodes");
+    const folderNodes = await progress(Nodes.nodes(URLS.FOLDER_136_FILES), "Nodes.nodes");
 
     const mediaNodesCount = folderNodes.filter(Nodes.isMediaNode).length;
     const countDownLatch = new CountDownLatch(mediaNodesCount);
