@@ -2,6 +2,7 @@ const URLS = require("./test-urls-private");
 const FileAttributes = require("../file-attributes");
 const {Nodes} = require("../nodes");
 const {Util} = require("../util");
+const {Mega} = require("../mega");
 const {performance} = require("../browser-context");
 const {progress} = require("./promise-progress");
 
@@ -22,8 +23,7 @@ async function example() {
 }
 
 async function handle(node, index) {
-    // Note: set `grouped` also to `false` here: `Mega.requestAPI(payload, searchParams = {}, grouped = true)`
-    // if you use `Thumbnail.getDownloadUrl({node}, false)`.
+    //Mega.groupedApiRequest = false; // if you use `Thumbnail.getDownloadUrl({node}, false)`
     const downloadUrl = await progress(FileAttributes.Thumbnail.getDownloadUrl({node}, true), "URL fetching");
     //await progress(Util.sleep(10), "Waiting for a delay"); // may break grouped downloading
     //await Util.nextEventLoopTask();

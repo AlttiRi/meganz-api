@@ -8,6 +8,7 @@ const GroupedTasks = require("./grouped-tasks");
 class Mega {
 
     static apiGateway = "https://g.api.mega.co.nz/cs";
+    static groupedApiRequest = true;
     static ssl = 2; // Is there a difference between "1" and "2" [???]
     /**
      * Max parallel requests count that Mega allows for API access are `63` within ~4 seconds.
@@ -21,8 +22,9 @@ class Mega {
 
     /**
      * @extends {GroupedTasks<String, Object, Object>}
+     * @private
      */
-    static GroupedApiRequests = class extends GroupedTasks {
+    static RequestApiGrouped = class extends GroupedTasks {
         async handle(entriesHolder) {
             const url = entriesHolder.key;
 
@@ -32,7 +34,7 @@ class Mega {
                 payloads.push(entry.getValue());
             }
 
-            const responseArray = await Mega._requestApiSafe(url, payloads);
+            const responseArray = await Mega.requestApiSafe(url, payloads);
             console.log("[grouped request]", responseArray);
 
             entries.forEach((entry, index) => {
@@ -40,7 +42,8 @@ class Mega {
             });
         }
     }
-    static groupedApiRequests = new Mega.GroupedApiRequests();
+    /** @private */
+    static requestApiGrouped = new Mega.RequestApiGrouped();
 
     /**
      * @param {*} payload
@@ -48,42 +51,39 @@ class Mega {
      * @param {boolean} [grouped]
      * @returns {Promise<*>} responseData
      */
-    static async requestAPI(payload, searchParams = {}, grouped = true) { // todo configure "grouped" from an outer code
+    static async requestApi(payload, searchParams = {}, grouped = Mega.groupedApiRequest) {
         const _url = new URL(Mega.apiGateway);
         Util.addSearchParamsToURL(_url, searchParams);
         const url = _url.toString();
 
         if (grouped) {
-            return Mega.groupedApiRequests.getResult({
+            return Mega.requestApiGrouped.getResult({
                     key: url,
                     value: payload
                 });
         }
-        return (await Mega._requestApiSafe(url, [payload]))[0];
+        return (await Mega.requestApiSafe(url, [payload]))[0];
     }
 
     /**
-     * Note: If move `semaphore` inside `_requestAPI` or `repeatIfErrorAsync`, then in case an error
+     * Note: If you move `semaphore` inside `requestApi` or `repeatIfErrorAsync`, then in case an error
      * the repeating request will be added at the end of queue of `semaphore`
      * @param {string|URL} url
      * @param {Object[]} payloads
      * @return {Promise<*[]>}
      * @private
      */
-    static async _requestApiSafe(url, payloads) {
+    static async requestApiSafe(url, payloads) {
         await Mega.semaphore.acquire();
         try {
-            const response = await Util.repeatIfErrorAsync(_ => Mega._requestAPI(url, payloads));
-            return Mega._apiErrorHandler(response); // todo Retry if -3 exception
+            const response = await Util.repeatIfErrorAsync(_ => Mega.requestApiUnsafe(url, payloads));
+            return Mega.apiErrorHandler(response); // todo Retry if -3 exception
         } finally { // if an exception happens more than `count` times, or the error code was returned
             Mega.semaphore.release();
         }
     }
 
     /**
-     * The main function.
-     * Represented as a callback to pass it in `_repeatIfErrorAsync`.
-     *
      * Returns an array with one item (multiple request are not implemented), or an error code (number)
      *
      * An exception may be thrown by `fetch`, for example, if you perform to many connections
@@ -94,7 +94,7 @@ class Mega {
      * @return {Promise<*[]>}
      * @private
      */
-    static async _requestAPI(url, payloads) {
+    static async requestApiUnsafe(url, payloads) {
         const response = await fetch(url, {
             method: "post",
             body: JSON.stringify(payloads)
@@ -111,8 +111,9 @@ class Mega {
         return JSON.parse(text);
     }
 
-    static _apiErrorHandler(response) {
-        if (Array.isArray(response)) { //todo the error code can be in an array
+    /** @private */
+    static apiErrorHandler(response) {
+        if (Array.isArray(response)) { //todo for file links it is _in an array_
             return response;
         } else {
             // todo v2 api error response
@@ -143,7 +144,7 @@ class Mega {
      */
     static async requestFileAttributeDownloadUrl({id, type}) {
         console.log("Request download url...");
-        const responseData = await Mega.requestAPI({
+        const responseData = await Mega.requestApi({
             "a": "ufa",    // action (command): u [???] file attribute
             "fah": id,     // `h` means handler(hash, id)
             "ssl": Mega.ssl,
@@ -207,7 +208,7 @@ class Mega {
      *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number, fileAttributesStr?: string}>} nodeInfo
      */
     static async requestNodeInfo(shareId) {
-        const responseData = await Mega.requestAPI({
+        const responseData = await Mega.requestApi({
             "a": "g",        // Command type
             "p": shareId,    // Content ID
             "g": 1,          // The download link
@@ -250,7 +251,7 @@ class Mega {
     // all nodes with the same parent are listed one by one in creationDate order,
     // one level folders iterates in reverse order to `print` their children.
     static async requestFolderInfo(shareId) {
-        const responseData = await Mega.requestAPI({
+        const responseData = await Mega.requestApi({
             "a": "f",
             "r":  1, // Recursive (include sub folders/files) // if not set only root node and 1th lvl file/folder nodes
             "c":  1, // [???][useless]
@@ -262,8 +263,8 @@ class Mega {
 
         const {
             f: rawNodes, // array of file and folder nodes
-            sn, // [???][unused] // "1"
-            noc // [???][unused] // "McPlUF51ioE" [random]
+            sn, // [???][unused] // "McPlUF51ioE" [random]
+            noc // [???][unused] // "1"
         } = responseData;
 
 
@@ -282,7 +283,7 @@ class Mega {
         }
 
         const shareRootNodeId = _getShareRootNodeId(rawNodes);
-        //logger.debug("[shareRootNodeId]", shareRootNodeId);
+        //console.log("[shareRootNodeId]", shareRootNodeId);
 
 
         function _prettifyType(type) {
