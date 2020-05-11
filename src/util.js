@@ -291,7 +291,7 @@ class Util {
      * @returns {Promise}
      */
     static sleep(ms, inNextEventLoopTask = false) {
-        if (ms === 0) {
+        if (ms <= 0) {
             if (inNextEventLoopTask) {
                 return Util.nextEventLoopTask();
             } else {

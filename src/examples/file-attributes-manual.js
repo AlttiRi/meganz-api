@@ -9,10 +9,10 @@ const {progress} = require("./promise-progress");
 async function example() {
     const promises = [];
 
-    const nodes = await progress(Nodes.nodes(URLS.FOLDER_999), "Nodes info fetching");
+    const nodes = await progress(Nodes.nodes(URLS.FOLDER_136_FILES), "Nodes info fetching");
     let i = 0;
     for (const node of nodes) {
-        if (Nodes.isMediaNode(node) && i < 151) {
+        if (Nodes.isMediaNode(node)/* && i < 151*/) {
             //await progress(Util.sleep(1), "Waiting for a delay in cycle"); // may break grouped downloading
             //await Util.nextEventLoopTask();
             promises.push(handle(node, i++));
@@ -22,11 +22,13 @@ async function example() {
 }
 
 async function handle(node, index) {
-    const downloadUrl = await progress(FileAttributes.Thumbnail.getDownloadUrl({node}), "URL fetching");
+    // Note: set `grouped` also to `false` here: `Mega.requestAPI(payload, searchParams = {}, grouped = true)`
+    // if you use `Thumbnail.getDownloadUrl({node}, false)`.
+    const downloadUrl = await progress(FileAttributes.Thumbnail.getDownloadUrl({node}, true), "URL fetching");
     //await progress(Util.sleep(10), "Waiting for a delay"); // may break grouped downloading
     //await Util.nextEventLoopTask();
 
-    const encryptedBytes = await FileAttributes.Thumbnail.getEncryptedBytes({node, downloadUrl},true);
+    const encryptedBytes = await FileAttributes.Thumbnail.getEncryptedBytes({node, downloadUrl}, true);
     let bytes /*//*/ = await FileAttributes.Thumbnail.getBytes({node, encryptedBytes}); // comment the right part to no decryption
     // or
     //const bytes = await FileAttributes.Thumbnail.getBytes({node, downloadUrl});

@@ -10,14 +10,14 @@ class Mega {
     static apiGateway = "https://g.api.mega.co.nz/cs";
     static ssl = 2; // Is there a difference between "1" and "2" [???]
     /**
-     * Max parallel requests count that Mega allows for API access are `64` within ~4 seconds.
-     * If you perform more than 64 connection within ~4 seconds:
+     * Max parallel requests count that Mega allows for API access are `63` within ~4 seconds.
+     * If you perform more than 63 connection within ~4 seconds:
      * Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
      *
-     * Example values: (64, 4000);   (12, 650);   (3, 0);
-     * The second value is a delay before releasing the semaphore. // todo implement `within`, not just a `delay`
+     * Example values: (63, 4000);   (12, 650);   (2, 0);
+     * The second value is a delay before releasing the semaphore.
      */
-    static semaphore = new Semaphore(12, 650);
+    static semaphore = new Semaphore(16, 1000);
 
     /**
      * @extends {GroupedTasks<String, Object, Object>}
@@ -48,7 +48,7 @@ class Mega {
      * @param {boolean} [grouped]
      * @returns {Promise<*>} responseData
      */
-    static async requestAPI(payload, searchParams = {}, grouped = true) {
+    static async requestAPI(payload, searchParams = {}, grouped = true) { // todo configure "grouped" from an outer code
         const _url = new URL(Mega.apiGateway);
         Util.addSearchParamsToURL(_url, searchParams);
         const url = _url.toString();

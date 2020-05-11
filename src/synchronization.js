@@ -1,53 +1,52 @@
 const {Util} = require("./util");
+const performance = require("./browser-context").performance;
 
-//todo "within"
 class Semaphore {
     /**
      * By default works like a mutex
-     * @param {number} max   - max count of parallel executions
+     * @param {number} limit - a max count of parallel executions
      * @param {number} delay - a delay before realise (ms)
      */
-    constructor(max = 1, delay = 0) {
-        this.max = max;
+    constructor(limit = 1, delay = 0) {
+        this.limit = limit;
         this.delay = delay;
     }
 
-    /**
-     * The count of "threads" that called `acquire` method, but not released yet
-     * @type {number}
-     */
-    #count = 0;
-    /**
-     * The queue of Promises's `resolve`s (callback param) for "threads" that are not fitted in `max` limit
-     * @type {function[]}
-     */
-    #queue = [];
+    /** @type {number} - the count of active parallel executions */
+    #active = 0;
+    /** @type {(function: void)[]} - resolve functions of enqueued executions */
+    #pending = [];
+    /** @type {number[]} - finish times of completed executions (it's used when there is no enqueued executions) */
+    #completeTimes = [];
 
     /** @return {Promise<void>} */
-    acquire() {
+    async acquire() {
         if (this.isDisabled) {
-            return Promise.resolve();
+            return;
         }
 
-        let promise;
-        if (this.#count < this.max) {
-            promise = Promise.resolve();
-        } else {
-            promise = new Promise(resolve => {
-                this.#queue.push(resolve);
-            });
+        if (this.#completeTimes.length > 0 && this.#completeTimes.length === this.limit - this.#active) {
+            const time = this.#delay - (performance.now() - this.#completeTimes.shift());
+            console.log("completed: " + this.#completeTimes.length + ", active: " + this.#active + ", wait: " + time);
+            await Util.sleep(time);
         }
 
-        this.#count++;
-        return promise;
+        if (this.#active < this.limit) {
+            this.#active++;
+            return;
+        }
+
+        return new Promise(resolve => {
+            this.#pending.push(resolve);
+        });
     }
 
     /**
-     * You may note the delay before finishing of the program because of the delay of the semaphore.
      * Recommendation: release in a finally block.
      */
     release() {
-        this._release().then(/*ignore promise*/); // Just to hide IDE warning
+        // Just do not return a Promise
+        this._release().then(/*ignore promise*/);
     }
 
     /** @private */
@@ -56,18 +55,19 @@ class Semaphore {
             return;
         }
 
-        if (this.delay > 0) {
-            await Util.sleep(this.delay);
-        }
+        if (this.#active > 0) {
+            this.#active--;
 
-        if (this.#queue.length > 0) {
-            const resolve = this.#queue.shift();
-            resolve();
-        }
-        this.#count--;
-        if (this.#count < 0) {
+            if (this.#pending.length > 0) {
+                const resolve = this.#pending.shift();
+                this.#active++;
+                await Util.sleep(this.#delay);
+                resolve();
+            } else {
+                this.#completeTimes.push(performance.now());
+            }
+        } else {
             console.warn("[Semaphore] over released"); // a possible error is in a code
-            this.#count = 0;
         }
     }
 
@@ -108,26 +108,27 @@ class Semaphore {
      * Release all waiters without any delay
      */
     releaseAll() {
-        while (this.#queue.length) {
-            const resolve = this.#queue.shift();
+        while (this.#pending.length) {
+            const resolve = this.#pending.shift();
             resolve();
         }
-        this.#count = 0;
+        this.#active = 0;
+        this.#completeTime = [];
     }
 
-    #max;
+    #limit;
     #delay;
 
-    set max(value) {
+    set limit(value) {
         if (value < 1) {
-            this.#max = 1;
+            this.#limit = 1;
         } else {
-            this.#max = value;
+            this.#limit = value;
         }
     }
 
-    get max() {
-        return this.#max;
+    get limit() {
+        return this.#limit;
     }
 
     set delay(value) {

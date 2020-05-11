@@ -103,7 +103,7 @@ class Bunch {
      * @param {boolean} cached=true
      * @return {Promise<string>}
      */
-    async getDownloadUrl(fileAttribute, cached= true) {
+    async getDownloadUrl(fileAttribute, cached = true) {
         if (cached && this.hasDownloadUrl) {
             return this.downloadUrl;
         }
