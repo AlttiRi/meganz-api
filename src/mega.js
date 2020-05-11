@@ -16,7 +16,6 @@ class Mega {
      * Fetch error (reason: write EPROTO) will happen (not a big problem, the request will be repeated)
      *
      * Example values: (63, 4000);   (12, 650);   (2, 0);
-     * The second value is a delay before releasing the semaphore.
      */
     static semaphore = new Semaphore(16, 1000);
 

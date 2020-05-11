@@ -4,12 +4,12 @@ const performance = require("./browser-context").performance;
 class Semaphore {
     /**
      * By default works like a mutex
-     * @param {number} limit - a max count of parallel executions
-     * @param {number} delay - a delay before realise (ms)
+     * @param {number} limit - the max count of parallel executions
+     * @param {number} time  - the time within which does not allowed to perform more than `limit` operations. (ms)
      */
-    constructor(limit = 1, delay = 0) {
+    constructor(limit = 1, time = 0) {
         this.limit = limit;
-        this.delay = delay;
+        this.delay = time;
     }
 
     /** @type {number} - the count of active parallel executions */
@@ -25,9 +25,10 @@ class Semaphore {
             return;
         }
 
-        if (this.#completeTimes.length > 0 && this.#completeTimes.length === this.limit - this.#active) {
+        const completed = this.#completeTimes.length;
+        if (completed > 0 && completed === this.limit - this.#active) {
             const time = this.#delay - (performance.now() - this.#completeTimes.shift());
-            console.log("completed: " + this.#completeTimes.length + ", active: " + this.#active + ", wait: " + time);
+            console.log("completed: " + completed + ", active: " + this.#active + ", wait: " + time);
             await Util.sleep(time);
         }
 
@@ -63,7 +64,7 @@ class Semaphore {
                 this.#active++;
                 await Util.sleep(this.#delay);
                 resolve();
-            } else {
+            } else if (this.#delay > 0) {
                 this.#completeTimes.push(performance.now());
             }
         } else {
