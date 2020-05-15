@@ -338,7 +338,7 @@ class Util {
      * @param {number} delay=5000 - ms to wait before repeating
      * @return {Promise<*>}
      */
-    static async repeatIfErrorAsync(executable, count = 5, delay = 5000) {
+    static async repeatIfErrorAsync(executable, count = 5, delay = 5000) { //todo make `delay` iterable
         for (let i = 0;; i++) {
             try {
                 if (i) {
