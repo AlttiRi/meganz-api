@@ -1,5 +1,5 @@
 const {btoa, atob, fetch} = require("./browser-context");
-const CryptoJS = require("./libs");
+const {CryptoJS} = require("./dependencies");
 
 class Util {
 

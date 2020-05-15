@@ -7,4 +7,4 @@ CryptoJS.AES   = require("crypto-js/aes");
 CryptoJS.pad.ZeroPadding = require("crypto-js/pad-zeropadding");
 CryptoJS.pad.NoPadding   = require("crypto-js/pad-nopadding");
 
-module.exports = CryptoJS;
+module.exports = {CryptoJS};
