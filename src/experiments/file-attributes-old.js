@@ -1,5 +1,6 @@
 const {Mega} = require("../mega");
 const {Util} = require("../util");
+const {Crypto} = require("../crypto");
 
 
 class FileAttributes {
@@ -71,7 +72,7 @@ class FileAttributes {
         console.log(`Encrypted file attribute size is ${length} bytes`); // with zero padding
 
         console.log("Decryption of downloaded content...");
-        return Util.decryptAES(dataBytes, node.key, {padding: "ZeroPadding"});
+        return Crypto.decryptAES(dataBytes, node.key, {padding: "ZeroPadding"});
     }
 }
 

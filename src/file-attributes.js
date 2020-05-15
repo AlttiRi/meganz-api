@@ -1,4 +1,5 @@
 const {Util} = require("./util");
+const {Crypto} = require("./crypto");
 const {MegaUtil} = require("./mega-util");
 const {Mega} = require("./mega");
 const GroupedTasks = require("./grouped-tasks");
@@ -314,7 +315,7 @@ class FileAttributeBytes {
             }
         }
         console.log("Decryption of a file attribute...");
-        return Util.decryptAES(_encryptedBytes, _fileAttributes.nodeKey, {padding: "ZeroPadding"});
+        return Crypto.decryptAES(_encryptedBytes, _fileAttributes.nodeKey, {padding: "ZeroPadding"});
     }
 }
 

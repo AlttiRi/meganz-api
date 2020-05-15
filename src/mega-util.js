@@ -1,4 +1,5 @@
 const {Util} = require("./util");
+const {Crypto} = require("./crypto");
 
 /**
  * The class contains Mega specific static util methods.
@@ -12,7 +13,7 @@ class MegaUtil {
      */
     static parseEncodedNodeAttributes(attributesEncoded, nodeKey) {
         const attributesEncrypted   = Util.base64BinaryStringToArrayBuffer(attributesEncoded);
-        const attributesArrayBuffer = Util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
+        const attributesArrayBuffer = Crypto.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
         const attributesPlane       = Util.arrayBufferToUtf8String(attributesArrayBuffer);
 
         const trimmedAttributesPlaneString = attributesPlane.substring("MEGA".length);
@@ -74,7 +75,7 @@ class MegaUtil {
 
         for (let i = 0; i < encryptedKey.length; i += 16) {
             const block = encryptedKey.subarray(i, i + 16);
-            const decryptedBlock = Util.decryptAES(block, key, {padding: "NoPadding"}); // "NoPadding" – for the case when the last byte is zero (do not trim it)
+            const decryptedBlock = Crypto.decryptAES(block, key, {padding: "NoPadding"}); // "NoPadding" – for the case when the last byte is zero (do not trim it)
             result.set(decryptedBlock, i);
         }
 

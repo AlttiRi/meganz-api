@@ -1,5 +1,6 @@
 const {fetch} = require("../browser-context");
 const {Util} = require("../util");
+const {Crypto} = require("../crypto");
 const {MegaUtil} = require("../mega-util");
 
 // The test of downloading a thumbnail and a preview (file attributes)
@@ -106,7 +107,7 @@ const {MegaUtil} = require("../mega-util");
 
 
 
-    let decrypted = Util.decryptAES(thumbnailBytes, nodeKey, {padding: "ZeroPadding"});
+    let decrypted = Crypto.decryptAES(thumbnailBytes, nodeKey, {padding: "ZeroPadding"});
     console.log(decrypted);
 // Uint8Array(2546) [
 //   255, 216, 255, 224,     0,  16,  74,  70,   73,  70,  0,   1,    1,   0,   0,   1,

@@ -1,5 +1,6 @@
 const {fetch} = require("../browser-context");
 const {Util} = require("../util");
+const {Crypto} = require("../crypto");
 const {MegaUtil} = require("../mega-util");
 const Share = require("../share");
 const logger = Util.logger;
@@ -102,7 +103,7 @@ const logger = Util.logger;
 
         console.log("Decryption of attributes...");
 
-        const attributesArrayBuffer = Util.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
+        const attributesArrayBuffer = Crypto.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
 
         const attributesPlane = Util.arrayBufferToUtf8String(attributesArrayBuffer);
 
