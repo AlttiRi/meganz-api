@@ -4,11 +4,23 @@ const {MegaUtil} = require("./mega-util");
 const {Semaphore} = require("./synchronization");
 const GroupedTasks = require("./grouped-tasks");
 
-// todo make `Util.repeatIfErrorAsync` configurable – use not default `count` and `delay` params
 class Mega {
 
     static apiGateway = "https://g.api.mega.co.nz/cs";
     static groupedApiRequest = true;
+
+    static errorRepeatCount = 5;
+    static errorRepeatDelay = 5000;
+    /**
+     * @param {function} executable - an async function to repeat if it throws an exception
+     * @param {number} count=5 - count of the repeats
+     * @param {number} delay=5000 - ms to wait before repeating
+     * @return {Promise<*>}
+     */
+    static repeatIfErrorAsync(executable, count = Mega.errorRepeatCount, delay = Mega.errorRepeatDelay) {
+        return Util.repeatIfErrorAsync(executable, count, delay);
+    }
+
     static ssl = 2; // Is there a difference between "1" and "2" [???]
     /**
      * Max parallel requests count that Mega allows for API access are `63` within ~4 seconds.
@@ -75,7 +87,7 @@ class Mega {
     static async requestApiSafe(url, payloads) {
         await Mega.semaphore.acquire();
         try {
-            const response = await Util.repeatIfErrorAsync(_ => Mega.requestApiUnsafe(url, payloads));
+            const response = await Mega.repeatIfErrorAsync(_ => Mega.requestApiUnsafe(url, payloads));
             return Mega.apiErrorHandler(response); // todo Retry if -3 exception
         } finally { // if an exception happens more than `count` times, or the error code was returned
             Mega.semaphore.release();
@@ -194,7 +206,7 @@ class Mega {
             }
             return new Uint8Array(await response.arrayBuffer());
         };
-        const responseBytes = await Util.repeatIfErrorAsync(callback);
+        const responseBytes = await Mega.repeatIfErrorAsync(callback);
         console.log("[downloaded]", responseBytes.length, "bytes");
         return responseBytes;
     }
