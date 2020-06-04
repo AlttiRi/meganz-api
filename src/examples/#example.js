@@ -1,6 +1,6 @@
 import * as URLS from "./test-urls-private.js";
 import Util from "../util.js";
-import Mega from "../mega.js";
+import MegaApi from "../mega-api.js";
 import Nodes from "../nodes.js";
 import Share from "../share.js";
 import FileAttributes from "../file-attributes.js";

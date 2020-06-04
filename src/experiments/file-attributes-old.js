@@ -1,4 +1,4 @@
-import Mega from "../mega.js";
+import MegaApi from "../mega-api.js";
 import Util from "../util.js";
 import Crypto from "../crypto.js";
 
@@ -83,8 +83,8 @@ export default class FileAttributes {
  * @returns {Promise<Uint8Array>} responseBytes – encrypted bytes
  */
 async function requestFileAttributeEncrypted(fileAttribute) {
-    const downloadLink = await Mega.requestFileAttributeDownloadUrl(fileAttribute);
-    return Mega.requestFileAttributeBytes(downloadLink, fileAttribute.id);
+    const downloadLink = await MegaApi.requestFileAttributeDownloadUrl(fileAttribute);
+    return MegaApi.requestFileAttributeBytes(downloadLink, fileAttribute.id);
 }
 
 

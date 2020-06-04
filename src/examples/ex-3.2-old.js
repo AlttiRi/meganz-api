@@ -3,12 +3,12 @@ import {saveFile} from "../util-node.js";
 import {
     Nodes,
     Util,
-    Api
+    MegaApi
 } from "../m.js";
 
 
 // to simulate the old behavior (without a semaphore)
-Api.semaphore.max = Number.MAX_SAFE_INTEGER;
+MegaApi.semaphore.max = Number.MAX_SAFE_INTEGER;
 
 
 // Not ideal, but works (old version, now there is a semaphore)

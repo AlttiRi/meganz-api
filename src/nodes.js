@@ -1,6 +1,6 @@
 import Util from "./util.js";
 import MegaUtil from "./mega-util.js";
-import Mega from "./mega.js";
+import MegaApi from "./mega-api.js";
 import FileAttributes from "./file-attributes.js";
 import Share from "./share.js";
 
@@ -318,7 +318,7 @@ class Nodes {
      * @returns {Promise<SharedFileNode|SharedMediaFileNode>}
      */
     static async getSharedNode(share) {
-        const nodeInfo = await Mega.requestNodeInfo(share.id);
+        const nodeInfo = await MegaApi.requestNodeInfo(share.id);
         if (nodeInfo.fileAttributesStr) {
             return new SharedMediaFileNode(share, nodeInfo);
         } else {
@@ -338,7 +338,7 @@ class Nodes {
         const {
             nodes,
             rootId
-        } = await Mega.requestFolderInfo(share.id);
+        } = await MegaApi.requestFolderInfo(share.id);
         //logger.debug(`[requestFolderInfo("${share.id}").nodes]`, nodes);
 
         const folders = new Map(); // [note] JS's HashMap holds the insert order

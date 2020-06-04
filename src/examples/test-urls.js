@@ -105,7 +105,7 @@ export const CAT_FOLDER_NO_KEY_SELECTED_FOLDER_2 = "https://mega.nz/folder/e1ogx
  * RELATIVE URLs (some examples)
  * ----------------------------------------------------------------
  * The RegExp checks not full URL, but only the signature.
- * @see Mega.parseUrl
+ * @see Share.fromUrl
  */
 
 export const CAT_FILE_IMAGE_OLD_RELATIVE_1 = "/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk";

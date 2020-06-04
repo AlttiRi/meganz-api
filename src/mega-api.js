@@ -4,7 +4,7 @@ import MegaUtil from "./mega-util.js";
 import {Semaphore} from "./synchronization.js";
 import GroupedTasks from "./grouped-tasks.js";
 
-export default class Mega {
+export default class MegaApi {
 
     static apiGateway = "https://g.api.mega.co.nz/cs";
     static groupedApiRequest = true;
@@ -17,7 +17,7 @@ export default class Mega {
      * @param {number} delay=5000 - ms to wait before repeating
      * @return {Promise<*>}
      */
-    static repeatIfErrorAsync(executable, count = Mega.errorRepeatCount, delay = Mega.errorRepeatDelay) {
+    static repeatIfErrorAsync(executable, count = MegaApi.errorRepeatCount, delay = MegaApi.errorRepeatDelay) {
         return Util.repeatIfErrorAsync(executable, count, delay);
     }
 
@@ -45,7 +45,7 @@ export default class Mega {
                 payloads.push(entry.getValue());
             }
 
-            const responseArray = await Mega.requestApiSafe(url, payloads);
+            const responseArray = await MegaApi.requestApiSafe(url, payloads);
             console.log("[grouped request]", responseArray);
 
             entries.forEach((entry, index) => {
@@ -54,7 +54,7 @@ export default class Mega {
         }
     }
     /** @private */
-    static requestApiGrouped = new Mega.RequestApiGrouped();
+    static requestApiGrouped = new MegaApi.RequestApiGrouped();
 
     /**
      * @param {*} payload
@@ -62,18 +62,18 @@ export default class Mega {
      * @param {boolean} [grouped]
      * @returns {Promise<*>} responseData
      */
-    static async requestApi(payload, searchParams = {}, grouped = Mega.groupedApiRequest) {
-        const _url = new URL(Mega.apiGateway);
+    static async requestApi(payload, searchParams = {}, grouped = MegaApi.groupedApiRequest) {
+        const _url = new URL(MegaApi.apiGateway);
         Util.addSearchParamsToURL(_url, searchParams);
         const url = _url.toString();
 
         if (grouped) {
-            return Mega.requestApiGrouped.getResult({
+            return MegaApi.requestApiGrouped.getResult({
                     key: url,
                     value: payload
                 });
         }
-        return (await Mega.requestApiSafe(url, [payload]))[0];
+        return (await MegaApi.requestApiSafe(url, [payload]))[0];
     }
 
     /**
@@ -85,12 +85,12 @@ export default class Mega {
      * @private
      */
     static async requestApiSafe(url, payloads) {
-        await Mega.semaphore.acquire();
+        await MegaApi.semaphore.acquire();
         try {
-            const response = await Mega.repeatIfErrorAsync(_ => Mega.requestApiUnsafe(url, payloads));
-            return Mega.apiErrorHandler(response); // todo Retry if -3 exception
+            const response = await MegaApi.repeatIfErrorAsync(_ => MegaApi.requestApiUnsafe(url, payloads));
+            return MegaApi.apiErrorHandler(response); // todo Retry if -3 exception
         } finally { // if an exception happens more than `count` times, or the error code was returned
-            Mega.semaphore.release();
+            MegaApi.semaphore.release();
         }
     }
 
@@ -155,10 +155,10 @@ export default class Mega {
      */
     static async requestFileAttributeDownloadUrl({id, type}) {
         console.log("Request download url...");
-        const responseData = await Mega.requestApi({
+        const responseData = await MegaApi.requestApi({
             "a": "ufa",    // action (command): u [???] file attribute
             "fah": id,     // `h` means handler(hash, id)
-            "ssl": Mega.ssl,
+            "ssl": MegaApi.ssl,
             "r": 1         // r [???] – It adds "." in response url (without this dot the url does not work)
         });
 
@@ -206,7 +206,7 @@ export default class Mega {
             }
             return new Uint8Array(await response.arrayBuffer());
         };
-        const responseBytes = await Mega.repeatIfErrorAsync(callback);
+        const responseBytes = await MegaApi.repeatIfErrorAsync(callback);
         console.log("[downloaded]", responseBytes.length, "bytes");
         return responseBytes;
     }
@@ -219,12 +219,12 @@ export default class Mega {
      *           downloadUrl: string, timeLeft: number, EFQ: number, MSD: number, fileAttributesStr?: string}>} nodeInfo
      */
     static async requestNodeInfo(shareId) {
-        const responseData = await Mega.requestApi({
+        const responseData = await MegaApi.requestApi({
             "a": "g",        // Command type
             "p": shareId,    // Content ID
             "g": 1,          // The download link
             //"v": 2,        // Multiple links for big files
-            "ssl": Mega.ssl  // HTTPS for the download link
+            "ssl": MegaApi.ssl  // HTTPS for the download link
         });
         //console.log("[responseData]", responseData);
 
@@ -262,7 +262,7 @@ export default class Mega {
     // all nodes with the same parent are listed one by one in creationDate order,
     // one level folders iterates in reverse order to `print` their children.
     static async requestFolderInfo(shareId) {
-        const responseData = await Mega.requestApi({
+        const responseData = await MegaApi.requestApi({
             "a": "f",
             "r":  1, // Recursive (include sub folders/files) // if not set only root node and 1th lvl file/folder nodes
             "c":  1, // [???][useless]

@@ -1,7 +1,7 @@
 import Util from "./util.js";
 import Crypto from "./crypto.js";
 import MegaUtil from "./mega-util.js";
-import Mega from "./mega.js";
+import MegaApi from "./mega-api.js";
 import GroupedTasks from "./grouped-tasks.js";
 import {Semaphore} from "./synchronization.js";
 
@@ -108,7 +108,7 @@ class Bunch {
         if (cached && this.hasDownloadUrl) {
             return this.downloadUrl;
         }
-        const url = await Mega.requestFileAttributeDownloadUrl(fileAttribute);
+        const url = await MegaApi.requestFileAttributeDownloadUrl(fileAttribute);
         //todo urls
         this.downloadUrl = url;
         return url;
@@ -264,7 +264,7 @@ class FileAttributeBytes {
             });
         }
 
-        const responseBytes = await Mega.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
+        const responseBytes = await MegaApi.requestFileAttributeBytes(_downloadUrl, _fileAttribute.id);
         return FileAttributeBytes.parseBytes(responseBytes).dataBytes;
     }
 
@@ -274,7 +274,7 @@ class FileAttributeBytes {
      * @return {AsyncGenerator<{dataBytes: Uint8Array, id: string}>}
      */
     static async *fileAttributeBytes(downloadUrl, fileAttrIDs) {
-        const responseBytes = await Mega.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
+        const responseBytes = await MegaApi.requestFileAttributeBytes(downloadUrl, fileAttrIDs);
 
         for (let i = 0, offset = 0; i < fileAttrIDs.length; i++) {
             const {id, dataBytes} = FileAttributeBytes.parseBytes(responseBytes, offset);
