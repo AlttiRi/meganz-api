@@ -1,10 +1,14 @@
-const URLS = require("./test-urls-private");
-const {Nodes} = require("../nodes");
-const {Util} = require("../util");
+import * as URLS from "./test-urls-private.js";
+import {saveFile} from "../util-node.js";
+import {
+    Nodes,
+    Util,
+    Api
+} from "../m.js";
 
-// to simulate old behavior (without a semaphore)
-const {Mega} = require("../mega");
-Mega.semaphore.max = Number.MAX_SAFE_INTEGER;
+
+// to simulate the old behavior (without a semaphore)
+Api.semaphore.max = Number.MAX_SAFE_INTEGER;
 
 
 // Not ideal, but works (old version, now there is a semaphore)
@@ -24,14 +28,14 @@ async function example() {
                 // max safe connection count is 63
                 if (count === 63) {
                     console.log("---await---");
-                    await Util.sleep(4000); // will be errors if it is less
+                    await Util.sleep(4000); // will be errors if it is less // UPD: No, due to there is "grouped request" optimization now
                     console.log("---reset---");
                     count = 0;
                 }
                 console.log(++count);
                 node.getThumbnail()
                     .then(thumb => {
-                        Util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
+                        saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
                     })
                     .catch(error => {
                         errors++;

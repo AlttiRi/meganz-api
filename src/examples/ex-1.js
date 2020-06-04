@@ -1,10 +1,9 @@
-const URLS = require("./test-urls");
-const {Nodes} = require("../nodes");
-
+import * as URLS from "./test-urls.js";
+import * as Mega from "../m.js";
 
 async function example() {
-    const nodesFromFolder = await Nodes.nodes(URLS.CAT_FOLDER);
-    const nodesFromFile   = await Nodes.nodes(URLS.CAT_FILE_IMAGE);
+    const nodesFromFolder = await Mega.nodes(URLS.CAT_FOLDER);
+    const nodesFromFile   = await Mega.nodes(URLS.CAT_FILE_IMAGE);
     console.log(nodesFromFolder.root);
     console.log("[1] ---");
     console.log(nodesFromFolder);

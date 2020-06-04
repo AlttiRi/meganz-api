@@ -1,4 +1,4 @@
-const {Semaphore} = require("../synchronization");
+import {Semaphore} from "../synchronization.js";
 
 // Not the best demo for a semaphore
 !async function demo() {

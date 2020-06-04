@@ -1,9 +1,9 @@
-const {Util} = require("./util");
-const {Crypto} = require("./crypto");
-const {MegaUtil} = require("./mega-util");
-const {Mega} = require("./mega");
-const GroupedTasks = require("./grouped-tasks");
-const {Semaphore} = require("./synchronization");
+import Util from "./util.js";
+import Crypto from "./crypto.js";
+import MegaUtil from "./mega-util.js";
+import Mega from "./mega.js";
+import GroupedTasks from "./grouped-tasks.js";
+import {Semaphore} from "./synchronization.js";
 
 /**
  * The interface of a media file node
@@ -64,7 +64,7 @@ class Bunch {
     /** @type {Number} */
     id;
 
-    #downloadUrl = null;
+    downloadUrl = null;
 
     /**
      * The holder of the instances of this class.
@@ -110,14 +110,14 @@ class Bunch {
         }
         const url = await Mega.requestFileAttributeDownloadUrl(fileAttribute);
         //todo urls
-        this.#downloadUrl = url;
+        this.downloadUrl = url;
         return url;
     }
     get hasDownloadUrl() {
-        return Boolean(this.#downloadUrl);
+        return Boolean(this.downloadUrl);
     }
     get downloadUrl() {
-        return this.#downloadUrl;
+        return this.downloadUrl;
     }
 }
 
@@ -136,14 +136,14 @@ class Types {
 
 class FileAttributeBytes {
     /** @type {number} */ //todo use Types?
-    #type;
+    type;
 
     get type() {
-        return this.#type;
+        return this.type;
     }
 
     constructor(type) {
-        this.#type = type;
+        this.type = type;
     }
 
     /**
@@ -319,7 +319,7 @@ class FileAttributeBytes {
     }
 }
 
-class FileAttributes {
+export default class FileAttributes {
 
     /**
      * If `false` (default) returns not decrypted file attribute if no node key specified.
@@ -428,5 +428,3 @@ class FileAttributes {
     }
 
 }
-
-module.exports = FileAttributes;

@@ -1,8 +1,10 @@
-const {CryptoJS} = require("./dependencies");
+// import {default as CryptoJS} from "crypto-es";      // or
+// import CryptoJS from "./dependencies/crypto-es.js"; // or
+import {CryptoJS} from "./dependencies/all.js";
 
-class Crypto {
+export default class Crypto {
     /**
-     * Decrypt AES with `CryptoJS`
+     * Decrypt AES with `CryptoJS` (Upd: CryptoES)
      *
      * Modes: "CBC" (the default), "CFB", "CTR", "OFB", "ECB".
      *
@@ -27,10 +29,10 @@ class Crypto {
 
         /**
          * The convert code [*] is from "crypto-js/lib-typedarrays.js" file
-         * Note: "word" is a 32 bits big-endian signed integer
+         * Note: a "word" is a 32 bits big-endian signed integer
          *
          * @param {Uint8Array} arrayBuffer
-         * @returns {CryptoJS.lib.WordArray} wordArray
+         * @returns {CryptoES.lib.WordArray} wordArray
          * @private
          */
         const _arrayBufferToWordArray = function(arrayBuffer) {
@@ -39,13 +41,13 @@ class Crypto {
             for (let i = 0; i < arrayBuffer.length; i++) {
                 words[i >>> 2] |= arrayBuffer[i] << (24 - (i % 4) * 8); // [*]
             }
-            return CryptoJS.lib.WordArray.create(words, arrayBuffer.length);
+            return CryptoJS.lib.WordArray.create(words, arrayBuffer.length); // the passing ArrayBuffer works only with CryptoES, not CryptoJS
         };
 
         const _data = _arrayBufferToWordArray(data);
         const _key = _arrayBufferToWordArray(key);
         const _iv = _arrayBufferToWordArray(iv);
-        const plaintextWA = CryptoJS.AES.decrypt( // (CipherParamsData, WordArray, IBlockCipherCfg)
+        const plaintextWA = CryptoJS.AES.decrypt( // (CipherParamsData, WordArray, IBlockCipherCfg) (for CryptoJS)
             {
                 ciphertext: _data
             },
@@ -59,10 +61,10 @@ class Crypto {
 
         /**
          * The convert code [*] is from CryptoJS.enc.Latin1.stringify ("crypto-js/core.js")
-         * @see CryptoJS.enc.Latin1 stringify()
+         * See CryptoJS.enc.Latin1 stringify()
          * Note: "word" is a 32 bits big-endian signed integer
          *
-         * @param {CryptoJS.lib.WordArray} wordArray
+         * @param {CryptoES.lib.WordArray} wordArray
          * @returns {Uint8Array}
          * @private
          */
@@ -77,5 +79,3 @@ class Crypto {
         return _wordArrayToArrayBuffer(plaintextWA);
     }
 }
-
-module.exports = {Crypto};

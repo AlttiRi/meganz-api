@@ -1,6 +1,6 @@
-const {btoa, atob, fetch} = require("./browser-context");
+import {btoa, atob} from "./browser-context.js";
 
-class Util {
+export default class Util {
 
     /**
      * @param {string} base64
@@ -80,7 +80,7 @@ class Util {
      * @returns {string}
      */
     static arrayBufferToHexString(arrayBuffer) {
-        const byteToHex = Util.#ByteToHexTable.get();
+        const byteToHex = Util.ByteToHexTable.get();
 
         const buffer = new Uint8Array(arrayBuffer.buffer);
         const hexOctets = new Array(buffer.length);
@@ -102,46 +102,27 @@ class Util {
      * It is used only in `Util.arrayBufferToHexString()`. Lazy loading.
      * @private
      */
-    static #ByteToHexTable = class {
+    static ByteToHexTable = class {
         static get() {
-            const self = Util.#ByteToHexTable;
-            if (!self.#inited) {
-                self.#init();
+            const self = Util.ByteToHexTable;
+            if (!self.inited) {
+                self.init();
             }
-            return self.#byteToHex;
+            return self.byteToHex;
         }
-        static #byteToHex = [];
-        static #inited = false;
-        static #init = () => {
-            const self = Util.#ByteToHexTable;
+        static byteToHex = [];
+        static inited = false;
+        static init = () => {
+            const self = Util.ByteToHexTable;
             for (let i = 0; i < 256; i++) {
                 const hexOctet = i.toString(16).padStart(2, "0");
-                self.#byteToHex.push(hexOctet);
+                self.byteToHex.push(hexOctet);
             }
-            self.#inited = true;
+            self.inited = true;
         }
     }
 
-    /**
-     * Save with Node.js API to `temp/` folder
-     * @param {Uint8Array} arrayBuffer
-     * @param {string} name
-     * @param {number|Date} [mtime]
-     * @param {string[]} [path] - array of folders names
-     */
-    static saveFile(arrayBuffer, name, mtime = new Date(), path = []) {
-        const safePath = path.map(Util.getSafeName);
-        const pathStr = "temp/" + (safePath.length ? safePath.join("/") + "/" : "");
-        console.log(`Saving "${name}" file to "${pathStr}" folder...`);
 
-        const fs = require("fs");
-        fs.mkdirSync(pathStr, {recursive: true});
-
-        const safeName = Util.getSafeName(name);
-
-        fs.writeFileSync(pathStr + safeName, Buffer.from(arrayBuffer));
-        fs.utimesSync(pathStr + safeName, new Date(), mtime);
-    }
 
     /**
      * Array of bytes (Little-endian) to Long (64-bits) value
@@ -225,11 +206,14 @@ class Util {
     }
 
     /**
-     * Return promise that fulfills at the next event loop task
+     * Return a promise that fulfills at the next event loop task
+     * Use to split a long time work to multiple tasks
+     *
      * @example
      * doWorkPart1();
      * await Util.nextEventLoopTask();
      * doWorkPart2();
+     *
      * @returns {Promise}
      */
     static nextEventLoopTask() {
@@ -311,35 +295,34 @@ class Util {
         return false;
     }
 
-    // the experimental version
-    static logger = {
-        DEBUG: true,
-        INFO: true,
-        /**
-         * @param {*} arguments
-         */
-        debug() {
-            if (!Util.logger.DEBUG) {
-                return;
-            }
-            [...arguments].forEach(el => {
-                console.log(el);
-            });
-            console.log();
-        },
-        /**
-         * @param {*} arguments
-         */
-        info() {
-            if (!Util.logger.INFO) {
-                return;
-            }
-            [...arguments].forEach(el => {
-                console.log(el);
-            });
-        }
-    };
+    // // the experimental version
+    // static logger = {
+    //     DEBUG: true,
+    //     INFO: true,
+    //     /**
+    //      * @param {*} arguments
+    //      */
+    //     debug() {
+    //         if (!Util.logger.DEBUG) {
+    //             return;
+    //         }
+    //         // rollup says: "A static class field initializer may not contain arguments"
+    //         [...arguments].forEach(el => {
+    //             console.log(el);
+    //         });
+    //         console.log();
+    //     },
+    //     /**
+    //      * @param {*} arguments
+    //      */
+    //     info() {
+    //         if (!Util.logger.INFO) {
+    //             return;
+    //         }
+    //         // rollup says: "A static class field initializer may not contain arguments"
+    //         [...arguments].forEach(el => {
+    //             console.log(el);
+    //         });
+    //     }
+    // };
 }
-
-
-module.exports = {Util};

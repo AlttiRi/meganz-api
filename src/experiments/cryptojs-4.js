@@ -1,16 +1,15 @@
-const {Util} = require("../util");
+import Util from "../util.js";
+
+import CryptoJS from "crypto-js";
 
 
 function decryptWithCryptoJSHex(data, key, iv){
-    const CryptoJS = require("crypto-js");
-
     function _wordArrayToArrayBuffer(wordArray) {
-        let bites = [];
+        const bites = new Uint8Array(wordArray.sigBytes);
         for (let i = 0; i < wordArray.sigBytes; i++) {
-            const bite = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
-            bites.push(bite);
+            bites[i] = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
         }
-        return new Uint8Array(bites);
+        return bites;
     }
 
     const plaintextArray = CryptoJS.AES.decrypt(

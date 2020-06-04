@@ -1,7 +1,8 @@
-const URLS = require("./test-urls-private");
-const {Util} = require("../util");
-const {Nodes} = require("../nodes");
-const Share = require("../share");
+import * as URLS from "./test-urls-private.js";
+import {
+    Share
+} from "../m.js";
+
 
 async function example() {
     const url = URLS.CAT_FOLDER_NO_KEY_SELECTED_FOLDER_2;

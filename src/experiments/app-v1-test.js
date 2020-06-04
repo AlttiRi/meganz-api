@@ -1,9 +1,8 @@
-const {fetch} = require("../browser-context");
-const {Util} = require("../util");
-const {Crypto} = require("../crypto");
-const {MegaUtil} = require("../mega-util");
-const Share = require("../share");
-const logger = Util.logger;
+import {fetch} from "../browser-context.js";
+import Util from "../util.js";
+import Crypto from "../crypto.js";
+import MegaUtil from "../mega-util.js";
+import Share from "../share.js";
 
 
 !async function app() {
@@ -23,7 +22,7 @@ const logger = Util.logger;
             selectedFileId
         } = Share.fromUrl(link);
 
-        logger.debug(isFolder, id, decryptionKeyStr, selectedFolderId, selectedFileId);
+        console.log(isFolder, id, decryptionKeyStr, selectedFolderId, selectedFileId);
 
     // false
     // bkwkHC7D
@@ -37,7 +36,7 @@ const logger = Util.logger;
         const decryptionKey = MegaUtil.megaBase64ToArrayBuffer(decryptionKeyStr);
 
 
-        logger.debug("decryptionKey:", decryptionKey);
+        console.log("decryptionKey:", decryptionKey);
     // Uint8Array(32) [  1,  98, 110, 182, 143,  63, 126,  25,  94,   0, 141, 150,  27,  68, 111,   0,
     //                  43,  74, 144, 191, 236, 246, 208,  45, 188,  21, 215,  13,  74, 118, 109,   9]
 
@@ -46,7 +45,7 @@ const logger = Util.logger;
         console.log("Parse decryption key...");
         const { iv, metaMac, key: nodeKey } = MegaUtil.decryptionKeyToParts(decryptionKey);
 
-        logger.debug("iv:", iv, "metaMac:", metaMac, "nodeKey:", nodeKey);
+        console.log("iv:", iv, "metaMac:", metaMac, "nodeKey:", nodeKey);
 
     // Uint8Array(8)  [ 43,  74, 144, 191, 236, 246, 208,  45]
     // Uint8Array(8)  [188,  21, 215,  13,  74, 118, 109,   9]
@@ -77,7 +76,7 @@ const logger = Util.logger;
             msd: MSD  // "MegaSync download"
         } = json[0];
 
-        logger.debug("s   " + size, "at  " + serializedAttributes, "fa  " + fileAttributesEncoded,
+        console.log("s   " + size, "at  " + serializedAttributes, "fa  " + fileAttributesEncoded,
                      "g   " + downloadUrl, "efq " + EFQ, "msd " + MSD);
 
     // s   523265
@@ -90,7 +89,7 @@ const logger = Util.logger;
 // ---------------------------------------------------------------------------------------------------------------------
 
         const attributesEncrypted = Util.base64BinaryStringToArrayBuffer(serializedAttributes);
-        logger.debug("attributesEncrypted:", attributesEncrypted);
+        console.log("attributesEncrypted:", attributesEncrypted);
 
     // Uint8Array(64)
     // [102,  80, 220,  73, 185, 233,  85,   7, 195, 196, 137, 107,  65, 150, 162, 161,
@@ -107,7 +106,7 @@ const logger = Util.logger;
 
         const attributesPlane = Util.arrayBufferToUtf8String(attributesArrayBuffer);
 
-        logger.debug("Attributes:", attributesArrayBuffer, attributesPlane);
+        console.log("Attributes:", attributesArrayBuffer, attributesPlane);
 
     // Uint8Array(61) [
     //  77,  69,  71,  65, 123,  34, 110,  34,  58,  34,  83,  104,  97, 114, 101, 100,
@@ -121,14 +120,14 @@ const logger = Util.logger;
         console.log("Parsing of Attributes...");
         const { n: name, c: serializedFingerprint } = JSON.parse(attributesPlane.substring("MEGA".length));
 
-        logger.debug(name, serializedFingerprint);
+        console.log(name, serializedFingerprint);
 
     // SharedFile.jpg
     // GRSM8+c1HUmlmyDuTJVrDwSDpqRV  // node hash + mtime
 
 
         const fingerprintBytes = Util.base64BinaryStringToArrayBuffer(serializedFingerprint);
-        logger.debug(fingerprintBytes);
+        console.log(fingerprintBytes);
 
     // Uint8Array(21) [
     //      25,  20, 140, 243,
@@ -153,14 +152,14 @@ const logger = Util.logger;
 
 
         const modificationDateSeconds = Util.arrayBufferToLong(timeBytes);
-        logger.debug(modificationDateSeconds);
+        console.log(modificationDateSeconds);
     // 1436853891
 
-        logger.debug(new Date(modificationDateSeconds * 1000).toLocaleString());
+        console.log(new Date(modificationDateSeconds * 1000).toLocaleString());
     // 14.07.2015, 09:04:51
 
         // I prefer this format
-        logger.debug(Util.secondsToFormattedString(modificationDateSeconds));
+        console.log(Util.secondsToFormattedString(modificationDateSeconds));
     // 2015.06.14 09:04:51
 
 

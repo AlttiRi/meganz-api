@@ -1,4 +1,4 @@
-const Semaphore = require("../synchronization").Semaphore;
+import {Semaphore} from "../synchronization.js";
 
 
 async function example() {

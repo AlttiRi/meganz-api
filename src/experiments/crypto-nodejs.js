@@ -1,9 +1,10 @@
-const {encryptedStr1: data, key, iv} = require("./data");
+import {encryptedStr1 as data, key, iv} from "./data.js";
+import crypto from "crypto";
 
 
 /** @returns {Promise<string>} */
 function decryptWithNodejsCrypto(data, key, iv, usePadding = true, algorithm = "aes-128-cbc") {
-    const crypto = require("crypto");
+
     const decipher = crypto.createDecipheriv(algorithm, key, iv);
     decipher.setAutoPadding(usePadding);
 

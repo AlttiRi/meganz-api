@@ -1,10 +1,10 @@
-const {Util} = require("./util");
-const {Crypto} = require("./crypto");
+import Util from "./util.js";
+import Crypto from "./crypto.js";
 
 /**
  * The class contains Mega specific static util methods.
  */
-class MegaUtil {
+export default class MegaUtil {
 
     /**
      * @param {string} attributesEncoded
@@ -12,7 +12,7 @@ class MegaUtil {
      * @returns {{name: string, serializedFingerprint: string}}
      */
     static parseEncodedNodeAttributes(attributesEncoded, nodeKey) {
-        const attributesEncrypted   = Util.base64BinaryStringToArrayBuffer(attributesEncoded);
+        const attributesEncrypted   = MegaUtil.megaBase64ToArrayBuffer(attributesEncoded);
         const attributesArrayBuffer = Crypto.decryptAES(attributesEncrypted, nodeKey, {padding: "ZeroPadding"});
         const attributesPlane       = Util.arrayBufferToUtf8String(attributesArrayBuffer);
 
@@ -183,5 +183,3 @@ class MegaUtil {
         return (bytes / Math.pow(k, i)).toFixed(decimals) + " " + sizes[i];
     }
 }
-
-module.exports = {MegaUtil};

@@ -1,5 +1,7 @@
-const URLS = require("./test-urls-private");
-const {Nodes} = require("../nodes");
+import * as URLS from "./test-urls-private.js";
+import {
+    Nodes
+} from "../m.js";
 
 // If a user upload the same file it will be reduplicated, so:
 // If nodes has the same `size`, `modificationDate`, `nodeKey`, `fileAttributesStr` and `ownerId` - it's the same file (re-duplicated).

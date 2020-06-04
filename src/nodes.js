@@ -1,13 +1,14 @@
-const {Util} = require("./util");
-const {MegaUtil} = require("./mega-util");
-const {Mega} = require("./mega");
-const FileAttributes = require("./file-attributes");
-const Share = require("./share");
+import Util from "./util.js";
+import MegaUtil from "./mega-util.js";
+import Mega from "./mega.js";
+import FileAttributes from "./file-attributes.js";
+import Share from "./share.js";
 
 
 //todo the most basic class with [Symbol.toStringTag]: "MegaNode"
 
 class BasicFolderShareNode {
+    [Symbol.toStringTag] = "BasicFolderShareNode";
     constructor(node, masterKey) {
         this.id           = node.id;
         this.parentId     = node.parentId;
@@ -17,9 +18,9 @@ class BasicFolderShareNode {
 
         if (masterKey && node.decryptionKeyStr) {
             const decryptionKeyEncrypted = MegaUtil.megaBase64ToArrayBuffer(node.decryptionKeyStr);
-            this.#decryptionKey = MegaUtil.decryptKey(decryptionKeyEncrypted, masterKey);
+            this._decryptionKey = MegaUtil.decryptKey(decryptionKeyEncrypted, masterKey);
         } else {
-            this.#decryptionKey = null;
+            this._decryptionKey = null;
         }
     }
     type;
@@ -28,10 +29,10 @@ class BasicFolderShareNode {
     parent;
     ownerId;
     creationDate;
-    #decryptionKey;
+    _decryptionKey;
 
     get key() {
-        return this.#decryptionKey;
+        return this._decryptionKey;
     };
     name; // [requires key]
 
@@ -53,6 +54,7 @@ class BasicFolderShareNode {
 }
 
 class FileNode extends BasicFolderShareNode {
+    [Symbol.toStringTag] = "FileNode";
     constructor(node, masterKey) {
         super(node, masterKey);
         this.type = "file";
@@ -76,16 +78,16 @@ class FileNode extends BasicFolderShareNode {
     }
     size;
 
-    #keyParts;
+    _keyParts;
     get key() {
-        if (!this.#keyParts) {
+        if (!this._keyParts) {
             if (super.key) {
-                this.#keyParts = MegaUtil.decryptionKeyToParts(super.key);
+                this._keyParts = MegaUtil.decryptionKeyToParts(super.key);
             } else {
-                this.#keyParts = {iv: null, metaMac: null, key: null};
+                this._keyParts = {iv: null, metaMac: null, key: null};
             }
         }
-        return this.#keyParts.key;
+        return this._keyParts.key;
     };
     modificationDate;   // [requires key]
     get mtime() {       // An alias
@@ -106,6 +108,7 @@ class FileNode extends BasicFolderShareNode {
  */
 // todo: add file attribute support for 8, 9 (9 may not exists)
 class MediaFileNode extends FileNode {
+    [Symbol.toStringTag] = "MediaFileNode";
     constructor(node, masterKey) {
         super(node, masterKey);
         this.type = "mediaFile";
@@ -133,6 +136,7 @@ class MediaFileNode extends FileNode {
 }
 
 class FolderNode extends BasicFolderShareNode {
+    [Symbol.toStringTag] = "FolderNode";
     constructor(node, masterKey) {
         super(node, masterKey);
         this.type = "folder";
@@ -149,13 +153,14 @@ class FolderNode extends BasicFolderShareNode {
     folders = [];
     files = [];
 
-    #size = 0;
+    _size = 0;
     get size() {
-        return this.#size; // todo: recursive calculate the size
+        return this._size; // todo: recursive calculate the size
     };
 }
 
 class RootFolderNode extends FolderNode {
+    get [Symbol.toStringTag]() { return "RootFolderNode"; };
     constructor(node, masterKey) {
         super(node, masterKey);
         this.type = "rootFolder";
@@ -168,6 +173,7 @@ class RootFolderNode extends FolderNode {
 
 
 class SharedFileNode {
+    [Symbol.toStringTag] = "SharedFileNode";
     constructor(share, nodeInfo) {
         this.type = "sharedFile";
         this.id = share.id; // in fact it is not real file node id (for every new generated share url you get new id)
@@ -192,7 +198,7 @@ class SharedFileNode {
         } = nodeInfo;
 
         this.size = size;
-        this.#meta = {downloadUrl, timeLeft};
+        this._meta = {downloadUrl, timeLeft};
 
         if (share.decryptionKeyStr) {
             const {
@@ -228,16 +234,17 @@ class SharedFileNode {
         return Util.secondsToFormattedString(this.modificationDate);
     }
 
-    #meta;
+    _meta;
     get timeLeft() {
-        return this.#meta.timeLeft;
+        return this._meta.timeLeft;
     }
     get downloadUrl() {
-        return this.#meta.downloadUrl;
+        return this._meta.downloadUrl;
     }
 }
 
 class SharedMediaFileNode extends SharedFileNode {
+    [Symbol.toStringTag] = "SharedMediaFileNode";
     constructor(share, nodeInfo) {
         super(share, nodeInfo);
         this.type = "sharedMediaFile";
@@ -282,14 +289,14 @@ class Nodes {
     static async node(url) {
         const share = Share.fromUrl(url);
         if (share.isFolder) {
-            return Nodes.getSharedNode(share);
-        } else {
             const nodes = await Nodes.getFolderNodes(share);
             if (nodes.selectedId) {
                 return nodes.selectedId;
             } else {
                 return nodes.root;
             }
+        } else {
+            return Nodes.getSharedNode(share);
         }
     }
 
@@ -391,8 +398,8 @@ class Nodes {
     }
 }
 
-
-module.exports = {
+export default Nodes;
+export {
     FolderNode, RootFolderNode,
     FileNode, MediaFileNode,
     SharedFileNode, SharedMediaFileNode,

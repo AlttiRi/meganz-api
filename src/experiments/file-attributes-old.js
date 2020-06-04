@@ -1,9 +1,9 @@
-const {Mega} = require("../mega");
-const {Util} = require("../util");
-const {Crypto} = require("../crypto");
+import Mega from "../mega.js";
+import Util from "../util.js";
+import Crypto from "../crypto.js";
 
 
-class FileAttributes {
+export default class FileAttributes {
 
     static thumbnailType = 0;
     static previewType   = 1;
@@ -122,5 +122,3 @@ class FileAttribute {
         return this.bunch + ":" + this.type + "*" + this.id;
     }
 }
-
-module.exports = FileAttributes;

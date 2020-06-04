@@ -1,6 +1,8 @@
-const URLS = require("./test-urls-private");
-const {Nodes} = require("../nodes");
-const {Util} = require("../util");
+import * as URLS from "./test-urls-private.js";
+import {saveFile} from "../util-node.js";
+import {
+    Nodes
+} from "../m.js";
 
 
 // Too slow, needs the parallel downloading
@@ -9,7 +11,7 @@ async function example() {
     for (const node of folderNodes) {
         if (Nodes.isMediaNode(node)) {
             const thumb = await node.getThumbnail();
-            Util.saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
+            saveFile(thumb, `thumb-${node.id}.jpg`, node.mtime);
         }
     }
 }

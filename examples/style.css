@@ -1,0 +1,39 @@
+body > div {
+    padding: 1vw 3vw;
+}
+.console-entry {
+    padding: 0.3vw 1vw;
+}
+
+.console-entry {
+    max-height: 50vh;
+    overflow: scroll;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body {
+    margin-left: 3vw;
+    margin-right: 3vw;
+}
+
+.line {
+    padding: 0.3vw;
+}
+
+#console_log-to-html {
+    max-width: 90%;
+}
+
+pre {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+hr {
+    width: 100%;
+    height: 1px;
+    margin: 0.7vw 0;
+    border: 0;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0) 10%, rgba(0, 0, 0, .25), rgba(0, 0, 0, 0) 90%);
+}

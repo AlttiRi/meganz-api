@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 2</title>
+
+    <link rel="stylesheet" href="./style.css">
+    <script defer src="console_log-to-html.js"></script>
+
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.3.0/crypto-js.min.js"
+            integrity="sha512-e2c+O0PvytekkdJLc82DHfa6La8TPKzO2/DFA97YeHTbiDCwKMzloupJM6Llf/W4K19+N21gFyplVkvzL4pZxQ=="
+            crossorigin="anonymous"></script>
+
+
+    <script defer src="../dist/mega.pure.js"></script>
+
+    <script type="module">
+        const CAT_FILE_IMAGE = "https://mega.nz/file/bkwkHC7D#AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
+        const CAT_FOLDER = "https://mega.nz/folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw"
+
+        async function example() {
+            const Mega = globalThis.Mega; // just to hide IDE warning (I have the excluded /dist/ folder)
+
+            console.log(`Requesting:\n${CAT_FILE_IMAGE}`);
+            const node = await Mega.node(CAT_FILE_IMAGE);
+            console.log("[node-from-file]", node);
+
+            console.log(`Requesting:\n${CAT_FOLDER}`);
+            const nodesFromFolder = await Mega.nodes(CAT_FOLDER);
+            console.log("[root-node]", nodesFromFolder.root);
+            console.log("[nodes-from-folder]", nodesFromFolder);
+        }
+
+        !async function main() {
+            console.time("Time");
+            await example();
+            console.timeEnd("Time");
+        }();
+    </script>
+
+</head>
+<body>
+    <div class="wrapper">
+        <h1>The example 2</h1>
+        <div class="line">It uses "../dist/mega.pure.js" with CryptoJS that is loaded from CDN.</div>
+        <div class="line">Use `Mega` object in the console.</div>
+        <hr>
+        <div id="console_log-to-html"></div>
+    </div>
+</body>
+</html>

@@ -193,4 +193,5 @@ class GroupedTasks {
     }
 }
 
-module.exports = GroupedTasks;
+export default GroupedTasks;
+export {GroupedTasks, SimpleEntry};

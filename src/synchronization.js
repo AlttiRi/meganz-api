@@ -1,7 +1,7 @@
-const {Util} = require("./util");
-const performance = require("./browser-context").performance;
+import {performance} from "./browser-context.js";
+import Util from "./util.js";
 
-class Semaphore {
+export class Semaphore {
     /**
      * By default works like a mutex
      * @param {number} limit - the max count of parallel executions
@@ -13,11 +13,11 @@ class Semaphore {
     }
 
     /** @type {number} - the count of active parallel executions */
-    #active = 0;
+    active = 0;
     /** @type {(function: void)[]} - resolve functions of enqueued executions */
-    #pending = [];
+    pending = [];
     /** @type {number[]} - finish times of completed executions (it's used when there is no enqueued executions) */
-    #completeTimes = [];
+    completeTimes = [];
 
     /** @return {Promise<void>} */
     async acquire() {
@@ -25,20 +25,20 @@ class Semaphore {
             return;
         }
 
-        const completed = this.#completeTimes.length;
-        if (completed > 0 && completed === this.limit - this.#active) {
-            const time = this.#delay - (performance.now() - this.#completeTimes.shift());
-            console.log("completed: " + completed + ", active: " + this.#active + ", wait: " + time);
+        const completed = this.completeTimes.length;
+        if (completed > 0 && completed === this.limit - this.active) {
+            const time = this.delay - (performance.now() - this.completeTimes.shift());
+            console.log("completed: " + completed + ", active: " + this.active + ", wait: " + time);
             await Util.sleep(time);
         }
 
-        if (this.#active < this.limit) {
-            this.#active++;
+        if (this.active < this.limit) {
+            this.active++;
             return;
         }
 
         return new Promise(resolve => {
-            this.#pending.push(resolve);
+            this.pending.push(resolve);
         });
     }
 
@@ -56,16 +56,16 @@ class Semaphore {
             return;
         }
 
-        if (this.#active > 0) {
-            this.#active--;
+        if (this.active > 0) {
+            this.active--;
 
-            if (this.#pending.length > 0) {
-                const resolve = this.#pending.shift();
-                this.#active++;
-                await Util.sleep(this.#delay);
+            if (this.pending.length > 0) {
+                const resolve = this.pending.shift();
+                this.active++;
+                await Util.sleep(this.delay);
                 resolve();
-            } else if (this.#delay > 0) {
-                this.#completeTimes.push(performance.now());
+            } else if (this.delay > 0) {
+                this.completeTimes.push(performance.now());
             }
         } else {
             console.warn("[Semaphore] over released"); // a possible error is in a code
@@ -109,39 +109,39 @@ class Semaphore {
      * Release all waiters without any delay
      */
     releaseAll() {
-        while (this.#pending.length) {
-            const resolve = this.#pending.shift();
+        while (this.pending.length) {
+            const resolve = this.pending.shift();
             resolve();
         }
-        this.#active = 0;
-        this.#completeTimes = [];
+        this.active = 0;
+        this.completeTimes = [];
     }
 
-    #limit;
-    #delay;
+    _limit;
+    _delay;
 
     set limit(value) {
         if (value < 1) {
-            this.#limit = 1;
+            this._limit = 1;
         } else {
-            this.#limit = value;
+            this._limit = value;
         }
     }
 
     get limit() {
-        return this.#limit;
+        return this._limit;
     }
 
     set delay(value) {
         if (value < 0) {
-            this.#delay = 0;
+            this._delay = 0;
         } else {
-            this.#delay = value;
+            this._delay = value;
         }
     }
 
     get delay() {
-        return this.#delay;
+        return this._delay;
     }
 
     isDisabled = false;
@@ -169,20 +169,20 @@ class Semaphore {
     }
 }
 
-class CountDownLatch {
+export class CountDownLatch {
     count;
-    #promise;
-    #resolve;
+    _promise;
+    _resolve;
 
     /** @param {number} count */
     constructor(count = 0) {
         this.count = count;
         if (count > 0) {
-            this.#promise = new Promise(resolve => {
-                this.#resolve = resolve;
+            this._promise = new Promise(resolve => {
+                this._resolve = resolve;
             });
         } else {
-            this.#promise = Promise.resolve();
+            this._promise = Promise.resolve();
         }
     }
 
@@ -190,14 +190,14 @@ class CountDownLatch {
         if (this.count > 0) {
             this.count--;
             if (this.count === 0) {
-                this.#resolve();
+                this._resolve();
             }
         }
     }
 
     /** @return {Promise<void>} */
     wait() {
-        return this.#promise;
+        return this._promise;
     }
 
     /** @return {boolean} */
@@ -206,9 +206,8 @@ class CountDownLatch {
     }
 
     release() {
-        this.#resolve();
+        this._resolve();
     }
 }
 
-
-module.exports = {Semaphore, CountDownLatch};
+export default {Semaphore,CountDownLatch};

@@ -8,3 +8,5 @@ src/temp/
 
 src/examples/test-urls-private.js
 src/examples/temp/
+
+/dist/

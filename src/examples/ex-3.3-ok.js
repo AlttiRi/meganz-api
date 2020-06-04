@@ -1,8 +1,8 @@
-const URLS = require("./test-urls-private");
-const {Util} = require("../util");
-const {Nodes} = require("../nodes");
-const {CountDownLatch} = require("../synchronization");
-const {progress} = require("./promise-progress");
+import * as URLS from "./test-urls-private.js";
+import {saveFile} from "../util-node.js";
+import Nodes from "../nodes.js";
+import {CountDownLatch} from "../synchronization.js";
+import progress from "./promise-progress.js";
 
 async function example() {
     const folderNodes = await progress(Nodes.nodes(URLS.FOLDER_136_FILES), "Nodes.nodes");
@@ -18,7 +18,12 @@ async function example() {
             node.getThumbnail()
                 .then(thumb => {
                     // NB: async – the creation time order will be not the same as the order of pictures
-                    Util.saveFile(thumb, `thumb-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
+                    saveFile(thumb,
+                        `thumbnail-${index.toString().padStart(3, "0")}-${node.id}.jpg`,
+                        //`${node.name}.jpg`, // or
+                        node.mtime,
+                        // node.path
+                    );
                     countDownLatch.countDown();
                 });
         }

@@ -1,8 +1,5 @@
-const URLS = require("./test-urls-private");
-const FileAttributes = require("../file-attributes");
-const {progress} = require("./promise-progress");
-const {Nodes} = require("../nodes");
-const {Util} = require("../util");
+import progress from "./promise-progress.js";
+import Util from "../util.js";
 const sleep = Util.sleep;
 
 

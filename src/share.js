@@ -5,7 +5,7 @@
  * Usually you have the URL, that contains that data.
  * `Share.fromUrl(url)` parses the URL and returns the instance of this class.
  */
-class Share {
+export default class Share {
     /** @type {string} */
     id;
     /** @type {string} */
@@ -135,5 +135,3 @@ class Share {
         return result;
     }
 }
-
-module.exports = Share;

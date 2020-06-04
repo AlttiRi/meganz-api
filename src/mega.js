@@ -1,10 +1,10 @@
-const {fetch} = require("./browser-context");
-const {Util} = require("./util");
-const {MegaUtil} = require("./mega-util");
-const {Semaphore} = require("./synchronization");
-const GroupedTasks = require("./grouped-tasks");
+import {fetch} from "./browser-context.js";
+import Util from "./util.js";
+import MegaUtil from "./mega-util.js";
+import {Semaphore} from "./synchronization.js";
+import GroupedTasks from "./grouped-tasks.js";
 
-class Mega {
+export default class Mega {
 
     static apiGateway = "https://g.api.mega.co.nz/cs";
     static groupedApiRequest = true;
@@ -118,7 +118,7 @@ class Mega {
         }
 
         const text = await response.text();
-        console.log(text);
+        console.log("[api-response-text]", text);
         return JSON.parse(text);
     }
 
@@ -340,5 +340,3 @@ class Mega {
     }
 
 }
-
-module.exports = {Mega};

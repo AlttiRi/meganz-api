@@ -1,4 +1,4 @@
-const {performance} = require("../browser-context");
+import {performance} from "../browser-context.js";
 
 /** @type {Map<number, Object>} */
 const queue = new Map(); // timerId to {startTime, name}
@@ -15,7 +15,7 @@ let timerId = null;
  * @param {string} name
  * @return {Promise<T>}
  */
-function progress(promise, name = "Progress") {
+export default function progress(promise, name = "Progress") {
     const id = startLogging(name);
     return promise.finally(_ => {
         queue.delete(id);
@@ -65,5 +65,3 @@ function startLogging(name) {
 
     return id;
 }
-
-module.exports = {progress};

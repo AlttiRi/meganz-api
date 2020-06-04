@@ -1,23 +1,21 @@
-const {Util} = require("../util");
-const {encryptedStr1: data, key, iv} = require("./data");
+import Util from "../util.js";
+import {encryptedStr1 as data, key, iv} from "./data.js";
 
+import CryptoJS from "crypto-js";
 
 
 function decryptWithCryptoJS(data, key, iv = new Uint8Array(key.length)){
-    const CryptoJS = require("crypto-js");
-
     key  = Util.arrayBufferToBinaryString(key);
     iv   = Util.arrayBufferToBinaryString(iv);
     data = Util.arrayBufferToBinaryString(data);
 
     /** @see CryptoJS.enc.Latin1.stringify code */
     function _wordArrayToArrayBuffer(wordArray) {
-        let bites = [];
+        const bites = new Uint8Array(wordArray.sigBytes);
         for (let i = 0; i < wordArray.sigBytes; i++) {
-            const bite = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
-            bites.push(bite);
+            bites[i] = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
         }
-        return new Uint8Array(bites);
+        return bites;
     }
     // Note: CipherParamsData uses only to get `ciphertext` property, the others will be ignored (iv, mode, padding...)
     const plaintextArray = CryptoJS.AES.decrypt( // (CipherParamsData, WordArray, IBlockCipherCfg)

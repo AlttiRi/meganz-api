@@ -1,14 +1,15 @@
-const {fetch} = require("../browser-context");
-const {Util} = require("../util");
-const {Crypto} = require("../crypto");
-const {MegaUtil} = require("../mega-util");
+import {fetch} from "../browser-context.js";
+import Util from "../util.js";
+import Crypto from "../crypto.js";
+import MegaUtil from "../mega-util.js";
+import {saveFile} from "../util-node.js";
 
 // The test of downloading a thumbnail and a preview (file attributes)
 !async function test() {
 
     // ------------------------------------------------------------------------------------------------
     // for "https://mega.nz/#!bkwkHC7D!AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
-    let fa = "924:1*sqbpWSbonCU/925:0*lH0B2ump-G8"; // 924 - "plain" ??? // fa - file attributes available for this file
+    let fa = "924:1*sqbpWSbonCU/925:0*lH0B2ump-G8"; // "924", "925" - group id // fa - file attributes available for this file
     let nodeKey = new Uint8Array([42, 40, 254, 9, 99, 201, 174, 52, 226, 21, 90, 155, 81, 50, 2, 9]);
     // ------------------------------------------------------------------------------------------------
 
@@ -114,13 +115,13 @@ const {MegaUtil} = require("../mega-util");
 //     0,   1,   0,   0,   255, 219,  0,   67,    0,  10,  7,   7,    8,   7,   6,  10,
 //     8,   8,   8,  11,    10,  10,  11,  14,   24,  16,  14, 13,   13,  14,  29,  21,
 
-    Util.saveFile(decrypted, "123.jpg"); // -> temp/123.jpg
+    saveFile(decrypted, "123.jpg"); // -> temp/123.jpg
 
 
-    // in case uncommenting – download necessary asmcrypto.js file
-    // decryptLikeMegaDo(thumbnailBytes, nodeKey);
+    // in case uncommenting – download necessary asmcrypto.js file and change the extension from "js" to "cjs"
+    // await decryptLikeMegaDo(thumbnailBytes, nodeKey);
 
-    function decryptLikeMegaDo(data, key) {
+    async function decryptLikeMegaDo(data, key) {
 
         // ------------------
         // It's like Mega do:
@@ -131,8 +132,8 @@ const {MegaUtil} = require("../mega-util");
 
         // Download it:
         // https://raw.githubusercontent.com/meganz/webclient/master/js/vendor/asmcrypto.js
-        // and put the file near.
-        const asmCrypto = require("./asmcrypto");
+        // and put the file near and change the extension from "js" to "cjs".
+        const asmCrypto = (await import("./asmcrypto.cjs")).default;
 
         let decryptedByASM = asmCrypto.AES_CBC.decrypt(data, key, false);
         console.log("asmCrypto:", decryptedByASM);
@@ -140,7 +141,7 @@ const {MegaUtil} = require("../mega-util");
 
         // It works OK, but it does not remove the tailing zero padding (the size of the image is multiple 16)
 
-        Util.saveFile(decryptedByASM,"123_asm.jpg");
+        saveFile(decryptedByASM,"123_asm.jpg");
     }
 
 

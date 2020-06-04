@@ -1,10 +1,10 @@
-const {Util} = require("../util");
-const {encryptedStr1: data, key, iv} = require("./data");
+import Util from "../util.js";
+import {encryptedStr1 as data, key, iv} from "./data.js";
+
+import CryptoJS from "crypto-js";
 
 
 function decryptWithCryptoJS(data, key, iv) {
-    const CryptoJS = require("crypto-js");
-
     const plaintextArray = CryptoJS.AES.decrypt(
         { ciphertext: CryptoJS.enc.Latin1.parse(data) },
         CryptoJS.enc.Hex.parse(key),

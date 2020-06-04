@@ -1,10 +1,17 @@
-const URLS = require("./test-urls-private");
-const FileAttributes = require("../file-attributes");
-const {Nodes} = require("../nodes");
-const {Util} = require("../util");
-const {Mega} = require("../mega");
-const {performance} = require("../browser-context");
-const {progress} = require("./promise-progress");
+import * as URLS from "./test-urls-private.js";
+import {saveFile} from "../util-node.js";
+import progress from "./promise-progress.js";
+import {performance} from "../browser-context.js";
+
+// import FileAttributes from "../file-attributes.js";
+// import Nodes from "../nodes.js";
+// import Util from "../util.js";
+
+import {
+    Nodes,
+    FileAttributes,
+    Util
+} from "../m.js";
 
 
 async function example() {
@@ -35,7 +42,7 @@ async function handle(node, index) {
     const id = node.thumbnail.bunch.id;
     const now = Math.trunc(performance.now()) + 1600000000; // the fake date - 2020.09.13// use for sorting in the explorer
 
-    await Util.saveFile(bytes || encryptedBytes, `thumb-${index.toString().padStart(3, "0")}-${id}.jpg`, now);
+    await saveFile(bytes || encryptedBytes, `thumb-${index.toString().padStart(3, "0")}-${id}.jpg`, now);
 }
 
 !async function main() {
