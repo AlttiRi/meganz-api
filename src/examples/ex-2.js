@@ -3,7 +3,7 @@ import * as URLS from "./test-urls.js";
 import {
     FileAttributes,
     Nodes,
-} from "../m.js";
+} from "../mega.js";
 
 async function example() {
     const nodeFromFile = await Nodes.node(URLS.CAT_FILE_IMAGE);

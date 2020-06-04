@@ -11,7 +11,7 @@ import {
     Nodes,
     FileAttributes,
     Util
-} from "../m.js";
+} from "../mega.js";
 
 
 async function example() {

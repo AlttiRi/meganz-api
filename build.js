@@ -16,7 +16,7 @@ const cryptoEsText = "CryptoES 1.1.0, Licence MIT (https://github.com/entronad/c
 function browserBundlePure(filename) {
     return bundle(
         {
-            input: "./src/m.js",
+            input: "./src/mega.js",
             name: filename,
             format: "iife",
             outputName: "Mega",
@@ -31,7 +31,7 @@ function browserBundlePure(filename) {
 function browserBundlePureV2(filename) {
     return bundle(
         {
-            input: "./src/m.js",
+            input: "./src/mega.js",
             name: filename,
             format: "iife",
             outputName: "Mega",
@@ -54,7 +54,7 @@ function browserBundlePureV2(filename) {
 function esBundlePure(filename) {
     return bundle(
         {
-            input: "./src/m.js",
+            input: "./src/mega.js",
             name: filename,
             plugins: [
                 ignoreImportFrom(["dependencies/", "browser-context"])
@@ -112,13 +112,13 @@ function esBundleStandalone(filename, inputFilename, dependenciesFilename) {
 function esBundleStandaloneV2(filename) {
     return bundle(
         {
-            input: "./src/examples/ex-1.js",
+            input: `./src/mega.js`,
             name: filename,
             plugins: [
                 ignoreImportFrom(["browser-context"]),
                 resolve()
             ],
-            banner: "/* With deps code */"
+            banner: `/*! The standalone ES bundle of ${bundleText}.*/`
         });
 }
 

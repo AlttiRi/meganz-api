@@ -1,7 +1,7 @@
 import * as URLS from "./test-urls-private.js";
 import {
     Share
-} from "../m.js";
+} from "../mega.js";
 
 
 async function example() {

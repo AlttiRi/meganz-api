@@ -2,7 +2,7 @@ import * as URLS from "./test-urls-private.js";
 import {saveFile} from "../util-node.js";
 import {
     Nodes
-} from "../m.js";
+} from "../mega.js";
 
 
 // Too slow, needs the parallel downloading

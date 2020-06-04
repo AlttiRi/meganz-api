@@ -4,7 +4,7 @@ import {
     Nodes,
     Util,
     MegaApi
-} from "../m.js";
+} from "../mega.js";
 
 
 // to simulate the old behavior (without a semaphore)

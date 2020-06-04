@@ -1,5 +1,5 @@
 import * as URLS from "./test-urls.js";
-import * as Mega from "../m.js";
+import * as Mega from "../mega.js";
 
 async function example() {
     const nodesFromFolder = await Mega.nodes(URLS.CAT_FOLDER);
