@@ -20,8 +20,6 @@
         const CAT_FOLDER = "https://mega.nz/folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw"
 
         async function example() {
-            const Mega = globalThis.Mega; // just to hide IDE warning (I have the excluded /dist/ folder)
-
             console.log(`Requesting:\n${CAT_FILE_IMAGE}`);
             const node = await Mega.node(CAT_FILE_IMAGE);
             console.log("[node-from-file]", node);
