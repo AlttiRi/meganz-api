@@ -2,7 +2,7 @@
 *.iml
 node_modules/
 
-notes/
+\#private-*/
 src/experiments/temp/
 src/temp/
 
