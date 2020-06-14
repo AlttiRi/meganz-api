@@ -7,7 +7,7 @@ import GroupedTasks from "./grouped-tasks.js";
 export default class MegaApi {
 
     static apiGateway = "https://g.api.mega.co.nz/cs";
-    static groupedApiRequest = true;
+    static grouped = true;
 
     static errorRepeatCount = 5;
     static errorRepeatDelay = 5000;
@@ -62,7 +62,7 @@ export default class MegaApi {
      * @param {boolean} [grouped]
      * @returns {Promise<*>} responseData
      */
-    static async requestApi(payload, searchParams = {}, grouped = MegaApi.groupedApiRequest) {
+    static async requestApi(payload, searchParams = {}, grouped = MegaApi.grouped) {
         const _url = new URL(MegaApi.apiGateway);
         Util.addSearchParamsToURL(_url, searchParams);
         const url = _url.toString();

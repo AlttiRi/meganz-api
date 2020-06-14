@@ -1,3 +1,8 @@
+import fs from "fs";
+const packageJson = JSON.parse(fs.readFileSync("./package.json").toString("utf8"));
+export const version = packageJson.version;
+export const dependencies = packageJson.dependencies;
+
 export const names = {
     // Both bundles use CryptoJS from the browser context
     browserPure: "mega.pure", // [used-in-release]
@@ -10,8 +15,8 @@ export const names = {
     browserStandalone: "mega",   // [used-in-release]
 }
 
-export const bundleText   = "MegaNzApi 0.2.0, Licence MIT (https://github.com/alttiri/meganz-api/blob/master/LICENSE)"
-export const cryptoEsText = "CryptoES 1.1.0, Licence MIT (https://github.com/entronad/crypto-es/blob/master/LICENSE)"
+export const bundleText   = `MegaNzApi ${version}, License MIT (https://github.com/alttiri/meganz-api/blob/master/LICENSE)`;
+export const cryptoEsText = `CryptoES ${dependencies["crypto-es"]}, License MIT (https://github.com/entronad/crypto-es/blob/master/LICENSE)`;
 
 export const src = "./src/";
 export const dist = "dist/"; // dist folder name
@@ -21,5 +26,5 @@ export const pathMap = [
     ["crypto-es/lib", "crypto-es"],
     ["node_modules/", ""],
     [dist, ""],
-    ["../", ""]
+    ["../", ""],
 ];

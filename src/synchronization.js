@@ -170,13 +170,13 @@ export class Semaphore {
 }
 
 export class CountDownLatch {
-    count;
+    _count;
     _promise;
     _resolve;
 
     /** @param {number} count */
     constructor(count = 0) {
-        this.count = count;
+        this._count = count;
         if (count > 0) {
             this._promise = new Promise(resolve => {
                 this._resolve = resolve;
@@ -187,9 +187,9 @@ export class CountDownLatch {
     }
 
     countDown() {
-        if (this.count > 0) {
-            this.count--;
-            if (this.count === 0) {
+        if (this._count > 0) {
+            this._count--;
+            if (this._count === 0) {
                 this._resolve();
             }
         }
@@ -202,12 +202,24 @@ export class CountDownLatch {
 
     /** @return {boolean} */
     get released() {
-        return this.count > 0;
+        return this._count > 0;
     }
 
     release() {
+        this._count = 0;
         this._resolve();
     }
 }
 
-export default {Semaphore,CountDownLatch};
+export class CountUpAndDownLatch extends CountDownLatch {
+    countUp() {
+        if (this._count === 0) {
+            this._promise = new Promise(resolve => {
+                this._resolve = resolve;
+            });
+        }
+        this._count++;
+    }
+}
+
+export default {Semaphore, CountDownLatch, CountUpAndDownLatch};

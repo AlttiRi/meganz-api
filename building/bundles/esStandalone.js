@@ -1,10 +1,10 @@
-import {bundleText, dist, names, src} from "../settings.js";
+import {bundleText, cryptoEsText, dist, names, src} from "../settings.js";
 import {bundle} from "../bundle.js";
 import {ignoreImportFrom, prependBefore, sourcemap} from "../rollup-plugins.js";
 import resolve from "rollup-plugin-node-resolve";
 import {workerWrapper} from "../worker.js";
 
-
+/** This bundle is only needed for bundling other ones. */
 export const esStandalone = workerWrapper(_esStandalone, import.meta.url);
 
 
@@ -13,6 +13,8 @@ function _esStandalone() {
 }
 
 function __esStandalone(filename, inputFilename, dependenciesFilename) {
+    const banner = `/* The standalone browser bundle of ${bundleText}.\n` +
+        ` * Dependencies: ${[cryptoEsText].map(str => " " + str).join("; ")}.*/`;
     return bundle(
         filename,
         {
@@ -23,14 +25,17 @@ function __esStandalone(filename, inputFilename, dependenciesFilename) {
             ]
         },
         {
-            banner: `/*! The standalone ES bundle of ${bundleText}.*/`
+            banner
         }, {
-            module: true
+            module: true,
+            output: {
+                preamble: banner
+            }
         });
 }
 
 // The same, except the dependencies code is not minified in the non-min version.
-function _esStandaloneV2() {
+function __esStandalone2() {
     return bundle(
         names.esStandalone,
         {

@@ -1,4 +1,4 @@
-import {bundleText, dist, names} from "../settings.js";
+import {bundleText, cryptoEsText, dist, names} from "../settings.js";
 import {bundle} from "../bundle.js";
 import {prependBefore, sourcemap} from "../rollup-plugins.js";
 import {workerWrapper} from "../worker.js";
@@ -10,6 +10,8 @@ function _browserStandalone() {
     return __browserStandalone(names.browserStandalone, names.esPure, names.esDependencies);
 }
 function __browserStandalone(filename, inputFilename, dependenciesFilename) {
+    const banner = `/* The standalone browser bundle of ${bundleText}.\n` +
+     ` * Dependencies:${[cryptoEsText].map(str => " " + str).join("; ")}.*/`;
     return bundle(
         filename,
         {
@@ -20,8 +22,12 @@ function __browserStandalone(filename, inputFilename, dependenciesFilename) {
             ]
         },
         {
-            banner: `/*! The standalone browser bundle of ${bundleText}.*/`,
+            banner,
             format: "iife",
             name: "Mega"
+        }, {
+            output: {
+                preamble: banner
+            }
         });
 }

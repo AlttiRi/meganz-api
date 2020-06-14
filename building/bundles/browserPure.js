@@ -4,43 +4,49 @@ import {ignoreImportFrom, prependBefore} from "../rollup-plugins.js";
 import {workerWrapper} from "../worker.js";
 
 
-export const browserPure = workerWrapper(_browserPure, import.meta.url);
+export const browserPure = workerWrapper(_browserPure2, import.meta.url);
 
 function _browserPure() {
+    const banner = `/* The pure browser bundle of ${bundleText}. It requires CryptoJS. */`
     return bundle(
         names.browserPure,
         {
             input: src + "mega.js",
             plugins: [
-                ignoreImportFrom(["dependencies/", "browser-context"])  // "util-node" is tree shaken
+                ignoreImportFrom(["dependencies/", "browser-context"])
             ],
         },
         {
-            banner: `/*! The pure browser bundle of ${bundleText}. It requires CryptoJS. */`,
+            banner,
             format: "iife",
             name: "Mega"
+        }, {
+            output: {
+                preamble: banner
+            }
         });
 }
 
-// It does almost the same thing
-function browserPureV2() {
+// It does almost the same thing, but IIFE expects `CryptoJS` as argument.
+function _browserPure2() {
+    const external = "crypto-js"; // or use "crypto-es" [?]
     return bundle(
         names.browserPure,
         {
             input: src + "mega.js",
             plugins: [
                 ignoreImportFrom(["dependencies/", "browser-context"]),
-                prependBefore(`import CryptoJS from "CryptoJS";`, "crypto.js"),
+                prependBefore(`import CryptoJS from "${external}";`, "crypto.js"),
             ],
-            external: ["CryptoJS"]
+            external: [external]
         },
         {
-            banner: `/*! The pure browser bundle of ${bundleText}. It requires CryptoJS. */`,
+            banner: `/* The pure browser bundle of ${bundleText}. */`,
             format: "iife",
             name: "Mega",
             globals: {
-                "CryptoJS": "CryptoJS"
+                [external]: "CryptoJS"
             },
-            interop: false // does not work
+            interop: false
         });
 }

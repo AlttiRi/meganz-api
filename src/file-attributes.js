@@ -134,7 +134,10 @@ class Types {
     }
 }
 
-class FileAttributeBytes {
+export class FileAttributeBytes {
+    static cached = true;
+    static grouped = true
+
     /** @type {number} */ //todo use Types?
     type;
 
@@ -187,7 +190,7 @@ class FileAttributeBytes {
      * @param {boolean} cached=true - do not request the new URL, if already there is one, experimental use only
      * @return {Promise<string>} downloadUrl
      */
-    getDownloadUrl({fileAttribute, node}, cached = true) {
+    getDownloadUrl({fileAttribute, node}, cached = FileAttributeBytes.cached) {
         const _fileAttribute = fileAttribute || FileAttributes.of(node).byType(this.type);
         if (cached) {
             return FileAttributeBytes.dlUrlRequests.getResult({
@@ -253,7 +256,7 @@ class FileAttributeBytes {
      * in the code (a semaphore), but Mega handles 136 connections at one moment normally
      * @return {Promise<Uint8Array>} encryptedBytes
      */
-    async getEncryptedBytes({fileAttribute, downloadUrl, node}, grouped = true) {
+    async getEncryptedBytes({fileAttribute, downloadUrl, node}, grouped = FileAttributeBytes.grouped) {
         const _fileAttribute = fileAttribute || FileAttributes.of(node).byType(this.type);
         const _downloadUrl = downloadUrl || await this.getDownloadUrl({fileAttribute: _fileAttribute});
 
@@ -423,8 +426,7 @@ export default class FileAttributes {
      * @return {Promise<Uint8Array>}
      */
     static getAttribute(node, typeClass) {
-        const fileAttributes = FileAttributes.of(node);
-        return typeClass.getBytes({fileAttributes});
+        return typeClass.getBytes({node});
     }
 
 }

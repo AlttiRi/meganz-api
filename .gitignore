@@ -3,10 +3,9 @@
 node_modules/
 
 \#private-*/
-src/experiments/temp/
-src/temp/
 
-src/examples/test-urls-private.js
-src/examples/temp/
+_examples-node/test-urls-private.js
+_examples-node/temp/
+__experiments/app/temp/
 
-/dist/
+dist/

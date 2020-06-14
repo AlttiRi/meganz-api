@@ -290,8 +290,8 @@ class Nodes {
         const share = Share.fromUrl(url);
         if (share.isFolder) {
             const nodes = await Nodes.getFolderNodes(share);
-            if (nodes.selectedId) {
-                return nodes.selectedId;
+            if (nodes.selected) {
+                return nodes.selected;
             } else {
                 return nodes.root;
             }
