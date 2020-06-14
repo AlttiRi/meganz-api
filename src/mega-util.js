@@ -30,7 +30,7 @@ export default class MegaUtil {
      * @returns {{modificationDate: number, fileChecksum: Uint8Array}}
      */
     static parseFingerprint(serializedFingerprint) {
-        const fingerprintBytes = Util.base64BinaryStringToArrayBuffer(serializedFingerprint);
+        const fingerprintBytes = MegaUtil.megaBase64ToArrayBuffer(serializedFingerprint);
 
         const fileChecksum    = fingerprintBytes.subarray(0, 16); // 4 CRC32 of the file [unused]
         const timeBytesLength = fingerprintBytes[16];             // === 4, and 5 after 2106.02.07 (06:28:15 UTC on Sunday, 7 February 2106)
@@ -122,7 +122,7 @@ export default class MegaUtil {
      */
     static megaBase64ToArrayBuffer(megaBase64) {
         const base64 = MegaUtil.megaBase64ToBase64(megaBase64);
-        return Util.base64BinaryStringToArrayBuffer(base64);
+        return Util.base64ToArrayBuffer(base64);
     }
 
     /**

@@ -7,7 +7,12 @@ export default class Util {
      * @returns {string} binaryString
      */
     static base64ToBinaryString(base64) {
-        return atob(base64);
+        try {
+            return atob(base64);
+        } catch (e) {
+            console.error("Incorrect Base64:", base64);
+            throw e;
+        }
     }
 
     /**
@@ -66,11 +71,11 @@ export default class Util {
 
     /**
      * Binary string (Latin1) encoded with Base64 to ArrayBuffer
-     * @param {string} base64BinaryString
+     * @param {string} base64
      * @returns {Uint8Array}
      */
-    static base64BinaryStringToArrayBuffer(base64BinaryString) {
-        const binaryString = Util.base64ToBinaryString(base64BinaryString);
+    static base64ToArrayBuffer(base64) {
+        const binaryString = Util.base64ToBinaryString(base64);
         return Util.binaryStringToArrayBuffer(binaryString);
     }
 
