@@ -73,7 +73,11 @@ export default class Share {
             regExp = /(?<type>(?<isFolder>folder\/)|(?<isFile>file\/))(?<id>[\w-_]+)(?<keyPrefix>#)?(?<key>(?<=#)[\w-_]{22,43})?(?<selected>((?<selectedFilePrefix>\/file\/)|(?<selectedFolderPrefix>\/folder\/))((?<file>(?<=\/file\/)[\w-_]+)|(?<folder>(?<=\/folder\/)[\w-_]+)))?/;
         }
 
-        const groups = _url.match(regExp).groups;
+        const match = _url.match(regExp);
+        if (!match) {
+            throw `Unsupported URL ("${_url}")`;
+        }
+        const {groups} = match;
 
         const isFolder = Boolean(groups.isFolder);
         /** Content ID */
