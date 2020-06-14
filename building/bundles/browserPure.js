@@ -1,12 +1,13 @@
 import {bundle} from "../bundle.js";
 import {bundleText, names, src} from "../settings.js";
 import {ignoreImportFrom, prependBefore} from "../rollup-plugins.js";
-import {workerWrapper} from "../worker.js";
 
 
-export const browserPure = workerWrapper(_browserPure2, import.meta.url);
+export function browserPure() {
+    return _browserPure1();
+}
 
-function _browserPure() {
+function _browserPure1() {
     const banner = `/* The pure browser bundle of ${bundleText}. It requires CryptoJS. */`
     return bundle(
         names.browserPure,
