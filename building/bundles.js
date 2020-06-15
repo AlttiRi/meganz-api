@@ -9,9 +9,9 @@ import {browserStandalone as _browserStandalone} from "./bundles/browserStandalo
 
 
 // Wrap with worker thread
-export const esPure = workerWrapper(_esPure, import.meta.url, "esPure");
-export const esDependencies = workerWrapper(_esDependencies, import.meta.url, "esDependencies");
-export const browserPure = workerWrapper(_browserPure, import.meta.url, "browserPure");
-export const browserCryptoES = workerWrapper(_browserCryptoES, import.meta.url, "browserCryptoES");
-export const esStandalone = workerWrapper(_esStandalone, import.meta.url, "esStandalone");
-export const browserStandalone = workerWrapper(_browserStandalone, import.meta.url, "browserStandalone");
+export const esPure = workerWrapper(_esPure, import.meta.url);
+export const esDependencies = workerWrapper(_esDependencies, import.meta.url);
+export const browserPure = workerWrapper(_browserPure, import.meta.url);
+export const browserCryptoES = workerWrapper(_browserCryptoES, import.meta.url);
+export const esStandalone = workerWrapper(_esStandalone, import.meta.url);
+export const browserStandalone = workerWrapper(_browserStandalone, import.meta.url);

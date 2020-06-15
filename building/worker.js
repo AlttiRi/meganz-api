@@ -1,26 +1,22 @@
 import {Worker, isMainThread, parentPort, workerData} from "worker_threads";
 
 
-export function workerWrapper(executable, filename, name) {
+export function workerWrapper(executable, filename, name = executable.name) {
     return function(runInWorker = true) {
         if (runInWorker && isMainThread) {
-            return handle({filename, name});
+            return new Promise((resolve, reject) => {
+                const worker = new Worker(new URL(import.meta.url), {workerData: {filename, name}});
+                worker.on("message", resolve);
+                worker.on("error", reject);
+                worker.on("exit", code => {
+                    if (code !== 0) {
+                        console.error("Worker finished with exit code " + code);
+                    }
+                });
+            });
         }
         return executable();
     }
-}
-
-function handle(workerData) {
-    return new Promise((resolve, reject) => {
-        const worker = new Worker(new URL(import.meta.url), {workerData});
-        worker.on("message", resolve);
-        worker.on("error", reject);
-        worker.on("exit", code => {
-            if (code !== 0) {
-                console.error("Worker finished with exit code " + code);
-            }
-        });
-    });
 }
 
 // [auto-run]
