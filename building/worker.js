@@ -4,15 +4,15 @@ import {Worker, isMainThread, parentPort, workerData} from "worker_threads";
 export function workerWrapper(executable, filename, name) {
     return function(runInWorker = true) {
         if (runInWorker && isMainThread) {
-            return handle(filename, {filename, name});
+            return handle({filename, name});
         }
         return executable();
     }
 }
 
-function handle(filename, workerData) {
+function handle(workerData) {
     return new Promise((resolve, reject) => {
-        const worker = new Worker(new URL(filename), {workerData});
+        const worker = new Worker(new URL(import.meta.url), {workerData});
         worker.on("message", resolve);
         worker.on("error", reject);
         worker.on("exit", code => {
@@ -23,14 +23,16 @@ function handle(filename, workerData) {
     });
 }
 
-!async function runInWorker() {
+// [auto-run]
+!async function workerMain() {
     if (isMainThread) {
         return;
     }
     const module = await import(workerData.filename);
     if (workerData.name) {
         const executable = module[workerData.name];
-        parentPort.postMessage(await executable());
+        const result = await executable();
+        parentPort.postMessage(result);
     } else
         if (module.default) {
         parentPort.postMessage(await module.default());

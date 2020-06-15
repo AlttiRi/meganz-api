@@ -13,7 +13,7 @@ import terser from "terser";
  * @param {import("rollup").InputOptions} inputOptions
  * @param {import("rollup").OutputOptions} outputOptions
  * @param {import("terser").MinifyOptions} terserOptions
- * @returns {Promise<void[]>}
+ * @returns {Promise<{filename, result, resultMin}>}
  */
 export async function bundle(filename, inputOptions, outputOptions = {}, terserOptions = {}) {
     /** @type {import("rollup").OutputOptions} */
@@ -29,7 +29,9 @@ export async function bundle(filename, inputOptions, outputOptions = {}, terserO
     const resultMin = await minifyWithTerser(result.code, result.map, filename + ".min.js", terserOptions);
     const writtenMin = write(filename + ".min.js", resultMin.code, resultMin.map);
 
-    return Promise.all([written, writtenMin]);
+    await Promise.all([written, writtenMin]);
+
+    return {filename, result, resultMin};
 }
 
 /**
