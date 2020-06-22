@@ -62,11 +62,19 @@ export default class Util {
      * Do not use `new TextEncoder().encode(binaryStr)` for binary (Latin1) strings
      * It maps code points to utf8 bytes (so char codes of 128-255 range maps to 2 bytes, not 1)
      * For example: String.fromCharCode(128) is mapped to [194, 128] bytes
+     *
+     * The current implementation works a bit faster (~13 %) than:
+     * `Uint8Array.from(binaryString.split(""), ch => ch.charCodeAt(0))`
+     *
      * @param {string} binaryString
-     * @returns {Uint8Array}
+     * @returns {Uint8Array} arrayBuffer
      */
     static binaryStringToArrayBuffer(binaryString) {
-        return Uint8Array.from(binaryString.split(""), ch => ch.charCodeAt(0));
+        const array = new Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            array[i] = binaryString.charCodeAt(i);
+        }
+        return Uint8Array.from(array);
     }
 
     /**
@@ -77,6 +85,16 @@ export default class Util {
     static base64ToArrayBuffer(base64) {
         const binaryString = Util.base64ToBinaryString(base64);
         return Util.binaryStringToArrayBuffer(binaryString);
+    }
+
+    /**
+     * ArrayBuffer to Base64 encoded binary string (Latin1)
+     * @param {Uint8Array} arrayBuffer
+     * @returns {string}
+     */
+    static arrayBufferToBase64(arrayBuffer) {
+        const binaryString = Util.arrayBufferToBinaryString(arrayBuffer);
+        return Util.binaryStringToBase64(binaryString);
     }
 
     /**
@@ -226,7 +244,7 @@ export default class Util {
             if (setImmediate) {
                 return setImmediate(resolve);
             }
-            // todo create the good implementation with postMessage (for the browsers)
+            // todo create the good implementation with MessageChannel (for the browsers)
             return setTimeout(resolve, 0); // in fact, it's 4 ms, not 0.
         });
     }
@@ -298,6 +316,53 @@ export default class Util {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Convert the string to the base64 encoded utf-8 bytes.
+     *
+     * With default mode "default" it uses `unescape` function that is deprecated now,
+     * but it works much faster than converting with "safe" mode (ArrayBuffer -> binaryString -> base64).
+     * With "unsafe" mode the sting must be Latin1 encoded, or you get the exception in a browser
+     * ("DOMException: Failed to execute 'btoa' on 'Window':
+     *     the string to be encoded contains characters outside of the Latin1 range.") or the wrong result in Node.js.
+     *
+     * For node.js you can use:
+     * `Buffer.from(string).toString("base64")`
+     *
+     * @param {string} string
+     * @param {"default"|"safe"|"unsafe"} [mode="default"]
+     * @returns {string} base64
+     */
+    static stringToBase64(string, mode = "default") {
+        if (mode === "default") {       // uses deprecated `escape` function
+            const binaryString = unescape(encodeURIComponent(string));
+            return Util.binaryStringToBase64(binaryString);
+        } else if (mode === "safe") {   // works slower (~3x)
+            const arrayBuffer = new TextEncoder().encode(string);
+            return Util.arrayBufferToBase64(arrayBuffer);
+        } else if (mode === "unsafe") { // only for Latin1 within Base64
+            return Util.binaryStringToBase64(string);
+        }
+    }
+
+    /**
+     * Convert the Base64 encoded string of utf-8 bytes to the string.
+     *
+     * @param {string} base64
+     * @param {"default"|"safe"|"unsafe"} [mode="default"]
+     * @returns {string}
+     */
+    static base64ToString(base64, mode = "default") {
+        if (mode === "default") {       // uses deprecated `escape` function
+            const binaryString = Util.base64ToBinaryString(base64);
+            return decodeURIComponent(escape(binaryString));
+        } else if (mode === "safe") {   // works slower (~x4+)
+            const arrayBuffer = Util.base64ToArrayBuffer(base64);
+            return new TextDecoder().decode(arrayBuffer);
+        } else if (mode === "unsafe") { // only for Latin1 within Base64
+            return Util.base64ToBinaryString(base64);
+        }
     }
 
     // // the experimental version
