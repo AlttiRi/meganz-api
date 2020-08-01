@@ -394,13 +394,12 @@ export default class Util {
     }
 
 
-    // todo test it more
-    //  browsers MessagePort has no `unref`/`ref`
-    static setImmediate = globalThis.setImmediate ? globalThis.setImmediate :
-        MessageChannel ? (function() {
-            if (!MessageChannel) {
-                return;
-            }
+    /**
+     * Browsers' MessagePort has no `unref`/`ref`,
+     * but the realization for Node requires to use them.
+     */
+    static setImmediate = globalThis.setImmediate ||
+        (function() {
             const {port1, port2} = new MessageChannel();
             const queue = [];
 
@@ -418,7 +417,7 @@ export default class Util {
                 port2.postMessage(null);
                 queue.push(callback);
             };
-        })() : (callback) => setTimeout(callback, 0);
+        })();
 
 
 
