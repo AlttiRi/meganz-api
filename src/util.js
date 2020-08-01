@@ -51,6 +51,11 @@ export default class Util {
      * ```
      * Replaced with `reduce`. It works OK, no need to optimise (like `Util.arrayBufferToHexString()`).
      *
+     * Also:
+     * new TextDecoder("utf-8").decode(new Uint8Array([128])).charCodeAt(0) === 65533 "�"
+     * new TextDecoder("Latin1").decode(new Uint8Array([128])).charCodeAt(0) === 8364 "€"
+     * String.fromCharCode(128).charCodeAt(0) === 128 ""
+     *
      * @param {Uint8Array} arrayBuffer
      * @returns {string} binaryString
      * */
@@ -217,7 +222,7 @@ export default class Util {
      * @param {boolean} inNextEventLoopTask - if passed 0 wait for the next event loop task, or no (use micro task)
      * @returns {Promise}
      */
-    static sleep(ms, inNextEventLoopTask = false) {
+    static sleep(ms, inNextEventLoopTask = false) {  //todo rework (true be default)
         if (ms <= 0) {
             if (inNextEventLoopTask) {
                 return Util.nextEventLoopTask();
@@ -241,11 +246,7 @@ export default class Util {
      */
     static nextEventLoopTask() {
         return new Promise(resolve => {
-            if (setImmediate) {
-                return setImmediate(resolve);
-            }
-            // todo create the good implementation with MessageChannel (for the browsers)
-            return setTimeout(resolve, 0); // in fact, it's 4 ms, not 0.
+            Util.setImmediate(resolve);
         });
     }
 
@@ -364,6 +365,53 @@ export default class Util {
             return Util.base64ToBinaryString(base64);
         }
     }
+
+    /**
+     * Make ReadableStream iterable
+     *
+     * @example
+     *  for await (const chunk of iterateReadableStream(stream)) {
+     *      i++;                 // If you do not want to block event loop.
+     *      if (i % 128 === 0) { // Note: it has negative impact for performance: ~7 %, without `if`: ~30 %.
+     *          await new Promise(resolve => setImmediate(resolve));
+     *      }
+     *      handle(chunk);
+     * }
+     *
+     * @template T
+     * @param {ReadableStream<T>} stream
+     * @returns {AsyncGenerator<T>}
+     */
+    static async * iterateReadableStream(stream) {
+        const reader = stream.getReader();
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) {
+                break;
+            }
+            yield value;
+        }
+    }
+
+    //todo in browser-context
+    // const {MessageChannel} = require("worker_threads");
+    //
+    static setImmediate = setImmediate || MessageChannel ? (function() {
+        const {port1, port2} = new MessageChannel();
+        const queue = [];
+
+        port1.onmessage = function() {
+            const callback = queue.shift();
+            callback();
+        };
+
+        return function(callback) {
+            port2.postMessage(null);
+            queue.push(callback);
+        };
+    })() : (callback) => setTimeout(callback, 0);
+
+
 
     // // the experimental version
     // static logger = {
