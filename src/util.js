@@ -403,10 +403,14 @@ export default class Util {
         port1.onmessage = function() {
             const callback = queue.shift();
             callback();
+            if (!queue.length) {
+                port1.unref();
+            }
         };
         port1.unref();
 
         return function(callback) {
+            port1.ref();
             port2.postMessage(null);
             queue.push(callback);
         };
