@@ -4,9 +4,11 @@ const atob = b64 => Buffer.from(b64, "base64").toString("binary");
 import perf_hooks from "perf_hooks"; /** for `performance.now()` */
 const performance = perf_hooks.performance;
 
+import {MessageChannel} from "worker_threads";
+
 import fetch from "node-fetch";
 
-export {btoa, atob, fetch, performance};
+export {btoa, atob, fetch, performance, MessageChannel};
 // It's used by util.js, mega.js, synchronization.js
 
 

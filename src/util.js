@@ -1,4 +1,4 @@
-import {btoa, atob, /*MessageChannel*/} from "./browser-context.js";
+import {btoa, atob, MessageChannel} from "./browser-context.js";
 
 export default class Util {
 
@@ -393,11 +393,8 @@ export default class Util {
         }
     }
 
-    //todo in browser-context
-    // const {MessageChannel} = require("worker_threads");
-    //
-    static setImmediate = setImmediate || globalThis.MessageChannel ? (function() {
-        if (!globalThis.MessageChannel) {
+    static setImmediate = MessageChannel ? (function() { // setImmediate || ...
+        if (!MessageChannel) {
             return;
         }
         const {port1, port2} = new MessageChannel();
@@ -407,6 +404,7 @@ export default class Util {
             const callback = queue.shift();
             callback();
         };
+        port1.unref();
 
         return function(callback) {
             port2.postMessage(null);
