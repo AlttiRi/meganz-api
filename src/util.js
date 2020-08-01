@@ -393,28 +393,32 @@ export default class Util {
         }
     }
 
-    static setImmediate = MessageChannel ? (function() { // setImmediate || ...
-        if (!MessageChannel) {
-            return;
-        }
-        const {port1, port2} = new MessageChannel();
-        const queue = [];
 
-        port1.onmessage = function() {
-            const callback = queue.shift();
-            callback();
-            if (!queue.length) {
-                port1.unref();
+    // todo test it more
+    //  browsers MessagePort has no `unref`/`ref`
+    static setImmediate = globalThis.setImmediate ? globalThis.setImmediate :
+        MessageChannel ? (function() {
+            if (!MessageChannel) {
+                return;
             }
-        };
-        port1.unref();
+            const {port1, port2} = new MessageChannel();
+            const queue = [];
 
-        return function(callback) {
-            port1.ref();
-            port2.postMessage(null);
-            queue.push(callback);
-        };
-    })() : (callback) => setTimeout(callback, 0);
+            port1.onmessage = function() {
+                const callback = queue.shift();
+                callback();
+                // if (!queue.length) {
+                //     port1.unref();
+                // }
+            };
+            // port1.unref();
+
+            return function(callback) {
+                // port1.ref();
+                port2.postMessage(null);
+                queue.push(callback);
+            };
+        })() : (callback) => setTimeout(callback, 0);
 
 
 
