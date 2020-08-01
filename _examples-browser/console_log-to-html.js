@@ -5,27 +5,30 @@ console.error = getHtmlLog(console.error, "error");
 function getHtmlLog(func, className) {
     globalThis[func.name] = func;
     return function() {
-            func(...arguments);
+        func(...arguments);
 
-            const entry = document.createElement("div");
-            entry.classList.add("console-entry");
-            if (className) {
-                entry.classList.add(className);
-            }
+        const entry = document.createElement("div");
+        entry.classList.add("console-entry");
+        if (className) {
+            entry.classList.add(className);
+        }
 
-            for (const argument of arguments) {
+        for (const argument of arguments) {
 
-                const str = toString(argument);
+            const str = toString(argument);
 
-                const block = document.createElement("pre");
-                block.textContent = str;
-                entry.append(block);
-            }
+            const block = document.createElement("pre");
+            block.textContent = str;
+            entry.append(block);
+        }
 
-            const root = document.querySelector("#console_log-to-html") || document.querySelector("body");
+        const root = document.querySelector("#console_log-to-html") || document.querySelector("body");
 
-            root.append(entry);
-            root.append(document.createElement("hr"));
+        root.append(entry);
+        root.append(document.createElement("hr"));
+        if (root.dataset.autoScroll === "true") {
+            root.scrollTop = root.scrollHeight;
+        }
     };
 }
 
