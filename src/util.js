@@ -64,8 +64,8 @@ export default class Util {
     }
 
     /**
-     * Do not use `new TextEncoder().encode(binaryStr)` for binary (Latin1) strings
-     * It maps code points to utf8 bytes (so char codes of 128-255 range maps to 2 bytes, not 1)
+     * Do not use `new TextEncoder().encode(binaryStr)` for binary (Latin1) strings.
+     * It maps code points to utf8 bytes (so char codes of 128-255 range maps to 2 bytes, not 1).
      * For example: String.fromCharCode(128) is mapped to [194, 128] bytes
      *
      * The current implementation works x2-4 times faster than:
@@ -452,5 +452,3 @@ export default class Util {
     //     }
     // };
 }
-
-console.log(Util.stringToBase64("jvgyj5n4⏳💧💻✔☑⏳💧💻✔rtns46"));
