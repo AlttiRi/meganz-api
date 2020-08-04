@@ -72,7 +72,7 @@ export default class Util {
      * `Uint8Array.from(binaryString.split(""), ch => ch.charCodeAt(0))`
      *
      * @param {string} binaryString
-     * @returns {Uint8Array} arrayBuffer
+     * @returns {Uint8Array} u8Array
      */
     static binaryStringToArrayBuffer(binaryString) {
         const u8Array = new Uint8Array(binaryString.length);
