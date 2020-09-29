@@ -36,7 +36,7 @@ export default class Crypto {
          * @private
          */
         const _arrayBufferToWordArray = function(u8Array) { // todo: remove in the next commit
-            const length = Math.trunc(u8Array.length / 4) + (u8Array.length % 4 ? 1 : 0); // "round up"
+            const length = Math.trunc(u8Array.length / 4) + (u8Array.length % 4 ? 1 : 0); // "round up" // todo Math.ceil
             const words = new Array(length);
             for (let i = 0; i < u8Array.length; i++) {
                 words[i >>> 2] |= u8Array[i] << (24 - (i % 4) * 8); // [*]

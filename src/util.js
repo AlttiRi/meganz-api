@@ -1,4 +1,4 @@
-import {btoa, atob, MessageChannel} from "./browser-context.js";
+import {atob, btoa, MessageChannel} from "./browser-context.js";
 
 export default class Util {
 
@@ -396,10 +396,10 @@ export default class Util {
 
     /**
      * Browsers' MessagePort has no `unref`/`ref`,
-     * but the realization for Node requires to use them.
+     * but the realization for Node requires to use them so let's just use `globalThis.setImmediate`.
      */
     static setImmediate = globalThis.setImmediate ||
-        (function() {
+        /*#__PURE__*/ (function() {
             const {port1, port2} = new MessageChannel();
             const queue = [];
 
@@ -420,6 +420,17 @@ export default class Util {
         })();
 
 
+    // https://developers.google.com/web/updates/2011/09/Workers-ArrayBuffer
+    // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
+    static structuredClone(object) {
+        return new Promise(resolve => {
+            const {port1, port2} = new MessageChannel();
+            port1.onmessage = function(message) {
+                resolve(message.data);
+            };
+            port2.postMessage(object);
+        });
+    }
 
     // // the experimental version
     // static logger = {
