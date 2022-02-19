@@ -21,7 +21,7 @@ import {saveFile} from "./util-node.js";
 import {Nodes} from "../src/mega.js";
 import {progress} from "./progress.js";
 
-const folderNodes = await Nodes.nodes("URL");
+const folderNodes = await Nodes.nodes("https://mega.nz/..."); // Use you own URL
 
 const promises = [];
 let i = 0;
