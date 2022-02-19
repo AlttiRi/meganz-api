@@ -1,6 +1,6 @@
 # meganz-api
 
-Uncomplited, backlogged Mega.nz JS library.
+**Uncomplited**, backlogged Mega.nz JS library.
 
 - `npm ci`
 - `npm run build`
