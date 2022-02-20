@@ -20,7 +20,7 @@ https://github.com/AlttiRi/meganz-api/blob/master/_examples-node/ex-3.3-ok.js:
 import {saveFile} from "./util-node.js";
 import {Nodes} from "../src/mega.js";
 
-const folderNodes = await Nodes.nodes("https://mega.nz/..."); // Use you own URL
+const folderNodes = await Nodes.nodes("https://mega.nz/..."); // Use your own URL
 
 const promises = [];
 let i = 0;
