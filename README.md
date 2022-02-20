@@ -20,24 +20,23 @@ https://github.com/AlttiRi/meganz-api/blob/master/_examples-node/ex-3.3-ok.js:
 import {saveFile} from "./util-node.js";
 import {Nodes} from "../src/mega.js";
 
-const folderNodes = await Nodes.nodes("https://mega.nz/..."); // Use your own URL
+const nodeArray = await Nodes.nodes("https://mega.nz/..."); // Use your own URL
 
 const promises = [];
-let index = 0;
-for (const node of folderNodes) {
+let i = 0;
+for (const node of nodeArray) {
     if (Nodes.isMediaNode(node)) {
-        const index = ++i;
+        const index = (++i).toString().padStart(3, "0");
         console.log(`${index} ${node.name}`);
-        const filename = `thumbnail-${index.toString().padStart(3, "0")}-${node.id}.jpg`;
+        const filename = `thumbnail-${index}-${node.id}.jpg`;
         const downloaded = node.getThumbnail()
             .then(thumb => {
-                saveFile(thumb, filename, node.mtime);
+                void saveFile(thumb, filename, node.mtime);
             });
         promises.push(downloaded);
     }
 }
 await Promise.all(promises);
-
 ```
 
 - Multiple API requests are grouped within one API request when it's possible.
