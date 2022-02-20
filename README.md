@@ -46,4 +46,4 @@ await Promise.all(promises);
 
 ---
 
-- 2022.02.20: This private repo was turned to public one.
+- 2022.02.20: This private repo was turned into public one.
