@@ -42,3 +42,4 @@ await Promise.all(promises);
 - Multiple API requests are grouped within one API request when it's possible.
 - Multiple thumbnails data are downloaded within one download request when it's possible.
 - All similar HTTP connections are performed concurrently, but not more that 16 at one moment. See `Semaphore` class.
+- Also it uses custom (much faster) convertation from `ArrayBuffer` to `WordArray` of CryptoJS library. See `/src/crypto.js`.
