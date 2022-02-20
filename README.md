@@ -43,3 +43,7 @@ await Promise.all(promises);
 - Multiple thumbnails data are downloaded within one download request when it's possible.
 - All similar HTTP connections are performed concurrently, but not more that 16 at one moment. See `Semaphore` class.
 - Also it uses custom (much faster (up to x9 times)) convertation from `ArrayBuffer` to `WordArray` of CryptoJS library. See `/src/crypto.js`.
+
+---
+
+- 2022.02.20: This private repo was turned to public one.
