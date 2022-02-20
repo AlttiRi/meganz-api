@@ -23,16 +23,17 @@ import {Nodes} from "../src/mega.js";
 const folderNodes = await Nodes.nodes("https://mega.nz/..."); // Use your own URL
 
 const promises = [];
-let i = 0;
+let index = 0;
 for (const node of folderNodes) {
     if (Nodes.isMediaNode(node)) {
         const index = ++i;
         console.log(`${index} ${node.name}`);
-        const handled = node.getThumbnail()
+        const filename = `thumbnail-${index.toString().padStart(3, "0")}-${node.id}.jpg`;
+        const downloaded = node.getThumbnail()
             .then(thumb => {
-                saveFile(thumb, `thumbnail-${index.toString().padStart(3, "0")}-${node.id}.jpg`, node.mtime);
+                saveFile(thumb, filename, node.mtime);
             });
-        promises.push(handled);
+        promises.push(downloaded);
     }
 }
 await Promise.all(promises);
