@@ -11,7 +11,7 @@ export const names = {
     esDependencies: "_dependencies.es", // [used-in-building]
     browserCryptoES: "crypto-es-cut",   // [used-in-release]
 
-    esStandalone: "__mega.es",   // [unused]
+    esStandalone: "meganz-api.standalone.es",   // [standalone][es]
     browserStandalone: "mega",   // [used-in-release]
 }
 
