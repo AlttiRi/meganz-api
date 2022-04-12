@@ -21,8 +21,8 @@ async function build() {
     // ----------------------------------------
     await es;
     const standalone = Promise.all([
-        // I don't think that this bundle is needed
-        // bundles.esStandalone(),
+        // For dynamic imports
+        bundles.esStandalone(),
 
         // Just the standalone browser bundle (Note: CryptoES code is minified in the non minified bundle)
         bundles.browserStandalone()
