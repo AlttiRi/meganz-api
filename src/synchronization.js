@@ -1,6 +1,9 @@
 import {performance} from "./browser-context.js";
 import Util from "./util.js";
 
+
+//todo
+// available - use in loop to stop
 export class Semaphore {
     /**
      * By default works like a mutex
@@ -14,7 +17,7 @@ export class Semaphore {
 
     /** @type {number} - the count of active parallel executions */
     active = 0;
-    /** @type {(function: void)[]} - resolve functions of enqueued executions */
+    /** @type {(function)[]} - resolve functions of enqueued executions */
     pending = [];
     /** @type {number[]} - finish times of completed executions (it's used when there is no enqueued executions) */
     completeTimes = [];
@@ -68,7 +71,8 @@ export class Semaphore {
                 this.completeTimes.push(performance.now());
             }
         } else {
-            console.warn("[Semaphore] over released"); // a possible error is in a code
+            console.warn("[Semaphore] over released");
+            // it's possible if there is the logical error in the user code
         }
     }
 

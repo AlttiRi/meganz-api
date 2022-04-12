@@ -21,13 +21,15 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.3.0/pad-zeropadding.min.js"></script>
 
 
-    <script defer src="../dist/mega.pure.js"></script>
+    <script defer src="../dist/mega.pure.min.js"></script>
     <script type="module"> // Note: `type="module"` === `defer` attribute
 
         // It requires to comment the dependency import and use the "special" exports in `browser-context.js`:
         // import * as Mega from "../src/mega.js";
 
         import * as URLS from "../_examples-node/test-urls.js";
+        // 2021.05.11
+        // From https://gpailler.github.io/MegaApiClient/articles/samples.html
         // "https://mega.nz/folder/e1ogxQ7T#ee4Q_ocD1bSLmNeg9B6kBw"
         // "https://mega.nz/file/bkwkHC7D#AWJuto8_fhleAI2WG0RvACtKkL_s9tAtvBXXDUp2bQk"
 

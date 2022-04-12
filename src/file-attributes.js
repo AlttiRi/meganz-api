@@ -286,7 +286,12 @@ export class FileAttributeBytes {
         }
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {Uint8Array} bytes
+     * @param {number} offset
+     * @return {{dataBytes: *, id: string}}
+     */
     static parseBytes(bytes, offset = 0) {
         const idBytes     = bytes.subarray(offset,      offset +  8);
         const lengthBytes = bytes.subarray(offset + 8,  offset + 12);

@@ -63,6 +63,55 @@ export default class Util {
         return arrayBuffer.reduce((accumulator, byte) => accumulator + String.fromCharCode(byte), "");
     }
 
+
+// // https://github.com/nodeca/pako/blob/26dff4fb3472c5532b3bd8856421146d35ab7592/dist/pako.es5.js#L4027
+//     static arrayBufferToBinaryString = (buf, len) => {
+//         len = buf.length
+//         // On Chrome, the arguments in a function call that are allowed is `65534`.
+//         // If the length of the buffer is smaller than that, we can use this optimization,
+//         // otherwise we will take a slower path.
+//         if (len < 65534) {
+//             if (buf.subarray) {
+//                 return String.fromCharCode.apply(null, buf.length === len ? buf : buf.subarray(0, len));
+//             }
+//         }
+//
+//         let result = '';
+//         for (let i = 0; i < len; i++) {
+//             result += String.fromCharCode(buf[i]);
+//         }
+//         return result;
+//     };
+
+
+
+    // static arrayBufferToBinaryString(buf, offset = 0, length = 1e99) {
+    //     // The max number of arguments varies between JS engines but it's >32k so we're safe
+    //     const sliceSize = 8192;
+    //     const slices = [];
+    //     const end = Math.min(buf.byteLength, offset + length);
+    //     for (; offset < end; offset += sliceSize) {
+    //         slices.push(String.fromCharCode.apply(null,
+    //             new Uint8Array(buf, offset, Math.min(sliceSize, end - offset))));
+    //     }
+    //     console.log("xxxx");
+    //     return slices.join('');
+    // }
+
+    //  todo
+    // https://github.com/violentmonkey/violentmonkey/blob/62b3259f266032cb1ebb3e66c3c700ae228aaeea/src/common/util.js#L82
+    // export function buffer2string(buf, offset = 0, length = 1e99) {
+    //     // The max number of arguments varies between JS engines but it's >32k so we're safe
+    //     const sliceSize = 8192;
+    //     const slices = [];
+    //     const end = Math.min(buf.byteLength, offset + length);
+    //     for (; offset < end; offset += sliceSize) {
+    //         slices.push(String.fromCharCode.apply(null,
+    //             new Uint8Array(buf, offset, Math.min(sliceSize, end - offset))));
+    //     }
+    //     return slices.join('');
+    // }
+
     /**
      * Do not use `new TextEncoder().encode(binaryStr)` for binary (Latin1) strings.
      * It maps code points to utf8 bytes (so char codes of 128-255 range maps to 2 bytes, not 1).
@@ -337,7 +386,7 @@ export default class Util {
      */
     static stringToBase64(string, mode = "default") {
         if (mode === "default") {       // uses deprecated `escape` function
-            const binaryString = unescape(encodeURIComponent(string));
+            const binaryString = unescape(encodeURIComponent(string)); // todo function
             return Util.binaryStringToBase64(binaryString);
         } else if (mode === "safe") {   // works slower (~3x)
             const arrayBuffer = new TextEncoder().encode(string);
@@ -401,7 +450,7 @@ export default class Util {
     static setImmediate = globalThis.setImmediate ||
         /*#__PURE__*/ (function() {
             const {port1, port2} = new MessageChannel();
-            const queue = [];
+            const queue = new Util.Queue(); // [];
 
             port1.onmessage = function() {
                 const callback = queue.shift();
@@ -419,6 +468,33 @@ export default class Util {
             };
         })();
 
+    static Queue = class {
+        length = 0;
+        push(value) {
+            const newLast = {
+                value,
+                next: null
+            };
+            if (!this._last) {
+                if (!this._first) {
+                    this._first = newLast;
+                } else {
+                    this._first.next = newLast;
+                    this._last = newLast;
+                }
+            } else {
+                this._last.next = newLast;
+                this._last = newLast;
+            }
+            this.length++;
+        }
+        shift() {
+            const first = this._first?.value;
+            this._first = this._first?.next;
+            this.length--;
+            return first;
+        }
+    }
 
     // https://developers.google.com/web/updates/2011/09/Workers-ArrayBuffer
     // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
@@ -431,7 +507,15 @@ export default class Util {
             port2.postMessage(object);
         });
     }
-
+    /*
+    function structuralClone(obj) {
+        return new Promise(resolve => {
+            const {port1, port2} = new MessageChannel();
+            port2.onmessage = m => resolve(m.data);
+            port1.postMessage(obj);
+        });
+    }
+    */
     // // the experimental version
     // static logger = {
     //     DEBUG: true,

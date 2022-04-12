@@ -43,14 +43,18 @@ export async function bundle(filename, inputOptions, outputOptions = {}, terserO
  * @returns {Promise<{code: string, map: string}>}
  */
 function minifyWithTerser(code, map, name, terserOptions = {}) {
+    /** @type {import("terser").SourceMapOptions} */
     const sourceMap = map ? {
         content: map,
-        url: name + ".map"
+        url: name + ".map",
+        includeSources: true
     } : null;
 
     /** @type {import("terser").MinifyOptions} */
     const _terserOptions = {
-        sourceMap
+        sourceMap,
+        compress: false, // for workable sourceMap
+        mangle: true
     };
 
     Object.assign(_terserOptions, terserOptions);

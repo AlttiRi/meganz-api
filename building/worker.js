@@ -93,6 +93,13 @@ export class WorkerThread {
         return promise;
     }
 
+    executeFree(module, name, promise) {
+        this.state = "busy";
+        this.worker.ref();
+        this.promises.push(promise);
+        this.worker.postMessage({module, name});
+    }
+
     /**
      * @template T
      * @param {T} executable
@@ -128,7 +135,7 @@ export function workerWrapper(executable, filename, name = executable.name, exec
 
 // Worker code
 if (!isMainThread) {
-    console.log("[worker]");
+    // console.log("[worker]");
     const listener = async message => {
         if (message === "terminate") {
             console.log("terminating...");
@@ -151,7 +158,7 @@ if (!isMainThread) {
 
         try {
             const {module: modulePath, name} = message;
-    console.log(name)
+            console.log(name);
             const module = await import(modulePath);
             if (name === "default" && !module["default"]) {
                 return await noDefaultHandler(module);

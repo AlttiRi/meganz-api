@@ -275,7 +275,7 @@ class Nodes {
     /**
      * @param {string|URL} url
      * @returns {Promise<SharedFileNode|SharedMediaFileNode|RootFolderNode|FolderNode|FileNode|MediaFileNode>
-     *     |Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>}
+     *     |Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode|FolderNode|FileNode|MediaFileNode)[]>}
      */
     static async of(url) {
         const share = Share.fromUrl(url);
@@ -302,7 +302,7 @@ class Nodes {
 
     /**
      * @param {string|URL} url
-     * @returns {Promise<(SharedFileNode|SharedMediaFileNode)[]|(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>}
+     * @returns {Promise<(SharedFileNode|SharedMediaFileNode[])|(RootFolderNode|FolderNode|FileNode|MediaFileNode)[]>}
      */
     static async nodes(url) {
         const share = Share.fromUrl(url);
@@ -328,7 +328,7 @@ class Nodes {
 
     /**
      * @param {Share} share
-     * @returns {Promise<(RootFolderNode,FolderNode,FileNode,MediaFileNode)[]>} [note] The array have mixed type content
+     * @returns {Promise<(RootFolderNode|FolderNode|FileNode|MediaFileNode)[]>} [note] The array have mixed type content
      */
     static async getFolderNodes(share) {
 
