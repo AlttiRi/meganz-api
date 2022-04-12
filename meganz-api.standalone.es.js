@@ -1254,7 +1254,8 @@ class MegaApi {
     static async requestApiUnsafe(url, payloads) {
         const response = await fetch(url, {
             method: "post",
-            body: JSON.stringify(payloads)
+            body: JSON.stringify(payloads),
+            referrerPolicy: "strict-origin-when-cross-origin"
         });
 
         if (response.status === 500) {
@@ -1345,7 +1346,8 @@ class MegaApi {
                     // It's important for `node-fetch` (Node.js)
                     // But it is not needed in a browser
                     "connection": "keep-alive"
-                }
+                },
+                referrerPolicy: "strict-origin-when-cross-origin"
             });
             if (response.status !== 200) {
                 console.error("[response.status]", response.status);
