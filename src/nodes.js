@@ -209,7 +209,7 @@ class SharedFileNode {
             const {
                 modificationDate,
                 fileChecksum   // [unused][???]
-            } = MegaUtil.parseFingerprint(serializedFingerprint);
+            } = serializedFingerprint ? MegaUtil.parseFingerprint(serializedFingerprint) : {};
 
             this.name = name;
             this.modificationDate = modificationDate;
