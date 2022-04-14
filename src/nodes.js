@@ -73,7 +73,8 @@ class FileNode extends BasicFolderShareNode {
             } = MegaUtil.parseFingerprint(serializedFingerprint);
             this.modificationDate = modificationDate;
         } else {
-            this.name = this.modificationDate = null;
+            this.modificationDate = null;
+            this.name = getEncryptedName(node.attributes, true);
         }
     }
     size;
@@ -147,7 +148,7 @@ class FolderNode extends BasicFolderShareNode {
             } = MegaUtil.parseEncodedNodeAttributes(node.attributes, this.key);
             this.name = name;
         } else {
-            this.name = null;
+            this.name = getEncryptedName(node.attributes, false);
         }
     }
     folders = [];
@@ -209,12 +210,13 @@ class SharedFileNode {
             const {
                 modificationDate,
                 fileChecksum   // [unused][???]
-            } = serializedFingerprint ? MegaUtil.parseFingerprint(serializedFingerprint) : {};
+            } = serializedFingerprint ? MegaUtil.parseFingerprint(serializedFingerprint) : {}; // Removed in ~2022?
 
             this.name = name;
             this.modificationDate = modificationDate;
         } else {
-            this.name = this.modificationDate = null;
+            this.modificationDate = null;
+            this.name = getEncryptedName(nodeAttributesEncoded, false);
         }
 
     }
@@ -405,3 +407,21 @@ export {
     SharedFileNode, SharedMediaFileNode,
     Nodes
 };
+
+/** @return {string|null} */
+function getEncryptedName(attributesEncoded, hasSerializedFingerprint) {
+    if (!MegaApi.encryptedName) {
+        return null;
+    }
+    // 3/4 since it's Base64; `MEGA{"c":"","n":""}`.length === 19; also it has padding;
+    let count = Math.trunc(attributesEncoded.length * 3/4) - 19;
+    if (hasSerializedFingerprint) {
+        count = count - 28;
+    }
+    count = count - 1; // make dividable by 4
+    if (count < 0) {
+        count = 16;
+    }
+    console.log(count);
+    return "█".repeat(count); // "\u2588"
+}

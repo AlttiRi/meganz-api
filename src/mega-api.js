@@ -6,6 +6,8 @@ import GroupedTasks from "./grouped-tasks.js";
 
 export default class MegaApi {
 
+    static encryptedName = false; // If true, return "████" names instead of `null`, when no key is provided.
+
     static apiGateway = "https://g.api.mega.co.nz/cs";
     static grouped = true;
 
