@@ -1,6 +1,12 @@
 # meganz-api
 
-**Uncomplited**, backlogged Mega.nz JS library.
+**Uncomplited, demo Mega.nz JS library.**
+
+It works, but supports only some features: 
+- listing,
+- thumbnails/previews downloading.
+
+---
 
 - `npm ci`
 - `npm run build`
